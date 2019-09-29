@@ -63,6 +63,7 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, string aktSj, string outputSql)
         {
+            aktSj = "2018/19";
             ConnetionstringAtlantis = connetionstringAtlantis;
             
             output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
@@ -97,7 +98,7 @@ DBA.noten_einzel.fa_id,
 DBA.noten_einzel.kurztext AS Fach,
 DBA.noten_einzel.s_note AS Note
 FROM(((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
-WHERE schue_sj.pu_id = '147436' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND noten_kopf.nok_id = 240192 AND s_art_fach = 'UF' AND s_note IS NOT NULL
+WHERE schue_sj.pu_id = '147436' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND noten_kopf.nok_id = 240192 AND s_art_fach = 'UF'
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
 DBA.schueler.name_1 ASC ,
@@ -130,7 +131,58 @@ DBA.schueler.name_2 ASC; ", connection);
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
-        
+
+        internal void NeuZuSetzendeNoten(Leistungen webuntisLeistungen)
+        {
+            output.Add("");
+            output.Add("/* Neu einzutragende Noten in Atlantis: */");
+            try
+            {
+                foreach (var a in this)
+                {
+                    var w = (from webuntisLeistung in webuntisLeistungen
+                             where webuntisLeistung.Fach == a.Fach
+                             where webuntisLeistung.Klasse == a.Klasse
+                             where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
+                             where a.Note == ""
+                             select webuntisLeistung).FirstOrDefault();
+
+                    if (w != null)
+                    {
+                        Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
+
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, " ->" + w.Note, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+
+                        Console.WriteLine(" ... ok");
+                    }
+                    else
+                    {
+                        // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
+
+                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
+                                                                                         where at.Klasse == a.Klasse
+                                                                                         where at.Fach == "REL"
+                                                                                         where at.Note != ""
+                                                                                         where at.Note != "-"
+                                                                                         select at).Any())
+                        {
+                            // ... wird '-' gesetzt.
+
+                            Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, " ->-", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         internal void ZuÄnderendeNoten(Leistungen webuntisLeistungen)
         {
             output.Add("");
@@ -143,38 +195,36 @@ DBA.schueler.name_2 ASC; ", connection);
                              where webuntisLeistung.Fach == a.Fach
                              where webuntisLeistung.Klasse == a.Klasse
                              where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                             where a.Note != null
+                             where a.Note != ""
                              where a.Note != webuntisLeistung.Note
                              select webuntisLeistung).FirstOrDefault();
 
-                    if (w != null)
+                    if (w != null && a.Fach != "REL")
                     {
                         Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + " -> " + w.Note);
 
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->" + w.Note, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
 
                         Console.WriteLine(" ... ok");
                     }
-                    else
+                    
+                    // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
+
+                    if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
+                                                                                        where at.Klasse == a.Klasse
+                                                                                        where at.Fach == "REL"
+                                                                                        where at.Note != ""
+                                                                                        where at.Note != "-"
+                                                                                        select at).Any())
                     {
-                        // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
+                        // ... wird '-' gesetzt.
 
-                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
-                                                                                         where at.Klasse == a.Klasse
-                                                                                         where at.Fach == "REL"
-                                                                                         where at.Note != null
-                                                                                         where at.Note != "-"
-                                                                                         select at).Any())
-                        {
-                            // ... wird '-' gesetzt.
+                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
-                            Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "-> -", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
 
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
-
-                            Console.WriteLine(" ... ok");
-                        }
-                    }
+                        Console.WriteLine(" ... ok");
+                    }                    
                 }
             }
             catch (Exception ex)
@@ -191,19 +241,31 @@ DBA.schueler.name_2 ASC; ", connection);
             {
                 foreach (var a in this)
                 {
+                    // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
+
                     if (!(from w in webuntisLeistungen
                           where w.Fach == a.Fach
                           where w.Klasse == a.Klasse
                           where w.SchlüsselExtern == a.SchlüsselExtern
-                          where a.Note != null
                           select w).Any())
                     {
+                        // ... wird der Datensatz gelöscht, sofern es sich nicht um REL handelt und in Atlantis eine Note gesetzt ist.
+
+                        if (a.Fach != "REL" && a.Note != "")
+                        {
+                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->  ", "UPDATE noten_einzel SET s_note = NULL WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+                        }
+
                         // Wenn es um Religion geht, der Schüler Religion abgewählt hat und kein '-' gesetzt ist und Religion in der Klasse unterrichtet wird ...
 
                         if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note != "-" && (from at in this
                                                                                         where at.Klasse == a.Klasse
                                                                                         where at.Fach == "REL"
-                                                                                        where at.Note != null
+                                                                                        where at.Note != ""
                                                                                         where at.Note != "-"
                                                                                         select at).Any())
                         {
@@ -211,21 +273,11 @@ DBA.schueler.name_2 ASC; ", connection);
 
                             Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->  ", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
 
                             Console.WriteLine(" ... ok");
 
-                        }
-                        if(a.Fach != "REL")
-                        {
-                            // Wenn es nicht um Religion geht und in Webuntis kein Datensatz existiert, wird die Note gelöscht.
-
-                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
-
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = NULL WHERE noe_id = " + a.LeistungId + ";");
-
-                            Console.WriteLine(" ... ok");
-                        }
+                        }                       
                     }
                 }
             }
@@ -234,63 +286,12 @@ DBA.schueler.name_2 ASC; ", connection);
                 throw ex;
             }            
         }
-
-        internal void NeuZuSetzendeNoten(Leistungen webuntisLeistungen)
-        {
-            output.Add("");
-            output.Add("/* Neu einzutragende Noten in Atlantis: */");
-            try
-            {
-                foreach (var a in this)
-                {
-                    var w = (from webuntisLeistung in webuntisLeistungen
-                             where webuntisLeistung.Fach == a.Fach
-                             where webuntisLeistung.Klasse == a.Klasse
-                             where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                             where a.Note == null
-                             select webuntisLeistung).FirstOrDefault();
-
-                    if (w != null)
-                    {
-                        Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
-
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
-
-                        Console.WriteLine(" ... ok");
-                    }
-                    else
-                    {
-                        // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
-
-                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
-                                                                                         where at.Klasse == a.Klasse
-                                                                                         where at.Fach == "REL"
-                                                                                         where at.Note != null
-                                                                                         where at.Note != "-"
-                                                                                         select at).Any())
-                        {
-                            // ... wird '-' gesetzt.
-
-                            Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
-
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
-
-                            Console.WriteLine(" ... ok");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }            
-        }
-
-        private void UpdateLeistung(string name, string klasse, string fach, string updateQuery)
+        
+        private void UpdateLeistung(string name, string klasse, string fach, string meldung, string updateQuery)
         {
             try
             {
-                output.Add(updateQuery.PadRight(65) + " /* " + klasse.PadRight(6) + fach.PadRight(6) + name.PadRight(30) + " */");
+                output.Add(updateQuery.PadRight(62) + " /* " + klasse.PadRight(6) + fach.PadRight(5) + meldung.PadRight(5) + name.PadRight(30) + " */");
             }
             catch (Exception ex)
             {
