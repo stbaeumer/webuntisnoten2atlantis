@@ -1,0 +1,328 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Odbc;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+
+namespace webuntisnoten2atlantis
+{
+    public class Leistungen : List<Leistung>
+    {
+        public string ConnetionstringAtlantis { get; private set; }
+        public List<string> output = new List<string>();
+
+        public Leistungen(string datei)
+        {
+            using (StreamReader reader = new StreamReader(datei))
+            {
+                string überschrift = reader.ReadLine();
+
+                Console.Write("Leistungsdaten aus Webuntis ".PadRight(70, '.'));
+
+                while (true)
+                {
+                    string line = reader.ReadLine();
+
+                    try
+                    {
+                        if (line != null)
+                        {
+                            Leistung leistung = new Leistung();
+                            var x = line.Split('\t');
+
+                            leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                            leistung.Name = x[1];
+                            leistung.Klasse = x[2];
+                            leistung.Fach = x[3];
+                            leistung.Prüfungsart = x[4];
+                            leistung.Note = x[5].Substring(0, 1);
+                            leistung.Bemerkung = x[6];
+                            leistung.Benutzer = x[7];
+                            leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
+                            this.Add(leistung);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
+                        Console.ReadKey();
+                        Environment.Exit(0);
+                    }
+
+                    if (line == null)
+                    {
+                        break;
+                    }
+                }
+                Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+            }
+        }
+
+        public Leistungen(string connetionstringAtlantis, string aktSj, string outputSql)
+        {
+            ConnetionstringAtlantis = connetionstringAtlantis;
+            
+            output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
+            output.Add("/* Hoping for the best! */");
+            output.Add("/* " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString() + " */");
+            output.Add("");
+
+            try
+            {
+                Console.Write("Leistungsdaten aus Atlantis ".PadRight(70, '.'));
+
+                using (OdbcConnection connection = new OdbcConnection(ConnetionstringAtlantis))
+                {
+                    DataSet dataSet = new DataSet();
+                    OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"SELECT 
+DBA.schue_sj.vorgang_schuljahr,
+DBA.schue_sj.s_religions_unterricht AS Religion,
+DBA.klasse.klasse AS Klasse,
+DBA.schueler.name_1 AS Nachname,
+DBA.schueler.name_2 AS Vorname,
+DBA.noten_kopf.nok_id,
+DBA.noten_kopf.position,
+DBA.noten_kopf.s_typ_nok AS Prüfungsart,
+DBA.noten_kopf.s_art_nok,
+DBA.noten_kopf.dat_zeugnis,
+DBA.noten_kopf.dat_notenkonferenz,
+DBA.noten_kopf.fehlstunden_anzahl,
+DBA.noten_einzel.noe_id AS LeistungId,
+DBA.noten_einzel.nok_id,
+DBA.noten_einzel.pu_id AS SchlüsselExtern,
+DBA.noten_einzel.fa_id,
+DBA.noten_einzel.kurztext AS Fach,
+DBA.noten_einzel.s_note AS Note
+FROM(((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
+WHERE schue_sj.pu_id = '147436' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND noten_kopf.nok_id = 240192 AND s_art_fach = 'UF' AND s_note IS NOT NULL
+ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
+DBA.klasse.klasse ASC ,
+DBA.schueler.name_1 ASC ,
+DBA.schueler.name_2 ASC; ", connection);
+
+                    connection.Open();
+                    schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
+
+                    foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
+                    {
+                        Leistung leistung = new Leistung();
+                        leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
+                        leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N" ? true : false;
+                        leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
+                        leistung.Klasse = theRow["Klasse"].ToString();
+                        leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
+                        leistung.Prüfungsart = theRow["Prüfungsart"].ToString();
+                        leistung.Note = theRow["Note"].ToString();
+                        leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
+                        this.Add(leistung);
+                    }
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+            Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+        }
+        
+        internal void ZuÄnderendeNoten(Leistungen webuntisLeistungen)
+        {
+            output.Add("");
+            output.Add("/* Zu ändernde Noten in Atlantis: */");
+            try
+            {
+                foreach (var a in this)
+                {
+                    var w = (from webuntisLeistung in webuntisLeistungen
+                             where webuntisLeistung.Fach == a.Fach
+                             where webuntisLeistung.Klasse == a.Klasse
+                             where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
+                             where a.Note != null
+                             where a.Note != webuntisLeistung.Note
+                             select webuntisLeistung).FirstOrDefault();
+
+                    if (w != null)
+                    {
+                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + " -> " + w.Note);
+
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+
+                        Console.WriteLine(" ... ok");
+                    }
+                    else
+                    {
+                        // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
+
+                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
+                                                                                         where at.Klasse == a.Klasse
+                                                                                         where at.Fach == "REL"
+                                                                                         where at.Note != null
+                                                                                         where at.Note != "-"
+                                                                                         select at).Any())
+                        {
+                            // ... wird '-' gesetzt.
+
+                            Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }            
+        }
+        
+        internal void ZuLöschendeNoten(Leistungen webuntisLeistungen)
+        {
+            output.Add("");
+            output.Add("/* Zu löschende Noten in Atlantis: */");
+            try
+            {
+                foreach (var a in this)
+                {
+                    if (!(from w in webuntisLeistungen
+                          where w.Fach == a.Fach
+                          where w.Klasse == a.Klasse
+                          where w.SchlüsselExtern == a.SchlüsselExtern
+                          where a.Note != null
+                          select w).Any())
+                    {
+                        // Wenn es um Religion geht, der Schüler Religion abgewählt hat und kein '-' gesetzt ist und Religion in der Klasse unterrichtet wird ...
+
+                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note != "-" && (from at in this
+                                                                                        where at.Klasse == a.Klasse
+                                                                                        where at.Fach == "REL"
+                                                                                        where at.Note != null
+                                                                                        where at.Note != "-"
+                                                                                        select at).Any())
+                        {
+                            // ... wird '-' gesetzt.
+
+                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+
+                        }
+                        if(a.Fach != "REL")
+                        {
+                            // Wenn es nicht um Religion geht und in Webuntis kein Datensatz existiert, wird die Note gelöscht.
+
+                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = NULL WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }            
+        }
+
+        internal void NeuZuSetzendeNoten(Leistungen webuntisLeistungen)
+        {
+            output.Add("");
+            output.Add("/* Neu einzutragende Noten in Atlantis: */");
+            try
+            {
+                foreach (var a in this)
+                {
+                    var w = (from webuntisLeistung in webuntisLeistungen
+                             where webuntisLeistung.Fach == a.Fach
+                             where webuntisLeistung.Klasse == a.Klasse
+                             where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
+                             where a.Note == null
+                             select webuntisLeistung).FirstOrDefault();
+
+                    if (w != null)
+                    {
+                        Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
+
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+
+                        Console.WriteLine(" ... ok");
+                    }
+                    else
+                    {
+                        // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
+
+                        if (a.Fach == "REL" && a.ReligionAbgewählt && a.Note == null && (from at in this
+                                                                                         where at.Klasse == a.Klasse
+                                                                                         where at.Fach == "REL"
+                                                                                         where at.Note != null
+                                                                                         where at.Note != "-"
+                                                                                         select at).Any())
+                        {
+                            // ... wird '-' gesetzt.
+
+                            Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+
+                            Console.WriteLine(" ... ok");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }            
+        }
+
+        private void UpdateLeistung(string name, string klasse, string fach, string updateQuery)
+        {
+            try
+            {
+                output.Add(updateQuery.PadRight(65) + " /* " + klasse.PadRight(6) + fach.PadRight(6) + name.PadRight(30) + " */");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        internal void ErzeugeSlqDatei(string outputSql)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(outputSql))
+                {
+                    foreach (var o in output)
+                    {
+                        writer.WriteLine(o);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+                        
+            try
+            {
+                System.Diagnostics.Process.Start(@"C:\Program Files (x86)\Notepad++\Notepad++.exe", outputSql);
+            }
+            catch (Exception)
+            {
+                System.Diagnostics.Process.Start("Notepad.exe", outputSql);
+            }
+        }
+    }
+}
