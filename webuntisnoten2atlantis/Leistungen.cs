@@ -62,7 +62,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Leistungen(string connetionstringAtlantis, string aktSj, string outputSql)
+        public Leistungen(string connetionstringAtlantis, string aktSj, string prüfungsart)
         {
             ConnetionstringAtlantis = connetionstringAtlantis;
             
@@ -74,7 +74,7 @@ namespace webuntisnoten2atlantis
             try
             {
                 Console.Write("Leistungsdaten aus Atlantis ".PadRight(70, '.'));
-
+                
                 using (OdbcConnection connection = new OdbcConnection(ConnetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
@@ -86,28 +86,28 @@ DBA.schueler.name_2 AS Vorname,
 DBA.noten_kopf.nok_id,
 DBA.noten_kopf.position,
 DBA.noten_kopf.s_typ_nok AS Prüfungsart,
-DBA.noten_kopf.s_art_nok,
+DBA.noten_kopf.s_art_nok AS S,
 DBA.noten_kopf.dat_zeugnis,
 DBA.noten_kopf.dat_notenkonferenz,
 DBA.noten_kopf.fehlstunden_anzahl,
-DBA.noten_einzel.noe_id AS LeistungId,
-DBA.noten_einzel.nok_id,
-DBA.noten_einzel.pu_id AS SchlüsselExtern,
-DBA.noten_einzel.fa_id,
-DBA.noten_einzel.kurztext AS Fach,
-DBA.noten_einzel.s_note AS Note,
 DBA.schue_sj.s_religions_unterricht AS Religion,
 DBA.noten_kopf.pu_id,
 DBA.noten_kopf.pj_id,
 DBA.schue_sj.pj_id,
+DBA.schluessel.aufloesung AS Prüfungssart,
+DBA.schluessel.wert,
+DBA.noten_einzel.noe_id AS LeistungId,
+DBA.noten_einzel.pu_id AS SchlüsselExtern,
+DBA.noten_einzel.kurztext AS Fach,
+DBA.noten_einzel.s_note AS Note,
 DBA.noten_einzel.position_1
-FROM(((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
-WHERE /*schue_sj.pu_id = '147436' AND*/ schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND s_art_fach = 'UF' AND schue_sj.pj_id = noten_kopf.pj_id
+FROM((((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) LEFT OUTER JOIN DBA.schluessel ON DBA.noten_kopf.s_art_nok = DBA.schluessel.wert ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
+WHERE schue_sj.pu_id = '149565' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND aufloesung = '" + prüfungsart + @"' AND schue_sj.pj_id = noten_kopf.pj_id  AND s_art_fach = 'UF'
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
-DBA.noten_einzel.position_1 ASC ,
 DBA.schueler.name_1 ASC ,
-DBA.schueler.name_2 ASC; ", connection);
+DBA.schueler.name_2 ASC,
+DBA.noten_einzel.position_1; ", connection);
 
                     connection.Open();
                     schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
@@ -120,7 +120,7 @@ DBA.schueler.name_2 ASC; ", connection);
                         leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                         leistung.Klasse = theRow["Klasse"].ToString();
                         leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                        leistung.Prüfungsart = theRow["Prüfungsart"].ToString();
+                        leistung.Prüfungsart = prüfungsart;
                         leistung.Note = theRow["Note"].ToString();
                         leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
                         this.Add(leistung);
@@ -136,7 +136,7 @@ DBA.schueler.name_2 ASC; ", connection);
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
-
+        
         public Leistungen()
         {
         }

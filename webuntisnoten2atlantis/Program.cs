@@ -16,8 +16,7 @@ namespace webuntisnoten2atlantis
             try
             {
                 string inputCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
-                string outputSql = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\webuntisnoten2atlantis_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".SQL";
-                
+                                
                 List<string> aktSj = new List<string>
                 {
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
@@ -72,8 +71,8 @@ namespace webuntisnoten2atlantis
                 }
 
                 Console.WriteLine("");
-                Leistungen alleWebuntisLeistungen = new Leistungen(inputCsv);
-                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], outputSql);
+                Leistungen alleWebuntisLeistungen = new Leistungen(inputCsv);                
+                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart);
                 Leistungen webuntisLeistungen;
 
                 Console.WriteLine("");
@@ -82,105 +81,113 @@ namespace webuntisnoten2atlantis
 
                 do
                 {
-                    webuntisLeistungen = new Leistungen();
+                    string outputSql = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\webuntisnoten2atlantis_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".SQL";
 
-                    try
+                    do
                     {
-                        Console.WriteLine("********************************************************************************************************************");
-                        Console.WriteLine("*                                                                                                                  *");
-                        Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1 oder HHU1,HHU2). Dann ENTER.        *");
-                        Console.WriteLine("*  Oder 10 Sekunden warten, um alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt zu wählen:                               *");
-                        Console.WriteLine("*                                                                                                                  *");
-                        Console.WriteLine("********************************************************************************************************************");
-                        Console.WriteLine("");
-                        Console.Write("Ihre Wahl: ");
-                        string eingabe = Reader.ReadLine(15000).ToUpper();
+                        webuntisLeistungen = new Leistungen();
 
-                        // Wenn die Eingabe nicht leer ist, wird die Lehrerliste geleert.
-
-                        if (eingabe != "")
+                        try
                         {
-                            List<string> alleKlassen = (from k in atlantisLeistungen select k.Klasse).Distinct().ToList();
-                            
-                            var interessierendeKlassenString = "";
-                            var klassenOhneNotenblattString = "";
-                            var klassenOhneLeistungsdatensätzeString = "";
+                            Console.WriteLine("********************************************************************************************************************");
+                            Console.WriteLine("*                                                                                                                  *");
+                            Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1 oder HHU1,HHU2). Dann ENTER.        *");
+                            Console.WriteLine("*  Oder 10 Sekunden warten, um alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt und                                      *");
+                            Console.WriteLine("*  zugewiesenem " + alleWebuntisLeistungen[0].Prüfungsart + "-Zeugnisformular zu wählen:                                                       *");
+                            Console.WriteLine("*                                                                                                                  *");
+                            Console.WriteLine("********************************************************************************************************************");
+                            Console.WriteLine("");
+                            Console.Write("Ihre Wahl: ");
+                            string eingabe = Reader.ReadLine(15000).ToUpper();
+                            Console.WriteLine("");
+                            // Wenn die Eingabe nicht leer ist, wird die Lehrerliste geleert.
 
-                            foreach (var klasse in alleKlassen)
+                            if (eingabe != "")
                             {
-                                var x = (from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault();
-                                
-                                if (x != null)
-                                {
-                                    // Klassen, die ins Suchmuster passen, aber ohne Noten in Webuntis
+                                List<string> alleKlassen = (from k in atlantisLeistungen select k.Klasse).Distinct().ToList();
 
-                                    if (!(from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
+                                var interessierendeKlassenString = "";
+                                var klassenOhneNotenblattString = "";
+                                var klassenOhneLeistungsdatensätzeString = "";
+
+                                foreach (var klasse in alleKlassen)
+                                {
+                                    var x = (from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault();
+
+                                    if (x != null)
                                     {
-                                        klassenOhneLeistungsdatensätzeString += klasse + ",";
+                                        // Klassen, die ins Suchmuster passen, aber ohne Noten in Webuntis
+
+                                        if (!(from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
+                                        {
+                                            klassenOhneLeistungsdatensätzeString += klasse + ",";
+                                        }
+
+                                        var z = (from w in alleWebuntisLeistungen where w.Klasse == klasse select w).ToList();
+
+                                        if (z.Count > 0)
+                                        {
+                                            webuntisLeistungen.AddRange(z);
+                                            interessierendeKlassen.Add(x);
+                                            interessierendeKlassenString += klasse + ",";
+                                        }
                                     }
-                                    
-                                    var z = (from w in alleWebuntisLeistungen where w.Klasse == klasse select w).ToList();
-
-                                    if (z.Count > 0)
-                                    {
-                                        webuntisLeistungen.AddRange(z); 
-                                        interessierendeKlassen.Add(x);
-                                        interessierendeKlassenString += klasse + ",";
-                                    }                                    
                                 }
-                            }
 
-                            if (klassenOhneLeistungsdatensätzeString != "")
-                            {
-                                Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(','));
-                            }
-
-                            foreach (var w in alleWebuntisLeistungen)
-                            {
-                                if (!(from x in atlantisLeistungen where x.Klasse == w.Klasse select x).Any())
+                                if (klassenOhneLeistungsdatensätzeString != "")
                                 {
-                                    klassenOhneNotenblattString += w.Klasse + ",";
+                                    Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n");
+                                }
+
+                                foreach (var w in alleWebuntisLeistungen)
+                                {
+                                    if (!(from x in atlantisLeistungen where x.Klasse == w.Klasse select x).Any())
+                                    {
+                                        klassenOhneNotenblattString += w.Klasse + ",";
+                                    }
+                                }
+
+                                if (klassenOhneNotenblattString != "")
+                                {
+                                    Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n");
+
+                                }
+
+                                if (interessierendeKlassenString == "")
+                                {
+                                    Console.WriteLine("Es ist keine einzige Klasse bereit zur Verarbeitung.");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Klassen bereit zur Verarbeitung: \n    " + interessierendeKlassenString.TrimEnd(','));
                                 }
                             }
 
-                            if (klassenOhneNotenblattString != "")
-                            {
-                                Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(','));
-                                
-                            }
-
-                            if (interessierendeKlassenString == "")
-                            {
-                                Console.WriteLine("Es ist keine einzige Klasse bereit zur Verarbeitung.");
-                            }
-                            else
-                            {
-                                Console.WriteLine("Klassen bereit zur Verarbeitung: \n    " + interessierendeKlassenString.TrimEnd(','));                                
-                            }
+                            Console.WriteLine("");
                         }
-                        
-                        Console.WriteLine("");
-                    }
-                    catch (TimeoutException)
-                    {                        
-                        Console.WriteLine("");
-                        Console.WriteLine("Ihre Auswahl: Alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
-                        webuntisLeistungen = alleWebuntisLeistungen;                        
-                    }                   
-                } while (webuntisLeistungen.Count > 0 ? false : true);
+                        catch (TimeoutException)
+                        {
+                            Console.WriteLine("");
+                            Console.WriteLine("Ihre Auswahl: Alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
+                            webuntisLeistungen = alleWebuntisLeistungen;
+                        }
+                    } while (webuntisLeistungen.Count > 0 ? false : true);
+
+                    Console.WriteLine("");
+                    Console.WriteLine("Weiter mit ENTER");
+                    Console.ReadKey();
+
+                    atlantisLeistungen.NeuZuSetzendeNoten(webuntisLeistungen);
+                    atlantisLeistungen.ZuLöschendeNoten(webuntisLeistungen);
+                    atlantisLeistungen.ZuÄnderendeNoten(webuntisLeistungen);
+
+                    atlantisLeistungen.ErzeugeSqlDatei(outputSql);
+
+                    Console.WriteLine("Weitere Klassen mit ENTER auswählen. Beenden mit ANYKEY.");
+                    
+
+                } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);
                 
-                Console.WriteLine("");
-                Console.WriteLine("Weiter mit ENTER");
-                Console.ReadKey();
-
-                atlantisLeistungen.NeuZuSetzendeNoten(webuntisLeistungen);
-                atlantisLeistungen.ZuLöschendeNoten(webuntisLeistungen);
-                atlantisLeistungen.ZuÄnderendeNoten(webuntisLeistungen);
-
-                atlantisLeistungen.ErzeugeSqlDatei(outputSql);
-
-                Console.WriteLine("Beenden mit ANYKEY");
-                Console.ReadKey();
             }            
             catch (Exception ex)
             {
