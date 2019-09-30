@@ -71,8 +71,9 @@ namespace webuntisnoten2atlantis
                 }
 
                 Console.WriteLine("");
-                Leistungen alleWebuntisLeistungen = new Leistungen(inputCsv);                
-                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart);
+                Schlüssels schlüssels = new Schlüssels(ConnectionStringAtlantis);
+                Leistungen alleWebuntisLeistungen = new Leistungen(inputCsv);
+                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart, schlüssels);
                 Leistungen webuntisLeistungen;
 
                 Console.WriteLine("");

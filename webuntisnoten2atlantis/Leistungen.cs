@@ -62,10 +62,8 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Leistungen(string connetionstringAtlantis, string aktSj, string prüfungsart)
+        public Leistungen(string connetionstringAtlantis, string aktSj, string prüfungsart, Schlüssels schlüssels)
         {
-            ConnetionstringAtlantis = connetionstringAtlantis;
-            
             output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
             output.Add("/* Hoping for the best! */");
             output.Add("/* " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString() + " */");
@@ -75,59 +73,65 @@ namespace webuntisnoten2atlantis
             {
                 Console.Write("Leistungsdaten aus Atlantis ".PadRight(70, '.'));
                 
-                using (OdbcConnection connection = new OdbcConnection(ConnetionstringAtlantis))
+                using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
-                    OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"SELECT DBA.schue_sj.vorgang_schuljahr,
+                    OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"
+SELECT DBA.schue_sj.vorgang_schuljahr,
 DBA.klasse.klasse AS Klasse,
 DBA.schue_sj.pu_id,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.noten_kopf.nok_id,
 DBA.noten_kopf.position,
-DBA.noten_kopf.s_typ_nok AS Prüfungsart,
-DBA.noten_kopf.s_art_nok AS S,
+DBA.noten_kopf.s_typ_nok,
+DBA.noten_kopf.s_art_nok AS Prüfungsart,
 DBA.noten_kopf.dat_zeugnis,
 DBA.noten_kopf.dat_notenkonferenz,
 DBA.noten_kopf.fehlstunden_anzahl,
+DBA.noten_einzel.noe_id AS LeistungId,
+DBA.noten_einzel.nok_id,
+DBA.noten_einzel.pu_id AS SchlüsselExtern,
+DBA.noten_einzel.fa_id,
+DBA.noten_einzel.kurztext AS Fach,
+DBA.noten_einzel.s_note AS Note,
 DBA.schue_sj.s_religions_unterricht AS Religion,
 DBA.noten_kopf.pu_id,
 DBA.noten_kopf.pj_id,
 DBA.schue_sj.pj_id,
-DBA.schluessel.aufloesung AS Prüfungssart,
-DBA.schluessel.wert,
-DBA.noten_einzel.noe_id AS LeistungId,
-DBA.noten_einzel.pu_id AS SchlüsselExtern,
-DBA.noten_einzel.kurztext AS Fach,
-DBA.noten_einzel.s_note AS Note,
 DBA.noten_einzel.position_1
-FROM((((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) LEFT OUTER JOIN DBA.schluessel ON DBA.noten_kopf.s_art_nok = DBA.schluessel.wert ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
-WHERE /*schue_sj.pu_id = '149565' 
-AND*/ schue_sj.vorgang_schuljahr = '" + aktSj + @"' 
-AND aufloesung = '" + prüfungsart + @"' 
-AND schue_sj.pj_id = noten_kopf.pj_id  
-AND s_art_fach = 'UF'
-ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
+FROM(((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
+WHERE /*schue_sj.pu_id = '149565' AND*/ 
+schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND 
+s_art_fach = 'UF' AND 
+schue_sj.pj_id = noten_kopf.pj_id
+ORDER BY 
+DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
 DBA.schueler.name_1 ASC ,
 DBA.schueler.name_2 ASC,
-DBA.noten_einzel.position_1; ", connection);
+DBA.noten_einzel.position_1 ASC; ", connection);
 
                     connection.Open();
                     schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        Leistung leistung = new Leistung();
-                        leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
-                        leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N" ? true : false;
-                        leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
-                        leistung.Klasse = theRow["Klasse"].ToString();
-                        leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                        leistung.Prüfungsart = prüfungsart;
-                        leistung.Note = theRow["Note"].ToString();
-                        leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
-                        this.Add(leistung);
+                        if (schlüssels.RichtigePrüfungsart(theRow["Prüfungsart"].ToString(), prüfungsart))
+                        {
+                            Leistung leistung = new Leistung()
+                            {
+                                LeistungId = Convert.ToInt32(theRow["LeistungId"]),
+                                ReligionAbgewählt = theRow["Religion"].ToString() == "N" ? true : false,
+                                Name = theRow["Nachname"] + " " + theRow["Vorname"],
+                                Klasse = theRow["Klasse"].ToString(),
+                                Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString(),
+                                Prüfungsart = prüfungsart,
+                                Note = theRow["Note"].ToString(),
+                                SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString())
+                            };
+                            this.Add(leistung);
+                        }                        
                     }
                     connection.Close();
                 }
