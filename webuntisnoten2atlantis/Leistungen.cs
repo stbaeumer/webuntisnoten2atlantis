@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace webuntisnoten2atlantis
 {
@@ -63,7 +64,6 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, string aktSj, string outputSql)
         {
-            aktSj = "2018/19";
             ConnetionstringAtlantis = connetionstringAtlantis;
             
             output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
@@ -78,10 +78,9 @@ namespace webuntisnoten2atlantis
                 using (OdbcConnection connection = new OdbcConnection(ConnetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
-                    OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"SELECT 
-DBA.schue_sj.vorgang_schuljahr,
-DBA.schue_sj.s_religions_unterricht AS Religion,
+                    OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"SELECT DBA.schue_sj.vorgang_schuljahr,
 DBA.klasse.klasse AS Klasse,
+DBA.schue_sj.pu_id,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.noten_kopf.nok_id,
@@ -96,11 +95,17 @@ DBA.noten_einzel.nok_id,
 DBA.noten_einzel.pu_id AS SchlüsselExtern,
 DBA.noten_einzel.fa_id,
 DBA.noten_einzel.kurztext AS Fach,
-DBA.noten_einzel.s_note AS Note
+DBA.noten_einzel.s_note AS Note,
+DBA.schue_sj.s_religions_unterricht AS Religion,
+DBA.noten_kopf.pu_id,
+DBA.noten_kopf.pj_id,
+DBA.schue_sj.pj_id,
+DBA.noten_einzel.position_1
 FROM(((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
-WHERE schue_sj.pu_id = '147436' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND noten_kopf.nok_id = 240192 AND s_art_fach = 'UF'
+WHERE /*schue_sj.pu_id = '147436' AND*/ schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND(s_typ_nok = 'HZ' OR s_typ_nok = 'JZ') AND s_art_fach = 'UF' AND schue_sj.pj_id = noten_kopf.pj_id
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
+DBA.noten_einzel.position_1 ASC ,
 DBA.schueler.name_1 ASC ,
 DBA.schueler.name_2 ASC; ", connection);
 
@@ -132,6 +137,10 @@ DBA.schueler.name_2 ASC; ", connection);
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
+        public Leistungen()
+        {
+        }
+
         internal void NeuZuSetzendeNoten(Leistungen webuntisLeistungen)
         {
             output.Add("");
@@ -151,7 +160,7 @@ DBA.schueler.name_2 ASC; ", connection);
                     {
                         Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
 
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, " ->" + w.Note, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
 
                         Console.WriteLine(" ... ok");
                     }
@@ -170,7 +179,7 @@ DBA.schueler.name_2 ASC; ", connection);
 
                             Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, " ->-", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
                             Console.WriteLine(" ... ok");
                         }
@@ -201,9 +210,9 @@ DBA.schueler.name_2 ASC; ", connection);
 
                     if (w != null && a.Fach != "REL")
                     {
-                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + " -> " + w.Note);
+                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + ">" + w.Note);
 
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->" + w.Note, "UPDATE noten_einzel SET s_note = " + w.Note + " WHERE noe_id = " + a.LeistungId + ";");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + ">" + w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
 
                         Console.WriteLine(" ... ok");
                     }
@@ -221,7 +230,7 @@ DBA.schueler.name_2 ASC; ", connection);
 
                         Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "-> -", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
                         Console.WriteLine(" ... ok");
                     }                    
@@ -255,7 +264,7 @@ DBA.schueler.name_2 ASC; ", connection);
                         {
                             Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
 
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->  ", "UPDATE noten_einzel SET s_note = NULL WHERE noe_id = " + a.LeistungId + ";");
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
                             Console.WriteLine(" ... ok");
                         }
@@ -273,7 +282,7 @@ DBA.schueler.name_2 ASC; ", connection);
 
                             Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "->  ", "UPDATE noten_einzel SET s_note = '-' WHERE noe_id = " + a.LeistungId + ";");
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
                             Console.WriteLine(" ... ok");
 
@@ -291,7 +300,8 @@ DBA.schueler.name_2 ASC; ", connection);
         {
             try
             {
-                output.Add(updateQuery.PadRight(62) + " /* " + klasse.PadRight(6) + fach.PadRight(5) + meldung.PadRight(5) + name.PadRight(30) + " */");
+                string o = updateQuery + "/*" + klasse + "," + fach + "," + meldung + "," + name;
+                output.Add(o.Substring(0, Math.Min(82, o.Length - 1)) + "*/");
             }
             catch (Exception ex)
             {
@@ -299,11 +309,11 @@ DBA.schueler.name_2 ASC; ", connection);
             }
         }
 
-        internal void ErzeugeSlqDatei(string outputSql)
+        internal void ErzeugeSqlDatei(string outputSql)
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(outputSql))
+                using (StreamWriter writer = new StreamWriter(outputSql, true, Encoding.Default))
                 {
                     foreach (var o in output)
                     {
