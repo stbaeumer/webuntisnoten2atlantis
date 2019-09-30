@@ -102,7 +102,11 @@ DBA.noten_einzel.kurztext AS Fach,
 DBA.noten_einzel.s_note AS Note,
 DBA.noten_einzel.position_1
 FROM((((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id ) LEFT OUTER JOIN DBA.schluessel ON DBA.noten_kopf.s_art_nok = DBA.schluessel.wert ) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id
-WHERE schue_sj.pu_id = '149565' AND schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND aufloesung = '" + prüfungsart + @"' AND schue_sj.pj_id = noten_kopf.pj_id  AND s_art_fach = 'UF'
+WHERE /*schue_sj.pu_id = '149565' 
+AND*/ schue_sj.vorgang_schuljahr = '" + aktSj + @"' 
+AND aufloesung = '" + prüfungsart + @"' 
+AND schue_sj.pj_id = noten_kopf.pj_id  
+AND s_art_fach = 'UF'
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
 DBA.schueler.name_1 ASC ,
