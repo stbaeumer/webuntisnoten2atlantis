@@ -13,8 +13,7 @@ using System.Text;
 namespace webuntisnoten2atlantis
 {
     public class Leistungen : List<Leistung>
-    {
-        public string ConnetionstringAtlantis { get; private set; }
+    {   
         public List<string> output = new List<string>();
 
         public Leistungen(string datei)
@@ -73,7 +72,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.Write("Leistungsdaten aus Atlantis ".PadRight(70, '.'));
+                Console.Write("Schüler mit Abwesenheiten aus Atlantis ".PadRight(70, '.'));
                 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -195,6 +194,17 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                         }
                     }
                 }
+
+                // Prüfen, ob ein Fach in Webuntis eine Note bekommen hat, zu dem es in Atlantis keinentsprechendes Fach gibt.
+
+                foreach (var w in webuntisLeistungen)
+                {
+                    if (!(from a in this where a.Klasse == w.Klasse where a.Fach == w.Fach select a).Any())
+                    {
+                        UpdateLeistung(w.Name, w.Klasse, w.Fach, "-", "/*ACHTUNG: Das Fach " + w.Fach + " gibt es in Atlantis nicht!*/");
+                    }
+                }
+
             }
             catch (Exception ex)
             {

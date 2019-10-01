@@ -17,8 +17,9 @@ namespace webuntisnoten2atlantis
         {
             try
             {
-                string inputCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
-                                
+                string inputNotenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
+                string inputAbwesenheitenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\AbsenceTimesTotal.csv";
+
                 List<string> aktSj = new List<string>
                 {
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
@@ -30,9 +31,9 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine("");
                 
 
-                if (!File.Exists(inputCsv))
+                if (!File.Exists(inputNotenCsv))
                 {
-                    Console.WriteLine("Die Datei " + inputCsv + " existiert nicht.");
+                    Console.WriteLine("Die Datei " + inputNotenCsv + " existiert nicht.");
                     Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
                     Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
                     Console.WriteLine(" 2. Alle Klassen auswählen");
@@ -45,9 +46,9 @@ namespace webuntisnoten2atlantis
                 }
                 else
                 {
-                    if (System.IO.File.GetLastWriteTime(inputCsv).Date != DateTime.Now.Date)
+                    if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
                     {
-                        Console.WriteLine("Die Datei " + inputCsv + " ist nicht von heute.");
+                        Console.WriteLine("Die Datei " + inputNotenCsv + " ist nicht von heute.");
                         Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
                         Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
                         Console.WriteLine(" 2. Alle Klassen auswählen");
@@ -60,9 +61,40 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
+                if (!File.Exists(inputAbwesenheitenCsv))
+                {
+                    Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " existiert nicht.");
+                    Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
+                    Console.WriteLine(" 1. Administration > Export klicken");
+                    Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");                    
+                    Console.WriteLine(" 3. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
+                    Console.WriteLine("ENTER beendet das Programm.");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
+                    {
+                        Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " ist nicht von heute.");
+                        Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
+                        Console.WriteLine(" 1. Administration > Export klicken");
+                        Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                        Console.WriteLine(" 3. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
+                        Console.WriteLine("ENTER beendet das Programm.");
+                        Console.ReadKey();
+                        Environment.Exit(0);
+                    }
+                }
+
                 Console.WriteLine("");
                 Schlüssels schlüssels = new Schlüssels(ConnectionStringAtlantis);
-                Leistungen alleWebuntisLeistungen = new Leistungen(inputCsv);
+
+                Leistungen alleWebuntisLeistungen = new Leistungen(inputNotenCsv);
+
+                Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
+                Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart, schlüssels);
+                                
                 Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart, schlüssels);
                 Leistungen webuntisLeistungen;
 
@@ -130,18 +162,17 @@ namespace webuntisnoten2atlantis
                                     Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n");
                                 }
 
-                                foreach (var w in alleWebuntisLeistungen)
+                                foreach (var w in (from w in alleWebuntisLeistungen select w.Klasse).Distinct())
                                 {
-                                    if (!(from x in atlantisLeistungen where x.Klasse == w.Klasse select x).Any())
+                                    if (!(from x in atlantisLeistungen where x.Klasse == w select x).Any())
                                     {
-                                        klassenOhneNotenblattString += w.Klasse + ",";
+                                        klassenOhneNotenblattString += w + ",";
                                     }
                                 }
 
                                 if (klassenOhneNotenblattString != "")
                                 {
                                     Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n");
-
                                 }
 
                                 if (interessierendeKlassenString == "")

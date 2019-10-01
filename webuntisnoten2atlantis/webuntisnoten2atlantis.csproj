@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Abwesenheit.cs" />
+    <Compile Include="Abwesenheiten.cs" />
     <Compile Include="Leistung.cs" />
     <Compile Include="Leistungen.cs" />
     <Compile Include="Program.cs" />
