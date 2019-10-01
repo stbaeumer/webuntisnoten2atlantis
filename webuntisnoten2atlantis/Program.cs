@@ -26,19 +26,7 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine("Webuntisnoten2atlantis (Version " + DateTime.Now.ToString("yyyyMMdd") + ")");
                 Console.WriteLine("=========================================");
                 Console.WriteLine("");
-                Console.WriteLine("Voraussetzungen:");
-                Console.WriteLine("1. Fächer- und Klassenbezeichnungen sind identisch in Untis und Atlantis.");
-                Console.WriteLine("2. Ein Zeugnisdatensatz für die jeweilige Klasse ist angelegt:");
-                Console.WriteLine("   1. Zeugnisse > Sammelbearbeitung");
-                Console.WriteLine("   2. Klasse wählen und dann mit 'Alle auswählen' die SuS wählen.");
-                Console.WriteLine("   3. Zeugnissätze N (Notenblatt) und HZ (Halbjahreszeugnis) anklicken.");
-                Console.WriteLine("   4. 'Zeugnissätze anlegen (N, HZ)' klicken. Dann 'Funktion starten' klicken.");                
-                Console.WriteLine("3. Noten aus Webuntis exportieren:");
-                Console.WriteLine("   1. Klassenbuch > Berichte");
-                Console.WriteLine("   2. Alle Klassen auswählen");
-                Console.WriteLine("   3. Unter \"Noten\" Prüfungsart HZ auswählen");
-                Console.WriteLine("   4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
-                Console.WriteLine("   5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
+                
 
                 if (!File.Exists(inputCsv))
                 {
