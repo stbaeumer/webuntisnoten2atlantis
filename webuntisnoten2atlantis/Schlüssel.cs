@@ -1,4 +1,6 @@
-﻿namespace webuntisnoten2atlantis
+﻿// published under the terms of GPLv3 Stefan Bäumer 2019
+
+namespace webuntisnoten2atlantis
 {
     public class Schlüssel
     {

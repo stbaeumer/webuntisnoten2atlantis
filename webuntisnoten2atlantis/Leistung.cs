@@ -1,4 +1,6 @@
-﻿using System;
+﻿// published under the terms of GPLv3 Stefan Bäumer 2019
+
+using System;
 
 namespace webuntisnoten2atlantis
 {

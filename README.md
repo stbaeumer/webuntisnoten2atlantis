@@ -50,5 +50,15 @@ Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende B
 Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und dann auszuführen. 
 So kann zunächst bei einer einzelnen Note eines einzelnen Schülers gerüft werden, ob alles funktioniert.
 
+### FAQ
+
+#### Was ist mit den Umlauten passiert?
+Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig steht ist das Encoding auf Default gestellt.
+
+#### Unter welcher Lizenz steht das Programm?
+
+GNU General Public License
+
+
 
 stefan.baeumer@berufskolleg-borken.de 01.10.2019
