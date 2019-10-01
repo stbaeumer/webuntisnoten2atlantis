@@ -6,7 +6,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten von Webuntis nach Atlantis
 
 * Klassen- und Fächerbezeichnungen sind identisch in Untis und Atlantis.
 * Notenblatt und Zeugnisformular wurden in Atlantis angelegt.
-* Eine Prüfungsart wurde in Webuntis angelegt, die denselben Namen trägt, wie das Zeugnisformular in Atlantis.
+* Eine Prüfungsart wurde in Webuntis angelegt, die denselben Namen trägt wie das Zeugnisformular in Atlantis.
 * Der Benutzer hat Berechtigung Prüfungen aus Webuntis zu exportieren und SQL-Dateien in Atlantis zu importieren .               
 * Die Schülerinnen und Schüler haben in Webuntis die Atlantis-ID als externen Schlüssel gesetzt bekommen.
 
@@ -38,15 +38,17 @@ Der externe Schlüssel ist die Atlantis-ID.
 
 
 ### Die Datei webuntisnoten2atlantis_20190930.SQL
-Die Noten werden nicht unmittelbar vom Programm *WebuntisNoten2Atlantis* in die Atlantis-Datenbank zurückgeschrieben. Stattdessen wird eine SQL-Datei erzeugt, die die Noten als SQL-Befhele an die Datenbank übergibt.
+Die Noten werden nicht unmittelbar vom Programm *WebuntisNoten2Atlantis* in die Atlantis-Datenbank zurückgeschrieben. Stattdessen wird eine SQL-Datei erzeugt, die die Noten als SQL-Anweisungen an die Datenbank übergibt.
 
-Die SQL-Befehle sind alle vollkommen unabhängig voneinander und sehen wie folgt aus:
+Jede Note entspricht einer SQL-Anweisungen in einer Zeile. Die Anweisungen sind alle vollkommen unabhängig voneinander und sehen wie folgt aus:
 ```SQL
 UPDATE noten_einzel SET s_note=3 WHERE noe_id=3760033;/*HHO1,INW,3,Müller I*/
 ```  
 Hinter dem Semikolon steht ein kurzer Kommentar, der das Prüfen der Datei vereinfachen soll. 
 
-Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende Berechtigungen vorausgesetzt) unter *Funktionen>SQL-Anweisung ausführen* in die Datenbank eingelesen werden.
+Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende Berechtigungen vorausgesetzt) unter *Funktionen>SQL-Anweisung ausführen* in die Datenbank eingelesen werden. 
+Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und dann auszuführen. 
+So kann zunächst bei einer einzelnen Note eines einzelnen Schülers gerüft werden, ob alles funktioniert.
 
 
 stefan.baeumer@berufskolleg-borken.de 30.9.2019
