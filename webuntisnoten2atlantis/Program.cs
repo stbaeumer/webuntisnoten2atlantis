@@ -32,9 +32,9 @@ namespace webuntisnoten2atlantis
                 {
                     Console.WriteLine("Die Datei " + inputCsv + " existiert nicht.");
                     Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                    Console.WriteLine(" 1. Klassenbuch > Berichte");
+                    Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
                     Console.WriteLine(" 2. Alle Klassen auswählen");
-                    Console.WriteLine(" 3. Unter \"Noten\" Prüfungsart HZ auswählen");
+                    Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (z.B. Halbjahreszeugnis) auswählen");
                     Console.WriteLine(" 4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
                     Console.WriteLine(" 5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
                     Console.WriteLine("ENTER beendet das Programm.");
@@ -47,9 +47,9 @@ namespace webuntisnoten2atlantis
                     {
                         Console.WriteLine("Die Datei " + inputCsv + " ist nicht von heute.");
                         Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                        Console.WriteLine(" 1. Klassenbuch > Berichte");
+                        Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
                         Console.WriteLine(" 2. Alle Klassen auswählen");
-                        Console.WriteLine(" 3. Unter \"Noten\" Prüfungsart HZ auswählen");
+                        Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (z.B. Halbjahreszeugnis) auswählen");
                         Console.WriteLine(" 4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
                         Console.WriteLine(" 5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
                         Console.WriteLine("ENTER beendet das Programm.");

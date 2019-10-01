@@ -51,4 +51,4 @@ Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und da
 So kann zunächst bei einer einzelnen Note eines einzelnen Schülers gerüft werden, ob alles funktioniert.
 
 
-stefan.baeumer@berufskolleg-borken.de 30.9.2019
+stefan.baeumer@berufskolleg-borken.de 01.10.2019
