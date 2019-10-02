@@ -13,9 +13,7 @@ using System.Text;
 namespace webuntisnoten2atlantis
 {
     public class Leistungen : List<Leistung>
-    {   
-        public List<string> output = new List<string>();
-
+    {
         public Leistungen(string datei)
         {
             using (StreamReader reader = new StreamReader(datei))
@@ -65,14 +63,14 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, string aktSj, string prüfungsart, Schlüssels schlüssels)
         {
-            output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
-            output.Add("/* Hoping for the best! */");
-            output.Add("/* " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString() + " */");
-            output.Add("");
+            Global.Output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
+            Global.Output.Add("/* Hoping for the best! */");
+            Global.Output.Add("/* " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString() + " */");
+            Global.Output.Add("");
 
             try
             {
-                Console.Write("Schüler mit Abwesenheiten aus Atlantis ".PadRight(70, '.'));
+                Console.Write("Leistungsdaten aus Atlantis ".PadRight(70, '.'));
                 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -150,10 +148,10 @@ DBA.noten_einzel.position_1 ASC; ", connection);
         {
         }
 
-        internal void NeuZuSetzendeNoten(Leistungen webuntisLeistungen)
+        internal void Add(List<Leistung> webuntisLeistungen)
         {
-            output.Add("");
-            output.Add("/* Neu einzutragende Noten in Atlantis: */");
+            Global.Output.Add("");
+            Global.Output.Add("/* Neu einzutragende Noten in Atlantis: */");
             try
             {
                 foreach (var a in this)
@@ -167,11 +165,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (w != null)
                     {
-                        Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
+                        // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
 
                         UpdateLeistung(a.Name, a.Klasse, a.Fach, w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
 
-                        Console.WriteLine(" ... ok");
+                        // Console.WriteLine(" ... ok");
                     }
                     else
                     {
@@ -186,11 +184,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                         {
                             // ... wird '-' gesetzt.
 
-                            Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+                            // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
                             UpdateLeistung(a.Name, a.Klasse, a.Fach, "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
-                            Console.WriteLine(" ... ok");
+                            // Console.WriteLine(" ... ok");
                         }
                     }
                 }
@@ -212,10 +210,102 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             }
         }
 
-        internal void ZuÄnderendeNoten(Leistungen webuntisLeistungen)
+        internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen)
         {
-            output.Add("");
-            output.Add("/* Zu ändernde Noten in Atlantis: */");
+            List<string> alleKlassen = (from k in this select k.Klasse).Distinct().ToList();
+            List<string> interessierendeKlassen = new List<string>();
+
+            try
+            {
+                Console.WriteLine("****************************************************************************************************");
+                Console.WriteLine("*                                                                                                  *");
+                Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1 oder HHU1,HHU2).    *");
+                Console.WriteLine("*  Dann ENTER.                                                                                     *");
+                Console.WriteLine("*  Oder 10 Sekunden warten, um alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt und                      *");
+                Console.WriteLine("*  zugewiesenem " + alleWebuntisLeistungen[0].Prüfungsart + "-Zeugnisformular zu wählen:                                       *");
+                Console.WriteLine("*                                                                                                  *");
+                Console.WriteLine("****************************************************************************************************");
+                Console.WriteLine("");
+                Console.Write("Ihre Wahl: ");
+
+                string eingabe = Reader.ReadLine(15000).ToUpper();
+
+                Console.WriteLine("");
+                // Wenn die Eingabe nicht leer ist, wird die Lehrerliste geleert.
+
+                if (eingabe != "")
+                {
+                    var interessierendeKlassenString = "";
+                    var klassenOhneNotenblattString = "";
+                    var klassenOhneLeistungsdatensätzeString = "";
+
+                    foreach (var klasse in alleKlassen)
+                    {
+                        var x = (from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault();
+
+                        if (x != null)
+                        {
+                            // Klassen, die ins Suchmuster passen, aber ohne Noten in Webuntis
+
+                            if (!(from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
+                            {
+                                klassenOhneLeistungsdatensätzeString += klasse + ",";
+                            }
+
+                            var z = (from w in alleWebuntisLeistungen where w.Klasse == klasse select w).ToList();
+
+                            if (z.Count > 0)
+                            {
+                                interessierendeKlassen.Add(x);
+                                interessierendeKlassenString += klasse + ",";
+                            }
+                        }
+                    }
+
+                    if (klassenOhneLeistungsdatensätzeString != "")
+                    {
+                        Global.Output.Add("/* [!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n*/");
+                    }
+
+                    foreach (var w in (from w in alleWebuntisLeistungen select w.Klasse).Distinct())
+                    {
+                        if (!(from x in this where x.Klasse == w select x).Any())
+                        {
+                            klassenOhneNotenblattString += w + ",";
+                        }
+                    }
+
+                    if (klassenOhneNotenblattString != "")
+                    {
+                        Global.Output.Add("/* [!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n */");
+                    }
+
+                    if (interessierendeKlassenString == "")
+                    {
+                        Console.WriteLine("Es ist keine einzige Klasse bereit zur Verarbeitung.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Die Verarbeitung startet für ausgewählte Klassen: " + interessierendeKlassenString.TrimEnd(',') + " ...");
+                    }
+                }
+
+                Console.WriteLine("");
+
+                return interessierendeKlassen;
+            }
+            catch (TimeoutException)
+            {
+                Console.WriteLine("");
+                Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
+                return alleKlassen;
+            }
+        }
+
+        internal void Update(List<Leistung> webuntisLeistungen)
+        {
+            Global.Output.Add("");
+            Global.Output.Add("/* Zu ändernde Noten in Atlantis: */");
             try
             {
                 foreach (var a in this)
@@ -230,11 +320,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (w != null && a.Fach != "REL")
                     {
-                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + ">" + w.Note);
+                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + ">" + w.Note);
 
                         UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + ">" + w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
 
-                        Console.WriteLine(" ... ok");
+                        // Console.WriteLine(" ... ok");
                     }
                     
                     // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
@@ -248,11 +338,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                     {
                         // ... wird '-' gesetzt.
 
-                        Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
                         UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
-                        Console.WriteLine(" ... ok");
+                        // Console.WriteLine(" ... ok");
                     }                    
                 }
             }
@@ -262,10 +352,10 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             }            
         }
         
-        internal void ZuLöschendeNoten(Leistungen webuntisLeistungen)
+        internal void Delete(List<Leistung> webuntisLeistungen)
         {
-            output.Add("");
-            output.Add("/* Zu löschende Noten in Atlantis: */");
+            Global.Output.Add("");
+            Global.Output.Add("/* Zu löschende Noten in Atlantis: */");
             try
             {
                 foreach (var a in this)
@@ -282,11 +372,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                         if (a.Fach != "REL" && a.Note != "")
                         {
-                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
+                            // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
 
                             UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
-                            Console.WriteLine(" ... ok");
+                            // Console.WriteLine(" ... ok");
                         }
 
                         // Wenn es um Religion geht, der Schüler Religion abgewählt hat und kein '-' gesetzt ist und Religion in der Klasse unterrichtet wird ...
@@ -300,11 +390,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                         {
                             // ... wird '-' gesetzt.
 
-                            Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
+                            // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
 
                             UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
 
-                            Console.WriteLine(" ... ok");
+                            // Console.WriteLine(" ... ok");
 
                         }                       
                     }
@@ -321,7 +411,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             try
             {
                 string o = updateQuery + "/*" + klasse + "," + fach + "," + meldung + "," + name;
-                output.Add(o.Substring(0, Math.Min(82, o.Length - 1)) + "*/");
+                Global.Output.Add(o.Substring(0, Math.Min(82, o.Length - 1)) + "*/");
             }
             catch (Exception ex)
             {
@@ -335,7 +425,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             {
                 using (StreamWriter writer = new StreamWriter(outputSql, true, Encoding.Default))
                 {
-                    foreach (var o in output)
+                    foreach (var o in Global.Output)
                     {
                         writer.WriteLine(o);
                     }

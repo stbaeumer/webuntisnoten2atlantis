@@ -12,9 +12,11 @@ namespace webuntisnoten2atlantis
     class Program
     {
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=DBA";
-
+        
         static void Main(string[] args)
         {
+            Global.Output = new List<string>();
+
             try
             {
                 string inputNotenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
@@ -33,178 +35,64 @@ namespace webuntisnoten2atlantis
 
                 if (!File.Exists(inputNotenCsv))
                 {
-                    Console.WriteLine("Die Datei " + inputNotenCsv + " existiert nicht.");
-                    Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                    Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
-                    Console.WriteLine(" 2. Alle Klassen auswählen");
-                    Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (z.B. Halbjahreszeugnis) auswählen");
-                    Console.WriteLine(" 4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
-                    Console.WriteLine(" 5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
-                    Console.WriteLine("ENTER beendet das Programm.");
-                    Console.ReadKey();
-                    Environment.Exit(0);
+                    RenderNotenexportCsv(inputNotenCsv);                    
                 }
                 else
                 {
                     if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
                     {
-                        Console.WriteLine("Die Datei " + inputNotenCsv + " ist nicht von heute.");
-                        Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                        Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
-                        Console.WriteLine(" 2. Alle Klassen auswählen");
-                        Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (z.B. Halbjahreszeugnis) auswählen");
-                        Console.WriteLine(" 4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
-                        Console.WriteLine(" 5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
-                        Console.WriteLine("ENTER beendet das Programm.");
-                        Console.ReadKey();
-                        Environment.Exit(0);
+                        RenderNotenexportCsv(inputNotenCsv);
                     }
                 }
 
                 if (!File.Exists(inputAbwesenheitenCsv))
                 {
-                    Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " existiert nicht.");
-                    Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                    Console.WriteLine(" 1. Administration > Export klicken");
-                    Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");                    
-                    Console.WriteLine(" 3. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
-                    Console.WriteLine("ENTER beendet das Programm.");
-                    Console.ReadKey();
-                    Environment.Exit(0);
+                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);                    
                 }
                 else
                 {
                     if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
                     {
-                        Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " ist nicht von heute.");
-                        Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-                        Console.WriteLine(" 1. Administration > Export klicken");
-                        Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-                        Console.WriteLine(" 3. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
-                        Console.WriteLine("ENTER beendet das Programm.");
-                        Console.ReadKey();
-                        Environment.Exit(0);
+                        RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
                     }
                 }
 
                 Console.WriteLine("");
                 Schlüssels schlüssels = new Schlüssels(ConnectionStringAtlantis);
-
                 Leistungen alleWebuntisLeistungen = new Leistungen(inputNotenCsv);
-
-                Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
+                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
                 Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart, schlüssels);
-                                
                 Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], alleWebuntisLeistungen[0].Prüfungsart, schlüssels);
-                Leistungen webuntisLeistungen;
-
+                                
                 Console.WriteLine("");
-
-                var interessierendeKlassen = new List<string>();
-
+                
                 do
                 {
+                    List<Leistung> webuntisLeistungen;
+                    List<Abwesenheit> webuntisAbwesenheiten;
+
+                    var interessierendeKlassen = new List<string>();
+
                     string outputSql = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\webuntisnoten2atlantis_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".SQL";
 
                     do
-                    {
-                        webuntisLeistungen = new Leistungen();
+                    {                        
+                        interessierendeKlassen = atlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen);
+                        webuntisLeistungen = (from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).ToList();
+                        webuntisAbwesenheiten = (from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a).ToList();
 
-                        try
-                        {
-                            Console.WriteLine("********************************************************************************************************************");
-                            Console.WriteLine("*                                                                                                                  *");
-                            Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1 oder HHU1,HHU2). Dann ENTER.        *");
-                            Console.WriteLine("*  Oder 10 Sekunden warten, um alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt und                                      *");
-                            Console.WriteLine("*  zugewiesenem " + alleWebuntisLeistungen[0].Prüfungsart + "-Zeugnisformular zu wählen:                                                       *");
-                            Console.WriteLine("*                                                                                                                  *");
-                            Console.WriteLine("********************************************************************************************************************");
-                            Console.WriteLine("");
-                            Console.Write("Ihre Wahl: ");
-                            string eingabe = Reader.ReadLine(15000).ToUpper();
-                            Console.WriteLine("");
-                            // Wenn die Eingabe nicht leer ist, wird die Lehrerliste geleert.
-
-                            if (eingabe != "")
-                            {
-                                List<string> alleKlassen = (from k in atlantisLeistungen select k.Klasse).Distinct().ToList();
-
-                                var interessierendeKlassenString = "";
-                                var klassenOhneNotenblattString = "";
-                                var klassenOhneLeistungsdatensätzeString = "";
-
-                                foreach (var klasse in alleKlassen)
-                                {
-                                    var x = (from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault();
-
-                                    if (x != null)
-                                    {
-                                        // Klassen, die ins Suchmuster passen, aber ohne Noten in Webuntis
-
-                                        if (!(from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
-                                        {
-                                            klassenOhneLeistungsdatensätzeString += klasse + ",";
-                                        }
-
-                                        var z = (from w in alleWebuntisLeistungen where w.Klasse == klasse select w).ToList();
-
-                                        if (z.Count > 0)
-                                        {
-                                            webuntisLeistungen.AddRange(z);
-                                            interessierendeKlassen.Add(x);
-                                            interessierendeKlassenString += klasse + ",";
-                                        }
-                                    }
-                                }
-
-                                if (klassenOhneLeistungsdatensätzeString != "")
-                                {
-                                    Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n");
-                                }
-
-                                foreach (var w in (from w in alleWebuntisLeistungen select w.Klasse).Distinct())
-                                {
-                                    if (!(from x in atlantisLeistungen where x.Klasse == w select x).Any())
-                                    {
-                                        klassenOhneNotenblattString += w + ",";
-                                    }
-                                }
-
-                                if (klassenOhneNotenblattString != "")
-                                {
-                                    Console.WriteLine("[!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n");
-                                }
-
-                                if (interessierendeKlassenString == "")
-                                {
-                                    Console.WriteLine("Es ist keine einzige Klasse bereit zur Verarbeitung.");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Klassen bereit zur Verarbeitung: \n    " + interessierendeKlassenString.TrimEnd(','));
-                                }
-                            }
-
-                            Console.WriteLine("");
-                        }
-                        catch (TimeoutException)
-                        {
-                            Console.WriteLine("");
-                            Console.WriteLine("Ihre Auswahl: Alle " + (from a in atlantisLeistungen select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
-                            webuntisLeistungen = alleWebuntisLeistungen;
-                        }
                     } while (webuntisLeistungen.Count > 0 ? false : true);
 
-                    Console.WriteLine("");
-                    Console.WriteLine("Weiter mit ENTER");
-                    Console.ReadKey();
-
-                    atlantisLeistungen.NeuZuSetzendeNoten(webuntisLeistungen);
-                    atlantisLeistungen.ZuLöschendeNoten(webuntisLeistungen);
-                    atlantisLeistungen.ZuÄnderendeNoten(webuntisLeistungen);
+                    atlantisLeistungen.Add(webuntisLeistungen);
+                    atlantisLeistungen.Delete(webuntisLeistungen);
+                    atlantisLeistungen.Update(webuntisLeistungen);
+                    
+                    atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                    atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                    atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
                     atlantisLeistungen.ErzeugeSqlDatei(outputSql);
-
+                    
                     Console.WriteLine("Weitere Klassen mit ENTER auswählen. Beenden mit ANYKEY.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);                
@@ -218,6 +106,31 @@ namespace webuntisnoten2atlantis
                 Environment.Exit(0);
             }
         }
-            
+
+        private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv)
+        {
+            Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " existiert nicht.");
+            Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
+            Console.WriteLine(" 1. Administration > Export klicken");
+            Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+            Console.WriteLine(" 3. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("ENTER beendet das Programm.");
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
+
+        private static void RenderNotenexportCsv(string inputNotenCsv)
+        {
+            Console.WriteLine("Die Datei " + inputNotenCsv + " existiert nicht.");
+            Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
+            Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
+            Console.WriteLine(" 2. Alle Klassen auswählen");
+            Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (z.B. Halbjahreszeugnis) auswählen");
+            Console.WriteLine(" 4. Hinter \"Noten pro Schüler\" auf CSV klicken.");
+            Console.WriteLine(" 5. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("ENTER beendet das Programm.");
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
     }
 }
