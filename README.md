@@ -62,15 +62,15 @@ Jede Note entspricht einer SQL-Anweisungen in einer Zeile. Die Anweisungen sind 
 UPDATE noten_einzel SET s_note=3 WHERE noe_id=3760033;/*HHO1,INW,3,Müller I*/
 ```  
 Hinter dem Semikolon steht ein kurzer Kommentar, der das Prüfen der Datei vereinfachen soll. 
-
+Die gezeigte Zeile sagt aus, dass die Schülerin Ina Müller aus der Klasse HHO1 im Fach INW die Note 3 eingetragen bekommt. Der Notendatensatz hat die ID 3760033.
 Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende Berechtigungen vorausgesetzt) unter *Funktionen>SQL-Anweisung ausführen* in die Datenbank eingelesen werden. 
 Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und dann auszuführen. 
-So kann zunächst bei einer einzelnen Note eines einzelnen Schülers gerüft werden, ob alles funktioniert.
+So kann zunächst bei einer einzelnen Note eines einzelnen Schülers geprüft werden, ob alles funktioniert.
 
 ### FAQ
 
 #### Was ist mit den Umlauten passiert?
-Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig steht ist das Encoding auf Default gestellt.
+Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig ist das Encoding auf Default gestellt.
 
 #### Unter welcher Lizenz steht das Programm?
 GNU General Public License v3.0
