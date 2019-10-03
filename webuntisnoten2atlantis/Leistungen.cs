@@ -4,10 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace webuntisnoten2atlantis
@@ -150,7 +148,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
         internal void Add(List<Leistung> webuntisLeistungen)
         {
-            Global.PrintMessage("Neu anzulegende Leistungen in Atlantis");
+            Global.PrintMessage("Neu anzulegende Leistungen in Atlantis:");
 
             try
             {
@@ -165,7 +163,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (w != null)
                     {
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");                        
+                        UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach + "," + w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");   
                     }
                     else
                     {
@@ -180,7 +178,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                         {
                             // ... wird '-' gesetzt.
                             
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");                            
+                            UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");                            
                         }
                     }
                 }
@@ -191,10 +189,9 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                 {
                     if (!(from a in this where a.Klasse == w.Klasse where a.Fach == w.Fach select a).Any())
                     {
-                        UpdateLeistung(w.Name, w.Klasse, w.Fach, "-", "/* ACHTUNG: Das Fach " + w.Fach + " gibt es in Atlantis nicht! */");
+                        UpdateLeistung("","/* ACHTUNG: Das Fach " + w.Fach + " gibt es in Atlantis nicht! */");
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -309,11 +306,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (w != null && a.Fach != "REL")
                     {
-                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.Note + ">" + w.Note);
-
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + ">" + w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
-
-                        // Console.WriteLine(" ... ok");
+                        UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach + "," + a.Note + ">" + w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
                     }
                     
                     // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
@@ -326,12 +319,8 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                                                                                         select at).Any())
                     {
                         // ... wird '-' gesetzt.
-
-                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
-
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, a.Note + "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
-
-                        // Console.WriteLine(" ... ok");
+                        
+                        UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");                        
                     }                    
                 }
             }
@@ -360,11 +349,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                         if (a.Fach != "REL" && a.Note != "")
                         {
-                            // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + a.Note);
-
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
-
-                            // Console.WriteLine(" ... ok");
+                            UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
                         }
 
                         // Wenn es um Religion geht, der Schüler Religion abgewählt hat und kein '-' gesetzt ist und Religion in der Klasse unterrichtet wird ...
@@ -377,13 +362,8 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                                                                                         select at).Any())
                         {
                             // ... wird '-' gesetzt.
-
-                            // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
-
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
-
-                            // Console.WriteLine(" ... ok");
-
+                            
+                            UpdateLeistung(a.Name + "," + a.Klasse + "," + a.Fach, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");                            
                         }                       
                     }
                 }
@@ -394,11 +374,11 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             }            
         }
         
-        private void UpdateLeistung(string name, string klasse, string fach, string meldung, string updateQuery)
+        private void UpdateLeistung(string message, string updateQuery)
         {
             try
             {
-                string o = updateQuery + "/*" + klasse + "," + fach + "," + meldung + "," + name;
+                string o = updateQuery + "/*" + message;
                 Global.Output.Add(o.Substring(0, Math.Min(82, o.Length - 1)) + "*/");
             }
             catch (Exception ex)
