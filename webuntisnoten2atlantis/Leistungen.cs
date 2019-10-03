@@ -150,8 +150,8 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
         internal void Add(List<Leistung> webuntisLeistungen)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Neu einzutragende Noten in Atlantis: */");
+            Global.PrintMessage("Neu anzulegende Leistungen in Atlantis");
+
             try
             {
                 foreach (var a in this)
@@ -191,7 +191,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                 {
                     if (!(from a in this where a.Klasse == w.Klasse where a.Fach == w.Fach select a).Any())
                     {
-                        UpdateLeistung(w.Name, w.Klasse, w.Fach, "-", "/*ACHTUNG: Das Fach " + w.Fach + " gibt es in Atlantis nicht!*/");
+                        UpdateLeistung(w.Name, w.Klasse, w.Fach, "-", "/* ACHTUNG: Das Fach " + w.Fach + " gibt es in Atlantis nicht! */");
                     }
                 }
 
@@ -201,7 +201,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                 throw ex;
             }
         }
-
+        
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen)
         {
             List<string> alleKlassen = (from k in this select k.Klasse).Distinct().ToList();
@@ -231,24 +231,21 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     foreach (var klasse in alleKlassen)
                     {
-                        var x = (from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault();
+                        // Wenn die Klasse zur Eingabe passt ...
 
-                        if (x != null)
-                        {
-                            // Klassen, die ins Suchmuster passen, aber ohne Noten in Webuntis
+                        if ((from k in eingabe.Split(',') where klasse.Contains(k) select k).FirstOrDefault() != null)
+                        {                            
+                            // ... und auch Noten in Webuntis erfasst sind:
 
-                            if (!(from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
+                            if ((from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
                             {
-                                klassenOhneLeistungsdatensätzeString += klasse + ",";
-                            }
-
-                            var z = (from w in alleWebuntisLeistungen where w.Klasse == klasse select w).ToList();
-
-                            if (z.Count > 0)
-                            {
-                                interessierendeKlassen.Add(x);
+                                interessierendeKlassen.Add(klasse);
                                 interessierendeKlassenString += klasse + ",";
                             }
+                            else
+                            {
+                                klassenOhneLeistungsdatensätzeString += klasse + ",";
+                            }                            
                         }
                     }
 
@@ -284,7 +281,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                 else
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
+                    Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt und ein Zeugnisformular angelegt ist.");
                     return alleKlassen;
                 }
             }
@@ -296,8 +293,8 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
         internal void Update(List<Leistung> webuntisLeistungen)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Zu ändernde Noten in Atlantis: */");
+            Global.PrintMessage("Zu ändernde Noten in Atlantis:");
+
             try
             {
                 foreach (var a in this)
@@ -346,8 +343,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
         
         internal void Delete(List<Leistung> webuntisLeistungen)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Zu löschende Noten in Atlantis: */");
+            Global.PrintMessage("Zu löschende Noten in Atlantis:");
             try
             {
                 foreach (var a in this)

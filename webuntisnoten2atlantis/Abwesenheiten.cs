@@ -109,8 +109,8 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Neu einzutragende Abwesenheiten in Atlantis: */");
+            Global.PrintMessage("Neu einzutragende Abwesenheiten in Atlantis:");
+
             try
             {
                 foreach (var a in this)
@@ -150,8 +150,8 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Zu ändernde Abwesenheiten in Atlantis: */");
+            Global.PrintMessage("Zu ändernde Abwesenheiten in Atlantis:");
+
             try
             {
                 foreach (var a in this)
@@ -192,8 +192,8 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            Global.Output.Add("");
-            Global.Output.Add("/* Zu löschende Abwesenheiten in Atlantis: */");
+            Global.PrintMessage("Zu löschende Abwesenheiten in Atlantis:");
+
             try
             {
                 foreach (var a in this)
