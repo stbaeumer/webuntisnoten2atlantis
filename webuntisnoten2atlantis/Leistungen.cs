@@ -1,4 +1,4 @@
-﻿// published under the terms of GPLv3 Stefan Bäumer 2019
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
 
 using System;
 using System.Collections.Generic;
@@ -47,9 +47,7 @@ namespace webuntisnoten2atlantis
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
-                        Console.ReadKey();
-                        Environment.Exit(0);
+                        throw ex;
                     }
 
                     if (line == null)
@@ -63,9 +61,13 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, string aktSj, string prüfungsart, Schlüssels schlüssels)
         {
-            Global.Output.Add("/* Alle Noten aus Webuntis werden mit dieser Datei in Atlantis eingefügt */");
-            Global.Output.Add("/* Hoping for the best! */");
-            Global.Output.Add("/* " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString() + " */");
+            Global.Output.Add("/* ****************************************************************************** */");
+            Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.                    */");
+            Global.Output.Add("/* Sie können alle Noten und Fehlzeiten aus Webuntis nach Atlantis importieren,   */");
+            Global.Output.Add("/* indem Sie diese Datei in Atlantis unter Funktionen>SQL-Anweisung hochladen.    */");            
+            Global.Output.Add("/* Published under the terms of GPLv3. Hoping for the best!                       */");
+            Global.Output.Add("/* " + (System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString()).PadRight(78) + " */");
+            Global.Output.Add("/* ****************************************************************************** */");
             Global.Output.Add("");
 
             try
@@ -137,9 +139,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
-                Console.ReadKey();
-                Environment.Exit(0);
+                throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
@@ -165,11 +165,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (w != null)
                     {
-                        // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + w.Note);
-
-                        UpdateLeistung(a.Name, a.Klasse, a.Fach, w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");
-
-                        // Console.WriteLine(" ... ok");
+                        UpdateLeistung(a.Name, a.Klasse, a.Fach, w.Note, "UPDATE noten_einzel SET s_note=" + w.Note + " WHERE noe_id=" + a.LeistungId + ";");                        
                     }
                     else
                     {
@@ -183,17 +179,13 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                                                                                          select at).Any())
                         {
                             // ... wird '-' gesetzt.
-
-                            // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.Fach.PadRight(7) + "-");
-
-                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
-
-                            // Console.WriteLine(" ... ok");
+                            
+                            UpdateLeistung(a.Name, a.Klasse, a.Fach, "-", "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");                            
                         }
                     }
                 }
 
-                // Prüfen, ob ein Fach in Webuntis eine Note bekommen hat, zu dem es in Atlantis keinentsprechendes Fach gibt.
+                // Prüfen, ob ein Fach in Webuntis eine Note bekommen hat, zu dem es in Atlantis kein entsprechendes Fach gibt.
 
                 foreach (var w in webuntisLeistungen)
                 {
@@ -219,19 +211,17 @@ DBA.noten_einzel.position_1 ASC; ", connection);
             {
                 Console.WriteLine("****************************************************************************************************");
                 Console.WriteLine("*                                                                                                  *");
-                Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1 oder HHU1,HHU2).    *");
-                Console.WriteLine("*  Dann ENTER.                                                                                     *");
-                Console.WriteLine("*  Oder 10 Sekunden warten, um alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt und                      *");
+                Console.WriteLine("*  Geben Sie die interessierende(n) Klasse(n) ein (z. B. HH oder HHU oder HHU1). Dann ENTER.       *");                
+                Console.WriteLine("*  Oder ENTER drücken, um alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(3) + " Klassen mit angelegtem Notenblatt und                           *");
                 Console.WriteLine("*  zugewiesenem " + alleWebuntisLeistungen[0].Prüfungsart + "-Zeugnisformular zu wählen:                                       *");
                 Console.WriteLine("*                                                                                                  *");
                 Console.WriteLine("****************************************************************************************************");
                 Console.WriteLine("");
                 Console.Write("Ihre Wahl: ");
 
-                string eingabe = Reader.ReadLine(15000).ToUpper();
+                string eingabe = Console.ReadLine().ToUpper();
 
                 Console.WriteLine("");
-                // Wenn die Eingabe nicht leer ist, wird die Lehrerliste geleert.
 
                 if (eingabe != "")
                 {
@@ -264,7 +254,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (klassenOhneLeistungsdatensätzeString != "")
                     {
-                        Global.Output.Add("/* [!] Folgende Klassen passen in Ihr Suchmuster, allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n*/");
+                        Global.Output.Add("/* [!] Folgende Klassen passen zu Ihrem Suchmuster. Allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n*/");
                     }
 
                     foreach (var w in (from w in alleWebuntisLeistungen select w.Klasse).Distinct())
@@ -277,7 +267,7 @@ DBA.noten_einzel.position_1 ASC; ", connection);
 
                     if (klassenOhneNotenblattString != "")
                     {
-                        Global.Output.Add("/* [!] Folgende Klassen passen in Ihr Suchmuster, allerdings ist kein Notenblatt in Atlantis angelegt:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n */");
+                        Global.Output.Add("/* [!] Folgende Klassen passen zu Ihrem Suchmuster. Allerdings ist kein Notenblatt bzw. Zeugnisformular in Atlantis zugerdnet:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n */");
                     }
 
                     if (interessierendeKlassenString == "")
@@ -288,17 +278,19 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                     {
                         Console.WriteLine("Die Verarbeitung startet für ausgewählte Klassen: " + interessierendeKlassenString.TrimEnd(',') + " ...");
                     }
+                    Console.WriteLine("");
+                    return interessierendeKlassen;
                 }
-
-                Console.WriteLine("");
-
-                return interessierendeKlassen;
+                else
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
+                    return alleKlassen;
+                }
             }
-            catch (TimeoutException)
+            catch (Exception ex)
             {
-                Console.WriteLine("");
-                Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt angelegt ist.");
-                return alleKlassen;
+                throw ex;
             }
         }
 

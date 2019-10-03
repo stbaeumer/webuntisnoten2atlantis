@@ -1,4 +1,4 @@
-﻿// published under the terms of GPLv3 Stefan Bäumer 2019
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
 
 using System;
 using System.Collections.Generic;

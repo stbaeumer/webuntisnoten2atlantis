@@ -1,4 +1,4 @@
-﻿// published under the terms of GPLv3 Stefan Bäumer 2019
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
 
 using System;
 using System.Collections.Generic;
@@ -28,9 +28,8 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
 
-                Console.WriteLine("Webuntisnoten2atlantis (Version " + DateTime.Now.ToString("yyyyMMdd") + ")");
-                Console.WriteLine("=========================================");
-                Console.WriteLine("");
+                Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer 2019 | Version 20191003");
+                Console.WriteLine("====================================================================================================");
                 
 
                 if (!File.Exists(inputNotenCsv))
@@ -93,7 +92,7 @@ namespace webuntisnoten2atlantis
 
                     atlantisLeistungen.ErzeugeSqlDatei(outputSql);
                     
-                    Console.WriteLine("Weitere Klassen mit ENTER auswählen. Beenden mit ANYKEY.");
+                    Console.WriteLine("Weitere Klassen mit ENTER auswählen. Beenden mit ESC.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);                
             }            

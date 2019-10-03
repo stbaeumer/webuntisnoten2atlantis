@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
@@ -38,9 +40,7 @@ namespace webuntisnoten2atlantis
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
-                        Console.ReadKey();
-                        Environment.Exit(0);
+                        throw ex;
                     }
 
                     if (line == null)
@@ -72,7 +72,7 @@ DBA.noten_kopf.s_art_nok AS Prüfungsart,
 DBA.noten_kopf.fehlstunden_anzahl AS Fehlstunden,
 DBA.noten_kopf.fehlstunden_ents_unents AS FehlstundenUnentschuldigt
 FROM((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id
-WHERE /*schue_sj.pu_id = '152113' AND */
+WHERE 
 schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND 
 schue_sj.pj_id = noten_kopf.pj_id
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
@@ -102,9 +102,7 @@ DBA.schueler.name_2 ASC ", connection);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Hoppla. Da ist etwas schiefgelaufen. Die Verarbeitung wird hier abgebrochen.\n\n" + ex);
-                Console.ReadKey();
-                Environment.Exit(0);
+                throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
@@ -118,35 +116,29 @@ DBA.schueler.name_2 ASC ", connection);
                 foreach (var a in this)
                 {
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
-                             where webuntisAbwesenheit.NotenkopfId == a.NotenkopfId
+                             where webuntisAbwesenheit.StudentId == a.StudentId
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where a.StundenAbwesend == 0
+                             where webuntisAbwesenheit.StundenAbwesend > 0
                              select webuntisAbwesenheit).FirstOrDefault();
 
                     if (w != null)
                     {
-                        // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + w.StundenAbwesend + "( entschuldigt)");
-
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend + " WHERE nok_id=" + a.NotenkopfId + ";");
-
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET      fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
                 foreach (var a in this)
                 {
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
-                             where webuntisAbwesenheit.NotenkopfId == a.NotenkopfId
+                             where webuntisAbwesenheit.StudentId == a.StudentId
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where a.StundenAbwesendUnentschuldigt == 0
+                             where webuntisAbwesenheit.StundenAbwesendUnentschuldigt > 0
                              select webuntisAbwesenheit).FirstOrDefault();
 
                     if (w != null)
                     {
-                        // Console.Write("[ADD] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + w.StundenAbwesendUnentschuldigt + "( unentschuldigt)");
-
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");
-
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
             }
@@ -168,15 +160,13 @@ DBA.schueler.name_2 ASC ", connection);
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where webuntisAbwesenheit.StudentId == a.StudentId
                              where a.StundenAbwesend != 0
+                             where webuntisAbwesenheit.StundenAbwesend != 0
                              where a.StundenAbwesend != webuntisAbwesenheit.StundenAbwesend
                              select webuntisAbwesenheit).FirstOrDefault();
 
                     if (w != null)
                     {
-                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.StundenAbwesend + ">" + w.StundenAbwesend);
-
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString() + " WHERE nok_id=" + a.NotenkopfId + ";");
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET      fehlstunden_anzahl=" + w.StundenAbwesend.ToString() + " WHERE nok_id=" + a.NotenkopfId + ";");
                     }
                 }
                 foreach (var a in this)
@@ -185,14 +175,12 @@ DBA.schueler.name_2 ASC ", connection);
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where webuntisAbwesenheit.StudentId == a.StudentId
                              where a.StundenAbwesendUnentschuldigt != 0
+                             where webuntisAbwesenheit.StundenAbwesendUnentschuldigt != 0
                              where a.StundenAbwesendUnentschuldigt != webuntisAbwesenheit.StundenAbwesendUnentschuldigt
                              select webuntisAbwesenheit).FirstOrDefault();
                     if (w != null)
                     {
-                        // Console.Write("[UPD] " + a.Klasse.PadRight(6) + a.Name.PadRight(25) + a.StundenAbwesendUnentschuldigt + ">" + w.StundenAbwesendUnentschuldigt);
-
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesendUnentschuldigt.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");                     
                     }
                 }
             }
@@ -210,25 +198,23 @@ DBA.schueler.name_2 ASC ", connection);
             {
                 foreach (var a in this)
                 {
-                    if (!(from w in webuntisAbwesenheiten
+                    if ((from w in webuntisAbwesenheiten
                           where w.StudentId == a.StudentId
                           where w.Klasse == a.Klasse
-                          where a.StundenAbwesend != 0
+                          where a.StundenAbwesend > 0
+                          where w.StundenAbwesend == 0
                           select w).Any())
                     {
-                        // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.StundenAbwesend + "(entschuldigt)");
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET      fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
                     }
-                    if (!(from w in webuntisAbwesenheiten
+                    if ((from w in webuntisAbwesenheiten
                           where w.StudentId == a.StudentId
                           where w.Klasse == a.Klasse
-                          where a.StundenAbwesendUnentschuldigt != 0
+                          where a.StundenAbwesendUnentschuldigt > 0
+                          where w.StundenAbwesendUnentschuldigt == 0
                           select w).Any())
                     {
-                        // Console.Write("[DEL] " + a.Klasse.PadRight(6) + a.Name.PadRight(30) + a.StundenAbwesendUnentschuldigt + "(unentschuldigt)");
-                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
-                        // Console.WriteLine(" ... ok");
+                        UpdateAbwesenheit(a.Name, a.Klasse, a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");                     
                     }
                 }
             }
