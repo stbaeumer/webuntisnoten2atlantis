@@ -253,11 +253,13 @@ DBA.noten_einzel.position_1 ASC; ", connection);
                 {
                     // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
 
-                    if (!(from w in webuntisLeistungen
-                          where w.Fach == a.Fach
-                          where w.Klasse == a.Klasse
-                          where w.SchlüsselExtern == a.SchlüsselExtern
-                          select w).Any())
+                    var webuntisLeistung = (from w in webuntisLeistungen
+                                            where w.Fach == a.Fach
+                                            where w.Klasse == a.Klasse
+                                            where w.SchlüsselExtern == a.SchlüsselExtern
+                                            select w).FirstOrDefault();
+
+                    if (webuntisLeistung != null)
                     {
                         // ... wird der Datensatz gelöscht, sofern es sich nicht um REL handelt und in Atlantis eine Note gesetzt ist.
 
