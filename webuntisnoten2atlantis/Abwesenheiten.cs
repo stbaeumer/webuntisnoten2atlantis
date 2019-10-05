@@ -124,7 +124,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + ",0->" + a.StundenAbwesend, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
+                        UpdateAbwesenheit(a.Klasse + ",0->" + a.StundenAbwesend + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
                 foreach (var a in this)
@@ -138,7 +138,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + ",0->" + a.StundenAbwesend.ToString(), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
+                        UpdateAbwesenheit(a.Klasse + ",0->" + a.StundenAbwesend.ToString() + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
             }
@@ -166,7 +166,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + "," + a.StundenAbwesend + "->" + w.StundenAbwesend, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString() + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend + "->" + w.StundenAbwesend + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString() + " WHERE nok_id=" + a.NotenkopfId + ";");
                     }
                 }
                 foreach (var a in this)
@@ -180,7 +180,7 @@ DBA.schueler.name_2 ASC ", connection);
                              select webuntisAbwesenheit).FirstOrDefault();
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + "," + a.StundenAbwesendUnentschuldigt+"->"+ w.StundenAbwesendUnentschuldigt, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");                     
+                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesendUnentschuldigt+"->"+ w.StundenAbwesendUnentschuldigt + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");                     
                     }
                 }
             }
@@ -205,7 +205,7 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesend == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + "," + a.StundenAbwesend +"->0", "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend +"->0" + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
                     }
                     if ((from w in webuntisAbwesenheiten
                           where w.StudentId == a.StudentId
@@ -214,7 +214,7 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesendUnentschuldigt == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Name + "," + a.Klasse + "," + a.StundenAbwesend + "->0", "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");                     
+                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend + "->0" + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");                     
                     }
                 }
             }
