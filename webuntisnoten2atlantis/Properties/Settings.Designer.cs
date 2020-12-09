@@ -34,5 +34,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Klassenwahl"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Zeugnisarten {
+            get {
+                return ((string)(this["Zeugnisarten"]));
+            }
+            set {
+                this["Zeugnisarten"] = value;
+            }
+        }
     }
 }

@@ -10,8 +10,6 @@ namespace webuntisnoten2atlantis
 {
     public class Schlüssels : List<Schlüssel>
     {
-        private string wert;
-
         public Schlüssels(string connectionStringAtlantis)
         {
             try
@@ -50,8 +48,9 @@ WHERE kennzeichen = 'NOK-ART'
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
-        internal bool RichtigePrüfungsart(string wert, string auflösung)
+        internal bool RichtigePrüfungsart(string wert)
         {
+            string auflösung = "";
             return (from x in this
                     where x.Auflösung == auflösung
                     where x.Wert == wert

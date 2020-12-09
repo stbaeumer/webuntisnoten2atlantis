@@ -32,8 +32,8 @@ namespace webuntisnoten2atlantis
                             abwesenheit.StudentId = Convert.ToInt32(x[2]);
                             abwesenheit.Name = x[3] + " " + x[4];
                             abwesenheit.Klasse = x[5];
-                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[9]);
-                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[10]);
+                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[7])/45;
+                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8])/45;
 
                             this.Add(abwesenheit);
                         }
@@ -52,7 +52,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Abwesenheiten(string connetionstringAtlantis, string aktSj, string prüfungsart, Schlüssels schlüssels)
+        public Abwesenheiten(string connetionstringAtlantis, string aktSj, Schlüssels schlüssels, List<string> zeugnisart)
         {
             try
             {
@@ -68,7 +68,7 @@ DBA.schue_sj.pu_id AS StudentId,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.noten_kopf.nok_id AS NotenkopfId,
-DBA.noten_kopf.s_art_nok AS Prüfungsart,
+DBA.noten_kopf.s_art_nok AS Zeugnisart,
 DBA.noten_kopf.fehlstunden_anzahl AS Fehlstunden,
 DBA.noten_kopf.fehlstunden_ents_unents AS FehlstundenUnentschuldigt
 FROM((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id
@@ -85,7 +85,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        if (schlüssels.RichtigePrüfungsart(theRow["Prüfungsart"].ToString(), prüfungsart))
+                        if (zeugnisart.Contains(theRow["Zeugnisart"].ToString()))
                         {
                             Abwesenheit abwesenheit = new Abwesenheit();
                             abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
@@ -107,6 +107,10 @@ DBA.schueler.name_2 ASC ", connection);
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
+        public Abwesenheiten()
+        {
+        }
+
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
             Global.PrintMessage("Neu einzutragende Abwesenheiten in Atlantis:");
@@ -114,7 +118,7 @@ DBA.schueler.name_2 ASC ", connection);
             try
             {
                 foreach (var a in this)
-                {
+                {  
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
                              where webuntisAbwesenheit.StudentId == a.StudentId
                              where webuntisAbwesenheit.Klasse == a.Klasse
@@ -124,7 +128,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + a.StundenAbwesend + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
+                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesend + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
                 foreach (var a in this)
@@ -138,7 +142,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + a.StundenAbwesend.ToString() + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
+                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesendUnentschuldigt.ToString() + "|" + a.Name, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");                        
                     }
                 }
             }
