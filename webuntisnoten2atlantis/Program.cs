@@ -34,7 +34,7 @@ namespace webuntisnoten2atlantis
                 do
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ)[" + Properties.Settings.Default.Zeugnisarten + "]");
+                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ)" + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "]"));
 
                     var z = Console.ReadLine();
                     
@@ -55,10 +55,7 @@ namespace webuntisnoten2atlantis
                         Properties.Settings.Default.Save();
                     }
                 } while (zeugnisart.Count == 0);
-
-
                 
-
                 if (!File.Exists(inputNotenCsv))
                 {
                     RenderNotenexportCsv(inputNotenCsv);                    
