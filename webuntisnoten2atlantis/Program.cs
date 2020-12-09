@@ -28,13 +28,15 @@ namespace webuntisnoten2atlantis
 
                 Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer 2020 | Version 20201208");
                 Console.WriteLine("=====================================================================================================");
+                Console.WriteLine("Webuntisnoten2atlantis erstellt eine SQL-Datei mit den entsprechenden Befehlen zum Import in Atlantis.");
+                Console.WriteLine("ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird auch keine Gesamtnote ausgegeben!");
 
                 List<string> zeugnisart = new List<string>();
 
                 do
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ)" + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "]"));
+                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ)" + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "] "));
 
                     var z = Console.ReadLine();
                     
@@ -80,12 +82,11 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                Console.WriteLine("");
-                Schlüssels schlüssels = new Schlüssels(ConnectionStringAtlantis);
+                Console.WriteLine("");                
                 Leistungen alleWebuntisLeistungen = new Leistungen(inputNotenCsv);
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1],  schlüssels, zeugnisart);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], schlüssels, zeugnisart);                
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], zeugnisart);
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], zeugnisart);                
                 
                 Console.WriteLine("");
                 

@@ -57,8 +57,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Schlüssel.cs" />
-    <Compile Include="Schlüssels.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

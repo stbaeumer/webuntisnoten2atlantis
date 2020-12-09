@@ -65,7 +65,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Leistungen(string connetionstringAtlantis, string aktSj, Schlüssels schlüssels, List<string> zeugnisart)
+        public Leistungen(string connetionstringAtlantis, string aktSj, List<string> zeugnisart)
         {
             Global.Output.Add("/* ****************************************************************************** */");
             Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.                    */");
@@ -164,6 +164,8 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
 
         internal void Add(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
+            int i = 0;
+
             Global.PrintMessage("Neu anzulegende Leistungen in Atlantis:");
 
             try
@@ -183,7 +185,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                         {
                             string note = a.Zeugnisart.StartsWith("D") ? w.Gesamtnote : Punkte2Note(w.Gesamtnote);
 
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|0>" + note + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + note + " WHERE noe_id=" + a.LeistungId + ";");
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + note + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + note + " WHERE noe_id=" + a.LeistungId + ";");
+
+                            i++;
                         }
                         else
                         {
@@ -199,9 +203,16 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                                 // ... wird '-' gesetzt.
 
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|0>'-'" + "|" + a.Name, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
+
+                                i++;
                             }
                         }
                     }                    
+                }
+
+                if (i == 0)
+                {
+                    UpdateLeistung("                               ***keine***", "");
                 }
 
                 // Prüfen, ob ein Fach in Webuntis eine Note bekommen hat, zu dem es in Atlantis kein entsprechendes Fach gibt.
@@ -294,6 +305,8 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
 
         internal void Update(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
+            int i = 0;
+
             Global.PrintMessage("Zu ändernde Noten in Atlantis:");
 
             try
@@ -310,9 +323,12 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                                  where a.Gesamtnote != (a.Zeugnisart.StartsWith("D") ? webuntisLeistung.Gesamtnote : Punkte2Note(webuntisLeistung.Gesamtnote))
                                  select webuntisLeistung).FirstOrDefault();
 
-                        if (w != null && a.Fach != "REL")
+                        if (w != null && !a.ReligionAbgewählt)
                         {
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + w.Gesamtnote + " WHERE noe_id=" + a.LeistungId + ";");
+                            string note = (a.Zeugnisart.StartsWith("D") ? w.Gesamtnote : Punkte2Note(w.Gesamtnote));
+
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + note + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + note + " WHERE noe_id=" + a.LeistungId + ";");
+                            i++;
                         }
 
                         // Wenn es um Religion geht und der Schüler abgewählt hat und Religion in der Klasse unterrichtet wird ...
@@ -328,6 +344,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                             try
                             {
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
+                                i++;
                             }
                             catch (Exception)
                             {
@@ -336,6 +353,10 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                             }
                         }
                     }                    
+                }
+                if (i == 0)
+                {
+                    UpdateLeistung("                               ***keine***", "");
                 }
             }
             catch (Exception ex)
@@ -347,6 +368,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
         internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
             Global.PrintMessage("Zu löschende Noten in Atlantis:");
+
+            int i = 0;
+
             try
             {
                 foreach (var a in this)
@@ -368,6 +392,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                             if (a.Fach != "REL" && a.Gesamtnote != "")
                             {
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                i++;
                             }
 
                             // Wenn es um Religion geht, der Schüler Religion abgewählt hat und kein '-' gesetzt ist und Religion in der Klasse unterrichtet wird ...
@@ -382,9 +407,14 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                                 // ... wird '-' gesetzt.
 
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|''>'-'|" + a.Name, "UPDATE noten_einzel SET s_note='-' WHERE noe_id=" + a.LeistungId + ";");
+                                i++;
                             }
                         }
                     }   
+                }
+                if (i == 0)
+                {
+                    UpdateLeistung("                               ***keine***", "");
                 }
             }
             catch (Exception ex)
@@ -419,7 +449,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                 Console.WriteLine("*                                                                                                  *");
                 Console.WriteLine("****************************************************************************************************");
                 Console.WriteLine("");
-                Console.Write("Ihre Wahl: " + (Properties.Settings.Default.Klassenwahl == "" ? "" : "[" + Properties.Settings.Default.Klassenwahl + "]"));
+                Console.Write("Ihre Wahl: " + (Properties.Settings.Default.Klassenwahl == "" ? "" : "[" + Properties.Settings.Default.Klassenwahl + "] "));
 
                 string eingabe = Console.ReadLine().ToUpper();
 
