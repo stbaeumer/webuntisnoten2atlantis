@@ -137,6 +137,36 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
+        internal void Religionsabwähler(Leistungen atlantisLeistungen)
+        {
+            // Für die verschiednenen Klassen ...
+
+            foreach (var klasse in (from k in this select k.Klasse).Distinct())
+            {
+                // ... wenn Religion unterricht wird ...
+
+                if ((from t in this where (t.Fach == "KR" || t.Fach == "ER" || t.Fach == "REL") where t.Klasse == klasse select t).Any())
+                {
+                    // ... wwird bei allen Atlantis-Reli-Abwähler-Leistungsdatensätzen ...
+
+                    foreach (var aLeistung in (from a in atlantisLeistungen
+                                                 where a.Klasse == klasse
+                                                 where (a.Fach == "KR" || a.Fach == "ER" || a.Fach == "REL")
+                                                 where a.ReligionAbgewählt
+                                                 select a).ToList())
+                    {
+                        // ... ein '-' gesetzt.
+
+                        ((from w in this
+                          where w.Klasse == klasse
+                          where w.SchlüsselExtern == aLeistung.SchlüsselExtern
+                          where (w.Fach == "KR" || w.Fach == "ER" || w.Fach == "REL")
+                          select w).FirstOrDefault()).Gesamtnote = "-";                        
+                    }
+                }
+            }            
+        }
+        
         internal void ReligionKorrigieren()
         {
             foreach (var leistung in this)

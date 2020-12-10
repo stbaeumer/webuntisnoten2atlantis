@@ -119,6 +119,7 @@ namespace webuntisnoten2atlantis
 
                     webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
                     webuntisLeistungen.ReligionKorrigieren();
+                    webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
                     webuntisLeistungen.Punkte2NoteInAnlageD(atlantisLeistungen);
 
                     atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
