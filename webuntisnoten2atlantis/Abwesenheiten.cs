@@ -52,7 +52,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Abwesenheiten(string connetionstringAtlantis, string aktSj, List<string> zeugnisart)
+        public Abwesenheiten(string connetionstringAtlantis, string aktSj)
         {
             try
             {
@@ -85,17 +85,15 @@ DBA.schueler.name_2 ASC ", connection);
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        if (zeugnisart.Contains(theRow["Zeugnisart"].ToString()))
-                        {
-                            Abwesenheit abwesenheit = new Abwesenheit();
-                            abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
-                            abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
-                            abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
-                            abwesenheit.Klasse = theRow["Klasse"].ToString();
-                            abwesenheit.StundenAbwesend = theRow["Fehlstunden"].ToString() == "" ? 0 : Convert.ToDouble(theRow["Fehlstunden"]);
-                            abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
-                            this.Add(abwesenheit);
-                        };
+                        Abwesenheit abwesenheit = new Abwesenheit();
+                        abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
+                        abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
+                        abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
+                        abwesenheit.Klasse = theRow["Klasse"].ToString();
+                        abwesenheit.StundenAbwesend = theRow["Fehlstunden"].ToString() == "" ? 0 : Convert.ToDouble(theRow["Fehlstunden"]);
+                        abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
+                        abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
+                        this.Add(abwesenheit);
                     }
                     connection.Close();
                 }
@@ -105,6 +103,38 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+        }
+
+        internal List<Abwesenheit> Filter(List<string> zeugnisart)
+        {
+            Abwesenheiten abwesenheiten = new Abwesenheiten();
+
+            foreach (var abwesenheit in this)
+            {
+                if (zeugnisart.Contains(abwesenheit.Zeugnisart))
+                {
+                    abwesenheiten.Add(abwesenheit);
+                }
+            }
+
+            return abwesenheiten;
+        }        
+
+        internal List<Abwesenheit> Filter(List<string> zeugnisart, Abwesenheiten alleAtlantisAbwesenheitenGefiltert)
+        {
+            Abwesenheiten abwesenheiten = new Abwesenheiten();
+
+            foreach (var abwesenheit in this)
+            {
+                abwesenheit.Zeugnisart = (from a in alleAtlantisAbwesenheitenGefiltert where a.StudentId == abwesenheit.StudentId select a.Zeugnisart).FirstOrDefault();
+
+                if (zeugnisart.Contains(abwesenheit.Zeugnisart))
+                {
+                    abwesenheiten.Add(abwesenheit);
+                }
+            }
+
+            return abwesenheiten;
         }
 
         public Abwesenheiten()

@@ -10,7 +10,7 @@ namespace webuntisnoten2atlantis
     class Program
     {
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=DBA";
-        
+
         static void Main(string[] args)
         {
             Global.Output = new List<string>();
@@ -28,74 +28,79 @@ namespace webuntisnoten2atlantis
 
                 Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer 2020 | Version 20201208");
                 Console.WriteLine("=====================================================================================================");
-                Console.WriteLine("");
-                Console.WriteLine("*****************************************************************************************************");
-                Console.WriteLine("* Webuntisnoten2atlantis erstellt eine SQL-Datei mit den entsprechenden Befehlen zum Import in      *");
-                Console.WriteLine("* Atlantis. ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren,   *");
-                Console.WriteLine("* wird auch keine Gesamtnote ausgegeben!                                                            *");
-                Console.WriteLine("*****************************************************************************************************");
+                Console.WriteLine(" Webuntisnoten2atlantis erstellt eine SQL-Datei mit den entsprechenden Befehlen zum Import in      ");
+                Console.WriteLine(" Atlantis. ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren,   ");
+                Console.WriteLine(" wird auch keine Gesamtnote ausgegeben!                                                            ");
+                Console.WriteLine("=====================================================================================================");
 
-                List<string> zeugnisart = new List<string>();
+                CsvDateienVorhanden(inputAbwesenheitenCsv, inputNotenCsv);
 
-                do
-                {
-                    Console.WriteLine("");
-                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ) " + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "] "));
-
-                    var z = Console.ReadLine();
-                    
-                    if (z.Split(',')[0] == "")
-                    {
-                        foreach (var item in (Properties.Settings.Default.Zeugnisarten).Split(','))
-                        {
-                            zeugnisart.Add(item.Trim());
-                        }
-                    }
-                    else
-                    {
-                        foreach (var item in z.Split(','))
-                        {
-                            zeugnisart.Add(item.Trim());
-                        }
-                        Properties.Settings.Default.Zeugnisarten = z;
-                        Properties.Settings.Default.Save();
-                    }
-                } while (zeugnisart.Count == 0);
-                
-                if (!File.Exists(inputNotenCsv))
-                {
-                    RenderNotenexportCsv(inputNotenCsv);                    
-                }
-                else
-                {
-                    if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
-                    {
-                        RenderNotenexportCsv(inputNotenCsv);
-                    }
-                }
-
-                if (!File.Exists(inputAbwesenheitenCsv))
-                {
-                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);                    
-                }
-                else
-                {
-                    if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
-                    {
-                        RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
-                    }
-                }
-
-                Console.WriteLine("");                
                 Leistungen alleWebuntisLeistungen = new Leistungen(inputNotenCsv);
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], zeugnisart);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1], zeugnisart);                
-                
-                Console.WriteLine("");
-                
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
+                Abwesenheiten alleAtlantisAbwesenheitenGefiltert = new Abwesenheiten();
+                Leistungen alleAtlantisLeistungenGefiltert = new Leistungen();
+                Abwesenheiten alleWebuntisAbwesenheitenGefiltert = new Abwesenheiten();
+                Leistungen alleWebuntisLeistungenGefiltert = new Leistungen();
+
                 do
                 {
+
+                    List<string> zeugnisart = new List<string>();
+
+                    do
+                    {
+                        Console.WriteLine("");
+                        Console.WriteLine("Geben Sie die gewünschte(n) Zeugnisart(en) (kommagetrennt) ein. Die Zeugnisart steht im Noten-Kopf.");
+                        Console.WriteLine("Beispiel: A01HZ oder A01HZ,C03HJ) " + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "] "));
+
+                        var z = Console.ReadLine();
+
+                        if (z.Split(',')[0] == "")
+                        {
+                            foreach (var item in (Properties.Settings.Default.Zeugnisarten).Split(','))
+                            {
+                                zeugnisart.Add(item.Trim());
+                            }
+                        }
+                        else
+                        {
+                            foreach (var item in z.Split(','))
+                            {
+                                zeugnisart.Add(item.Trim());
+                            }
+                            Properties.Settings.Default.Zeugnisarten = z;
+                            Properties.Settings.Default.Save();
+                        }
+
+                        if (zeugnisart.Count > 0)
+                        {
+                            alleAtlantisAbwesenheitenGefiltert = new Abwesenheiten();
+                            alleAtlantisAbwesenheitenGefiltert.AddRange(alleAtlantisAbwesenheiten.Filter(zeugnisart));
+
+                            alleAtlantisLeistungenGefiltert = new Leistungen();
+                            alleAtlantisLeistungenGefiltert.AddRange((from a in alleAtlantisLeistungen where zeugnisart.Contains(a.Zeugnisart) select a).ToList());
+
+                            alleWebuntisAbwesenheitenGefiltert = new Abwesenheiten();
+                            alleWebuntisAbwesenheitenGefiltert.AddRange(alleWebuntisAbwesenheiten.Filter(zeugnisart, alleAtlantisAbwesenheitenGefiltert));
+
+                            alleWebuntisLeistungenGefiltert = new Leistungen();
+                            alleWebuntisLeistungenGefiltert.AddRange(alleWebuntisLeistungen.Filter(zeugnisart, alleAtlantisLeistungenGefiltert));
+
+                            if (alleAtlantisAbwesenheitenGefiltert.Count() == 0 && alleAtlantisLeistungenGefiltert.Count == 0)
+                            {
+                                Console.WriteLine("");
+                                Console.WriteLine("! Es konnte nichts aus Atlantis ausgelesen werden. Es geht nicht weiter. Sind Ihre Angaben richtig?");
+                                Console.WriteLine("");
+                                Properties.Settings.Default.Zeugnisarten = "";
+                                Properties.Settings.Default.Save();
+                            }
+                        }
+                    } while (zeugnisart.Count == 0 || (alleAtlantisAbwesenheitenGefiltert.Count() == 0 && alleAtlantisLeistungenGefiltert.Count == 0));
+                    
+                    Console.WriteLine("");
+                    
                     Leistungen webuntisLeistungen = new Leistungen();
                     Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
                     Leistungen atlantisLeistungen = new Leistungen();
@@ -106,36 +111,39 @@ namespace webuntisnoten2atlantis
                     string outputSql = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\webuntisnoten2atlantis_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".SQL";
 
                     do
-                    {                       
-                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen);                        
-                        webuntisLeistungen = alleWebuntisLeistungen.Filter(interessierendeKlassen);
+                    {
+                        interessierendeKlassen = alleAtlantisLeistungenGefiltert.GetIntessierendeKlassen(alleWebuntisLeistungenGefiltert);
+                        string o = "/* " + Properties.Settings.Default.Zeugnisarten + " | " + Properties.Settings.Default.Klassenwahl;
+                        Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                        webuntisLeistungen = alleWebuntisLeistungenGefiltert.Filter(interessierendeKlassen);
                         webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
-                        atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
-                        atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
+                        atlantisLeistungen.AddRange((from a in alleAtlantisLeistungenGefiltert where interessierendeKlassen.Contains(a.Klasse) select a));
+                        atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheitenGefiltert where interessierendeKlassen.Contains(a.Klasse) select a));
 
                     } while (webuntisLeistungen.Count > 0 ? false : true);
 
                     // Korrekturen:
 
-                    webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
+                    webuntisLeistungen.Punkte2NoteInAnlageD(atlantisLeistungen);
                     webuntisLeistungen.ReligionKorrigieren();
                     webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
-                    webuntisLeistungen.Punkte2NoteInAnlageD(atlantisLeistungen);
+                    webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                    webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR
 
                     atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
                     atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen);
                     atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
-                    
+
                     atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
-                    alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
-                    
-                    Console.WriteLine("Weitere Klassen auswählen mit ENTER. Programm beenden mit ESC.");
+                    alleAtlantisLeistungenGefiltert.ErzeugeSqlDatei(outputSql);
 
-                } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);                
-            }            
+                    Console.WriteLine("Weitere Zeugnisarten und Klassen auswählen mit ENTER. Programm beenden mit ESC.");
+
+                } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);
+            }
             catch (Exception ex)
             {
                 Console.WriteLine("Heiliger Bimbam! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
@@ -144,6 +152,35 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+        
+        private static void CsvDateienVorhanden(string inputAbwesenheitenCsv, string inputNotenCsv)
+        {
+            if (!File.Exists(inputAbwesenheitenCsv))
+            {
+                RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
+            }
+            else
+            {
+                if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
+                {
+                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
+                }
+            }
+
+            if (!File.Exists(inputNotenCsv))
+            {
+                RenderNotenexportCsv(inputNotenCsv);
+            }
+            else
+            {
+                if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
+                {
+                    RenderNotenexportCsv(inputNotenCsv);
+                }
+            }
+
+            Console.WriteLine("");
         }
 
         private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv)
