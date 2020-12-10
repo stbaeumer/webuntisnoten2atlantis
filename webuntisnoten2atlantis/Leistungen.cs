@@ -20,7 +20,7 @@ namespace webuntisnoten2atlantis
 
                 Console.Write("Leistungsdaten aus Webuntis ".PadRight(70, '.'));
 
-                int i = 0;
+                int i = 1;
 
                 while (true)
                 {
@@ -37,13 +37,14 @@ namespace webuntisnoten2atlantis
                             {
                                 Console.WriteLine("In der Zeile " + i + " stimmt die Anzahl der Spalten nicht.");
                                 Console.ReadKey();
-                                throw new Exception();
+                                DateiÖffnen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv");
+                                throw new Exception("In der Zeile " + i + " stimmt die Anzahl der Spalten nicht.");
                             }
 
                             leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                             leistung.Name = x[1];
                             leistung.Klasse = x[2];
-                            leistung.Fach = x[3] == "KR" || x[3] == "ER" ? "REL" : x[3];                            
+                            leistung.Fach = x[3];                            
                             leistung.Gesamtnote = x[9].Split('.')[0];
                             leistung.Bemerkung = x[6];
                             leistung.Benutzer = x[7];
@@ -136,6 +137,62 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
+        internal void ReligionKorrigieren()
+        {
+            foreach (var leistung in this)
+            {
+                if (leistung.Fach == "KR" || leistung.Fach == "ER")
+                {
+                    leistung.Fach = "REL";
+                }
+            }             
+        }
+
+        internal void FächerZuordnen(Leistungen atlantisLeistungen)
+        {
+            // Für die verschiednenen Klassen ...
+
+            foreach (var klasse in (from k in this select k.Klasse).Distinct())
+            {
+                // ... unde deren verschiedene Fächer aus Webuntis, in denen auch Noten gegeben wurden (also kein FU) ... 
+
+                foreach (var webuntisFach in (from t in this where t.Klasse == klasse where t.Gesamtnote != "" select t.Fach).Distinct())
+                {
+                    // ... wenn es in Atlantis kein entsprechendes Fach gibt ...
+
+                    if (!(from a in atlantisLeistungen where a.Fach == webuntisFach select a).Any())
+                    {
+                        // ... wird geschaut, ob es ein Fach mit demselben Anfangsbuchstaben gibt, ...
+
+                        var afa = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a.Fach).Distinct().ToList();
+
+                        var af = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a).FirstOrDefault();
+
+                        // ... und dass seinerseits in Webuntis nicht vorkommt ...
+
+                        if (afa.Count == 1 && !(from w in this where w.Fach == af.Fach select w).Any())
+                        {
+                            string o = "/* Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet.";
+                            Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+
+                            foreach (var leistung in this)
+                            {
+                                if (leistung.Fach == webuntisFach && leistung.Klasse == klasse)
+                                {
+                                    leistung.Fach = af.Fach;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string o = "/* Achtung: In der " + webuntisFach + " kann das Fach " + webuntisFach + " keinem Atlantisfach zugeordnet werden!";
+                            Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                        }
+                    }
+                }
+            }            
+        }
+
         internal Leistungen Filter(List<string> interessierendeKlassen)
         {
             Leistungen leistungen = new Leistungen();
@@ -183,9 +240,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
 
                         if (w != null && w.Gesamtnote != "")
                         {
-                            string note = a.Zeugnisart.StartsWith("D") ? w.Gesamtnote : Punkte2Note(w.Gesamtnote);
-
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + note + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + note + " WHERE noe_id=" + a.LeistungId + ";");
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + w.Gesamtnote + " WHERE noe_id=" + a.LeistungId + ";");
 
                             i++;
                         }
@@ -234,73 +289,78 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             }
         }
 
-        private string Punkte2Note(string gesamtnote)
+        public void Punkte2NoteInAnlageD(Leistungen atlantisLeistungen)
         {
-            if (gesamtnote == "0")
+            foreach (var leistung in (from t in this where t.Gesamtnote != "" select t).ToList())
             {
-                return "6";
+                if (!(from a in atlantisLeistungen where a.Klasse == leistung.Klasse select a.Zeugnisart).FirstOrDefault().StartsWith("D"))
+                {
+                    if (leistung.Gesamtnote == "0")
+                    {
+                        leistung.Gesamtnote = "6";
+                    }
+                    if (leistung.Gesamtnote == "1")
+                    {
+                        leistung.Gesamtnote = "5";
+                    }
+                    if (leistung.Gesamtnote == "2")
+                    {
+                        leistung.Gesamtnote = "5";
+                    }
+                    if (leistung.Gesamtnote == "3")
+                    {
+                        leistung.Gesamtnote = "5";
+                    }
+                    if (leistung.Gesamtnote == "4")
+                    {
+                        leistung.Gesamtnote = "4";
+                    }
+                    if (leistung.Gesamtnote == "5")
+                    {
+                        leistung.Gesamtnote = "4";
+                    }
+                    if (leistung.Gesamtnote == "6")
+                    {
+                        leistung.Gesamtnote = "4";
+                    }
+                    if (leistung.Gesamtnote == "7")
+                    {
+                        leistung.Gesamtnote = "3";
+                    }
+                    if (leistung.Gesamtnote == "8")
+                    {
+                        leistung.Gesamtnote = "3";
+                    }
+                    if (leistung.Gesamtnote == "9")
+                    {
+                        leistung.Gesamtnote = "3";
+                    }
+                    if (leistung.Gesamtnote == "10")
+                    {
+                        leistung.Gesamtnote = "2";
+                    }
+                    if (leistung.Gesamtnote == "11")
+                    {
+                        leistung.Gesamtnote = "2";
+                    }
+                    if (leistung.Gesamtnote == "12")
+                    {
+                        leistung.Gesamtnote = "2";
+                    }
+                    if (leistung.Gesamtnote == "13")
+                    {
+                        leistung.Gesamtnote = "1";
+                    }
+                    if (leistung.Gesamtnote == "14")
+                    {
+                        leistung.Gesamtnote = "1";
+                    }
+                    if (leistung.Gesamtnote == "15")
+                    {
+                        leistung.Gesamtnote = "1";
+                    }
+                }
             }
-            if (gesamtnote == "1")
-            {
-                return "5";
-            }
-            if (gesamtnote == "2")
-            {
-                return "5";
-            }
-            if (gesamtnote == "3")
-            {
-                return "5";
-            }
-            if (gesamtnote == "4")
-            {
-                return "4";
-            }
-            if (gesamtnote == "5")
-            {
-                return "4";
-            }
-            if (gesamtnote == "6")
-            {
-                return "4";
-            }
-            if (gesamtnote == "7")
-            {
-                return "3";
-            }
-            if (gesamtnote == "8")
-            {
-                return "3";
-            }
-            if (gesamtnote == "9")
-            {
-                return "3";
-            }
-            if (gesamtnote == "10")
-            {
-                return "2";
-            }
-            if (gesamtnote == "11")
-            {
-                return "2";
-            }
-            if (gesamtnote == "12")
-            {
-                return "2";
-            }
-            if (gesamtnote == "13")
-            {
-                return "1";
-            }
-            if (gesamtnote == "14")
-            {
-                return "1";
-            }
-            if (gesamtnote == "15")
-            {
-                return "1";
-            }
-            return gesamtnote;
         }
 
         internal void Update(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
@@ -320,14 +380,12 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                                  where webuntisLeistung.Klasse == a.Klasse
                                  where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
                                  where a.Gesamtnote != ""
-                                 where a.Gesamtnote != (a.Zeugnisart.StartsWith("D") ? webuntisLeistung.Gesamtnote : Punkte2Note(webuntisLeistung.Gesamtnote))
+                                 where a.Gesamtnote != webuntisLeistung.Gesamtnote
                                  select webuntisLeistung).FirstOrDefault();
 
                         if (w != null && !a.ReligionAbgewählt)
                         {
-                            string note = (a.Zeugnisart.StartsWith("D") ? w.Gesamtnote : Punkte2Note(w.Gesamtnote));
-
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + note + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + note + " WHERE noe_id=" + a.LeistungId + ";");
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note=" + w.Gesamtnote + " WHERE noe_id=" + a.LeistungId + ";");
                             i++;
                         }
 
@@ -568,14 +626,19 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             {
                 throw ex;
             }
-                        
+
+            DateiÖffnen(outputSql);
+        }
+
+        private void DateiÖffnen(string pfad)
+        {
             try
             {
-                System.Diagnostics.Process.Start(@"C:\Program Files (x86)\Notepad++\Notepad++.exe", outputSql);
+                System.Diagnostics.Process.Start(@"C:\Program Files (x86)\Notepad++\Notepad++.exe", pfad);
             }
             catch (Exception)
             {
-                System.Diagnostics.Process.Start("Notepad.exe", outputSql);
+                System.Diagnostics.Process.Start("Notepad.exe", pfad);
             }
         }
     }

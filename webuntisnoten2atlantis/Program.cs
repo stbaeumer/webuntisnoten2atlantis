@@ -28,15 +28,19 @@ namespace webuntisnoten2atlantis
 
                 Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer 2020 | Version 20201208");
                 Console.WriteLine("=====================================================================================================");
-                Console.WriteLine("Webuntisnoten2atlantis erstellt eine SQL-Datei mit den entsprechenden Befehlen zum Import in Atlantis.");
-                Console.WriteLine("ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird auch keine Gesamtnote ausgegeben!");
+                Console.WriteLine("");
+                Console.WriteLine("*****************************************************************************************************");
+                Console.WriteLine("* Webuntisnoten2atlantis erstellt eine SQL-Datei mit den entsprechenden Befehlen zum Import in      *");
+                Console.WriteLine("* Atlantis. ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren,   *");
+                Console.WriteLine("* wird auch keine Gesamtnote ausgegeben!                                                            *");
+                Console.WriteLine("*****************************************************************************************************");
 
                 List<string> zeugnisart = new List<string>();
 
                 do
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ)" + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "] "));
+                    Console.WriteLine("Um welche Zeugnisart(en) geht es? Die Zeugnisart steht im Noten-Kopf. (Beispiel: A01HZ,C03HZ) " + (Properties.Settings.Default.Zeugnisarten == "" ? "" : "[" + Properties.Settings.Default.Zeugnisarten + "] "));
 
                     var z = Console.ReadLine();
                     
@@ -92,8 +96,8 @@ namespace webuntisnoten2atlantis
                 
                 do
                 {
-                    List<Leistung> webuntisLeistungen;
-                    List<Abwesenheit> webuntisAbwesenheiten;
+                    Leistungen webuntisLeistungen = new Leistungen();
+                    Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
                     Leistungen atlantisLeistungen = new Leistungen();
                     Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
@@ -105,11 +109,17 @@ namespace webuntisnoten2atlantis
                     {                       
                         interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen);                        
                         webuntisLeistungen = alleWebuntisLeistungen.Filter(interessierendeKlassen);
-                        webuntisAbwesenheiten = (from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a).ToList();
+                        webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
                         atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
                         atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
 
                     } while (webuntisLeistungen.Count > 0 ? false : true);
+
+                    // Korrekturen:
+
+                    webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
+                    webuntisLeistungen.ReligionKorrigieren();
+                    webuntisLeistungen.Punkte2NoteInAnlageD(atlantisLeistungen);
 
                     atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
                     atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen);
