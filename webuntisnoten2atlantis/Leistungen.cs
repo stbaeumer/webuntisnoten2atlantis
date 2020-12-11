@@ -285,29 +285,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                 }
             }
         }
-
-        internal Leistungen Filter(List<string> interessierendeKlassen)
-        {
-            Leistungen leistungen = new Leistungen();
-            int i = 0;
-            foreach (var leistung in this)
-            {
-                if (interessierendeKlassen.Contains(leistung.Klasse))
-                {
-                    if (!(from l in leistungen
-                          where l.Klasse == leistung.Klasse
-                          where l.Fach == leistung.Fach
-                          where l.Name == leistung.Name
-                          select l).Any())
-                    {
-                        leistungen.Add(leistung);
-                        i++;
-                    }                    
-                }
-            }
-            return leistungen;
-        }
-
+        
         public Leistungen()
         {
         }
@@ -495,9 +473,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             }
         }
 
-        internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen)
+        internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen, List<string> zeugnisart)
         {
-            List<string> alleKlassen = (from k in this select k.Klasse).Distinct().ToList();
+            List<string> alleKlassen = (from k in this where zeugnisart.Contains(k.Zeugnisart) select k.Klasse).Distinct().ToList();
             string alleKlassenString = "";
 
             foreach (var kl in alleKlassen)
@@ -513,7 +491,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
             try
             {
                 Console.WriteLine("Geben Sie die gewünschte(n) Klasse(n) (kommagetrennt) ein.");
-                Console.WriteLine("Oder '*' für alle Klassen der gewählten Zeugnisart(en)");
+                Console.WriteLine("Oder '*' für alle Klassen der gewählten Zeugnisart(en), bei denen zuvor ein Notenblatt angelegt wurde.");
                 Console.WriteLine("Beispiel: HBW20A oder HB,HG oder GW18A,GG oder '*') " + (Properties.Settings.Default.Klassenwahl == "" ? "" : "[" + Properties.Settings.Default.Klassenwahl + "] "));
                 
                 string eingabe = Console.ReadLine().ToUpper();
@@ -531,7 +509,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach = 'UF'; ", connection);
                 {
                     if (eingabe == "*")
                     {
-                        interessierendeKlassen.AddRange((from w in alleWebuntisLeistungen select w.Klasse).Distinct());
+                        interessierendeKlassen.AddRange(alleKlassen);
+                        Properties.Settings.Default.Klassenwahl = "*";
+                        Properties.Settings.Default.Save();
                     }
                     else
                     {
