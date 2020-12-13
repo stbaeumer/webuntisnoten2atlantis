@@ -19,6 +19,8 @@ namespace webuntisnoten2atlantis
         public int SchlüsselExtern { get; internal set; }
         public int LeistungId { get; internal set; }
         public bool ReligionAbgewählt { get; internal set; }
-        public string Zeugnisart { get; internal set; }
+        public string HzJz { get; internal set; }
+        public string Anlage { get; internal set; }
+        public string Zeugnistext { get; internal set; }
     }
 }

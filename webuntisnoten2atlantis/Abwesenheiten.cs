@@ -17,7 +17,7 @@ namespace webuntisnoten2atlantis
             {
                 string überschrift = reader.ReadLine();
 
-                Console.Write("Abwesenheiten aus Webuntis ".PadRight(70, '.'));
+                Console.Write("Abwesenheiten aus Webuntis ".PadRight(71, '.'));
 
                 while (true)
                 {
@@ -56,7 +56,7 @@ namespace webuntisnoten2atlantis
         {
             try
             {
-                Console.Write("Abwesenheiten aus Atlantis ".PadRight(70, '.'));
+                Console.Write("Abwesenheiten aus Atlantis ".PadRight(71, '.'));
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -103,38 +103,6 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-        }
-
-        internal List<Abwesenheit> Filter(List<string> zeugnisart)
-        {
-            Abwesenheiten abwesenheiten = new Abwesenheiten();
-
-            foreach (var abwesenheit in this)
-            {
-                if (zeugnisart.Contains(abwesenheit.Zeugnisart))
-                {
-                    abwesenheiten.Add(abwesenheit);
-                }
-            }
-
-            return abwesenheiten;
-        }        
-
-        internal List<Abwesenheit> Filter(List<string> zeugnisart, Abwesenheiten alleAtlantisAbwesenheitenGefiltert)
-        {
-            Abwesenheiten abwesenheiten = new Abwesenheiten();
-
-            foreach (var abwesenheit in this)
-            {
-                abwesenheit.Zeugnisart = (from a in alleAtlantisAbwesenheitenGefiltert where a.StudentId == abwesenheit.StudentId select a.Zeugnisart).FirstOrDefault();
-
-                if (zeugnisart.Contains(abwesenheit.Zeugnisart))
-                {
-                    abwesenheiten.Add(abwesenheit);
-                }
-            }
-
-            return abwesenheiten;
         }
 
         public Abwesenheiten()

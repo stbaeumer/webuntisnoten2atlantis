@@ -46,5 +46,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Zeugnisarten"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Anlagen {
+            get {
+                return ((string)(this["Anlagen"]));
+            }
+            set {
+                this["Anlagen"] = value;
+            }
+        }
     }
 }
