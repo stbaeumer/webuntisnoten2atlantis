@@ -54,10 +54,7 @@ namespace webuntisnoten2atlantis
                     do
                     {
                         interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleAtlantisLeistungen);
-
-                        string o = "/* " + Properties.Settings.Default.Klassenwahl;
-                        Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
-
+                        
                         webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen
                                                      where interessierendeKlassen.Contains(a.Klasse)
                                                      select a));

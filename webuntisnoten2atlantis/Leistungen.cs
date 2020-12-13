@@ -539,7 +539,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                 Console.WriteLine("");
                 Console.WriteLine("Sie müssen nun eine Auswahl der gewünschte(n) Klasse(n) treffen:.");
                 Console.WriteLine("");
-                Console.WriteLine("     '*'               gibt alle Noten aus aus allen Klassen mit Notenblatt aus.");
+                Console.WriteLine("     '*'               gibt alle Noten aus allen Klassen mit Notenblatt aus.");
                 Console.WriteLine("     '" + alleKlassenVerschiedenenKlassen[0] + "'          gibt alle Noten der Klasse " + alleKlassenVerschiedenenKlassen[0] + " aus.");
                 if (alleKlassenVerschiedenenKlassen.Count > 1)
                 {
@@ -601,10 +601,18 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
 
                             do
                             {
-                                Console.Write(" Wählen Sie. '*' wählt alle Anlagen aus  " + (Properties.Settings.Default.Anlagen == "" ? "[ " + anlagen.TrimEnd(',') + " ] : " : "[ " + Properties.Settings.Default.Anlagen + "] : "));
+                                Console.Write(" Wählen Sie. '*' wählt alle Anlagen aus  " + (Properties.Settings.Default.Anlagen == "" ? "[ " + anlagen.TrimEnd(',') + " ] : " : "[ " + Properties.Settings.Default.Anlagen.TrimEnd(',') + " ] : "));
 
                                 var eingabeAnlagen = Console.ReadLine();
-                                
+
+                                if (eingabeAnlagen == "")
+                                {
+                                    if (anlagen.TrimEnd(',') != "")
+                                    {
+                                        eingabeAnlagen = anlagen.TrimEnd(',');
+                                    }
+                                }
+
                                 if (eingabeAnlagen != "")
                                 {   
                                     alleKlassenString = "";
@@ -626,7 +634,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                                         Console.WriteLine("Insgesamt ausgewählte Klassen (in denen auch Noten angelegt sind): " + interessierendeKlassen.Count + " ...");
                                         Console.WriteLine("Die ausgewählten Klassen sind: " + alleKlassenString.TrimEnd(','));
                                         Console.WriteLine("Die Verarbeitung startet ...");
-                                        Properties.Settings.Default.Anlagen = anlagen;
+                                        Properties.Settings.Default.Anlagen = anlagen.TrimEnd(',');
                                         Properties.Settings.Default.Save();
                                     }
                                     else
@@ -712,7 +720,30 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                         }
                         Console.WriteLine("");
                     }
-                                        
+
+                    int z = 0;
+
+                    do
+                    {
+                        var zeile = "";
+
+                        try
+                        {
+                            while ((zeile + interessierendeKlassen[z + 1] + ",").Length <= 78)
+                            {
+                                zeile += interessierendeKlassen[z] + ",";
+                                z++;
+                            }
+                        }
+                        catch (Exception)
+                        {                            
+                        }
+                                                                        
+                        string o = "/* " + zeile;
+                        Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+
+                    } while (z <= interessierendeKlassen.Count); 
+                    
                     return interessierendeKlassen;
                 }
                 else
