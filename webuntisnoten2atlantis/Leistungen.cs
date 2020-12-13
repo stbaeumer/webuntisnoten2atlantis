@@ -729,20 +729,22 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
 
                         try
                         {
-                            while ((zeile + interessierendeKlassen[z + 1] + ",").Length <= 78)
+                            while ((zeile + interessierendeKlassen[z] + ", ").Length <= 78)
                             {
-                                zeile += interessierendeKlassen[z] + ",";
+                                zeile += interessierendeKlassen[z] + ", ";
                                 z++;
                             }
                         }
                         catch (Exception)
-                        {                            
+                        {
+                            z++;
+                            zeile.TrimEnd(',');
                         }
                                                                         
                         string o = "/* " + zeile;
                         Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
 
-                    } while (z <= interessierendeKlassen.Count); 
+                    } while (z < interessierendeKlassen.Count); 
                     
                     return interessierendeKlassen;
                 }
