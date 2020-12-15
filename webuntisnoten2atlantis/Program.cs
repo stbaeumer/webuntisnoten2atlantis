@@ -71,8 +71,7 @@ namespace webuntisnoten2atlantis
                     } while (webuntisLeistungen.Count > 0 ? false : true);
 
                     // Korrekturen
-
-                    webuntisLeistungen.Punkte2NoteInAnlageNichtD(atlantisLeistungen);
+                                       
                     webuntisLeistungen.ReligionKorrigieren();
                     webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);

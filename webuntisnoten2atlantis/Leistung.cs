@@ -22,5 +22,7 @@ namespace webuntisnoten2atlantis
         public string HzJz { get; internal set; }
         public string Anlage { get; internal set; }
         public string Zeugnistext { get; internal set; }
+        public string Gesamtpunkte { get; internal set; }
+        public string EinheitNP { get; internal set; }
     }
 }

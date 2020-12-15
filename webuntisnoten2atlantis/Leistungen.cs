@@ -37,17 +37,18 @@ namespace webuntisnoten2atlantis
 
                             if (x.Length != 10)
                             {
-                                Console.WriteLine("In der Zeile " + i + " stimmt die Anzahl der Spalten nicht.");
+                                Console.WriteLine("MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
                                 Console.ReadKey();
                                 DateiÖffnen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv");
-                                throw new Exception("In der Zeile " + i + " stimmt die Anzahl der Spalten nicht.");
+                                throw new Exception("MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
                             }
 
                             leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                             leistung.Name = x[1];
                             leistung.Klasse = x[2];
                             leistung.Fach = x[3];                            
-                            leistung.Gesamtnote = x[9].Split('.')[0];
+                            leistung.Gesamtpunkte = x[9].Split('.')[0];
+                            leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                             leistung.Bemerkung = x[6];
                             leistung.Benutzer = x[7];
                             leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
@@ -95,6 +96,8 @@ DBA.noten_einzel.fa_id,
 DBA.noten_einzel.kurztext AS Fach,
 DBA.noten_einzel.zeugnistext AS Zeugnistext,
 DBA.noten_einzel.s_note AS Note,
+DBA.noten_einzel.punkte AS Punkte,
+DBA.noten_einzel.s_einheit AS Einheit,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.schueler.pu_id AS SchlüsselExtern,
@@ -104,7 +107,7 @@ DBA.klasse.s_klasse_art AS Anlage,
 DBA.noten_kopf.s_typ_nok AS HzJz,
 DBA.klasse.klasse AS Klasse
 FROM(((DBA.noten_kopf JOIN DBA.schue_sj ON DBA.noten_kopf.pj_id = DBA.schue_sj.pj_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id ) JOIN DBA.schueler ON DBA.noten_einzel.pu_id = DBA.schueler.pu_id
-WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok = 'JZ' OR s_typ_nok = 'HZ') ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
+WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_typ_vorgang = 'A' AND (s_typ_nok = 'JZ' OR s_typ_nok = 'HZ') ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                     connection.Open();
                     schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
@@ -122,6 +125,8 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                                 leistung.Klasse = theRow["Klasse"].ToString();
                                 leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
                                 leistung.Gesamtnote = theRow["Note"].ToString();
+                                leistung.Gesamtpunkte = theRow["Punkte"].ToString();
+                                leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
                                 leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());                                
                                 leistung.HzJz = theRow["HzJz"].ToString();
                                 leistung.Anlage = theRow["Anlage"].ToString();
@@ -307,7 +312,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
 
                     if (!(from a in atlantisLeistungen where a.Fach == webuntisFach select a).Any())
                     {
-                        // Bei Nicht-Bindestrich-Fächern wird geschaut, ob es ein Fach mit demselben Anfangsbuchstaben gibt, ...
+                        // Bei Nicht-Bindestrich-Fächern wird geschaut, ob es ein Fach denselben Anfangsbuchstaben gibt, ...
 
                         var afa = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a.Fach).Distinct().ToList();
 
@@ -358,13 +363,17 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                                  where webuntisLeistung.Fach == a.Fach
                                  where webuntisLeistung.Klasse == a.Klasse
                                  where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                                 where a.Gesamtnote == ""
+                                 where a.Gesamtpunkte == ""
                                  select webuntisLeistung).FirstOrDefault();
 
                         if (w != null && w.Gesamtnote != "")
-                        {
+                        {                            
                             UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
-
+                            
+                            if (a.EinheitNP == "P")
+                            {
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                            }
                             i++;
                         }
                     }
@@ -381,78 +390,75 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
             }
         }
 
-        public void Punkte2NoteInAnlageNichtD(Leistungen atlantisLeistungen)
+        public string Gesamtpunkte2Gesamtnote(string gesamtpunkte)
         {
-            foreach (var leistung in (from t in this where t.Gesamtnote != "" select t).ToList())
+            string gesamtnote = "";
+
+            if (gesamtpunkte == "0")
             {
-                if (!(from a in atlantisLeistungen where a.Klasse == leistung.Klasse select a.Anlage).FirstOrDefault().StartsWith("D"))
-                {
-                    if (leistung.Gesamtnote == "0")
-                    {
-                        leistung.Gesamtnote = "6";
-                    }
-                    if (leistung.Gesamtnote == "1")
-                    {
-                        leistung.Gesamtnote = "5";
-                    }
-                    if (leistung.Gesamtnote == "2")
-                    {
-                        leistung.Gesamtnote = "5";
-                    }
-                    if (leistung.Gesamtnote == "3")
-                    {
-                        leistung.Gesamtnote = "5";
-                    }
-                    if (leistung.Gesamtnote == "4")
-                    {
-                        leistung.Gesamtnote = "4";
-                    }
-                    if (leistung.Gesamtnote == "5")
-                    {
-                        leistung.Gesamtnote = "4";
-                    }
-                    if (leistung.Gesamtnote == "6")
-                    {
-                        leistung.Gesamtnote = "4";
-                    }
-                    if (leistung.Gesamtnote == "7")
-                    {
-                        leistung.Gesamtnote = "3";
-                    }
-                    if (leistung.Gesamtnote == "8")
-                    {
-                        leistung.Gesamtnote = "3";
-                    }
-                    if (leistung.Gesamtnote == "9")
-                    {
-                        leistung.Gesamtnote = "3";
-                    }
-                    if (leistung.Gesamtnote == "10")
-                    {
-                        leistung.Gesamtnote = "2";
-                    }
-                    if (leistung.Gesamtnote == "11")
-                    {
-                        leistung.Gesamtnote = "2";
-                    }
-                    if (leistung.Gesamtnote == "12")
-                    {
-                        leistung.Gesamtnote = "2";
-                    }
-                    if (leistung.Gesamtnote == "13")
-                    {
-                        leistung.Gesamtnote = "1";
-                    }
-                    if (leistung.Gesamtnote == "14")
-                    {
-                        leistung.Gesamtnote = "1";
-                    }
-                    if (leistung.Gesamtnote == "15")
-                    {
-                        leistung.Gesamtnote = "1";
-                    }
-                }
+                gesamtnote = "6";
             }
+            if (gesamtpunkte == "1")
+            {
+                gesamtnote = "5";
+            }
+            if (gesamtpunkte == "2")
+            {
+                gesamtnote = "5";
+            }
+            if (gesamtpunkte == "3")
+            {
+                gesamtnote = "5";
+            }
+            if (gesamtpunkte == "4")
+            {
+                gesamtnote = "4";
+            }
+            if (gesamtpunkte == "5")
+            {
+                gesamtnote = "4";
+            }
+            if (gesamtpunkte == "6")
+            {
+                gesamtnote = "4";
+            }
+            if (gesamtpunkte == "7")
+            {
+                gesamtnote = "3";
+            }
+            if (gesamtpunkte == "8")
+            {
+                gesamtnote = "3";
+            }
+            if (gesamtpunkte == "9")
+            {
+                gesamtnote = "3";
+            }
+            if (gesamtpunkte == "10")
+            {
+                gesamtnote = "2";
+            }
+            if (gesamtpunkte == "11")
+            {
+                gesamtnote = "2";
+            }
+            if (gesamtpunkte == "12")
+            {
+                gesamtnote = "2";
+            }
+            if (gesamtpunkte == "13")
+            {
+                gesamtnote = "1";
+            }
+            if (gesamtpunkte == "14")
+            {
+                gesamtnote = "1";
+            }
+            if (gesamtpunkte == "15")
+            {
+                gesamtnote = "1";
+            }
+            return gesamtnote;
         }
 
         internal void Update(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
@@ -464,7 +470,11 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
             try
             {
                 foreach (var a in this)
-                {   
+                {
+                    if (a.LeistungId == 4175637)
+                    {
+                        string aa = "";
+                    }
                     var w = (from webuntisLeistung in webuntisLeistungen
                                 where webuntisLeistung.Fach == a.Fach
                                 where webuntisLeistung.Klasse == a.Klasse
@@ -476,8 +486,14 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                     if (w != null)
                     {
                         UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+                        
+                        if (a.EinheitNP == "P")
+                        {
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                        }
+
                         i++;
-                    }               
+                    }
                 }
                 if (i == 0)
                 {
@@ -499,13 +515,14 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
             try
             {
                 foreach (var a in this)
-                {
+                {   
                     // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
 
                     var webuntisLeistung = (from w in webuntisLeistungen
                                             where w.Fach == a.Fach
                                             where w.Klasse == a.Klasse
                                             where w.SchlüsselExtern == a.SchlüsselExtern
+                                            where w.Gesamtpunkte != ""
                                             select w).FirstOrDefault();
 
                     if (webuntisLeistung == null)
@@ -513,7 +530,11 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND (s_typ_nok =
                         if (a.Gesamtnote != "")
                         {
                             UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
-                            i++;
+                            if (a.EinheitNP == "P") 
+                            {
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                            }
+                                i++;
                         }
                     }
                 }

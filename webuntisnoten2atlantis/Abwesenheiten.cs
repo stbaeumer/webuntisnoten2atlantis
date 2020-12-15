@@ -73,8 +73,7 @@ DBA.noten_kopf.fehlstunden_anzahl AS Fehlstunden,
 DBA.noten_kopf.fehlstunden_ents_unents AS FehlstundenUnentschuldigt
 FROM((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id
 WHERE 
-schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND 
-schue_sj.pj_id = noten_kopf.pj_id
+schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND schue_sj.pj_id = noten_kopf.pj_id AND schue_sj.s_typ_vorgang = 'A'
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
 DBA.schueler.name_1 ASC ,
@@ -87,6 +86,10 @@ DBA.schueler.name_2 ASC ", connection);
                     {
                         Abwesenheit abwesenheit = new Abwesenheit();
                         abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
+                        if (abwesenheit.StudentId == 152264)
+                        {
+                            string a = "";
+                        }
                         abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
                         abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                         abwesenheit.Klasse = theRow["Klasse"].ToString();
