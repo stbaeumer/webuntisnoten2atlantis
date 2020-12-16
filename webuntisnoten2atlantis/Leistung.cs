@@ -24,5 +24,6 @@ namespace webuntisnoten2atlantis
         public string Zeugnistext { get; internal set; }
         public string Gesamtpunkte { get; internal set; }
         public string EinheitNP { get; internal set; }
+        public bool SchuelerAktivInDieserKlasse { get; internal set; }
     }
 }

@@ -40,7 +40,7 @@ namespace webuntisnoten2atlantis
                     }
                     catch (Exception ex)
                     {
-                        throw ex;
+                        throw new Exception("Die Datei " + inputAbwesenheitenCsv + " kann nicht gelesen werden.");
                     }
 
                     if (line == null)
@@ -86,10 +86,6 @@ DBA.schueler.name_2 ASC ", connection);
                     {
                         Abwesenheit abwesenheit = new Abwesenheit();
                         abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
-                        if (abwesenheit.StudentId == 152264)
-                        {
-                            string a = "";
-                        }
                         abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
                         abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                         abwesenheit.Klasse = theRow["Klasse"].ToString();

@@ -52,7 +52,7 @@ namespace webuntisnoten2atlantis
                             leistung.Bemerkung = x[6];
                             leistung.Benutzer = x[7];
                             leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
-                            leistungen.Add(leistung);                           
+                            leistungen.Add(leistung);
                         }
                     }
                     catch (Exception ex)
@@ -102,6 +102,8 @@ DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.schueler.pu_id AS SchlüsselExtern,
 DBA.schue_sj.s_religions_unterricht AS Religion,
+DBA.schue_sj.dat_austritt AS ausgetreten,
+DBA.schue_sj.vorgang_akt_satz_jn AS SchuelerAktivInDieserKlasse,
 (substr(schue_sj.s_berufs_nr,4,5)) AS Fachklasse,
 DBA.klasse.s_klasse_art AS Anlage,
 DBA.noten_kopf.s_typ_nok AS HzJz,
@@ -116,28 +118,37 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                     {
                         if (typ == theRow["HzJz"].ToString())
                         {
+                            DateTime austrittsdatum = theRow["ausgetreten"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["ausgetreten"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
                             Leistung leistung = new Leistung();
+
                             try
                             {
-                                leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
-                                leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N" ? true : false;
-                                leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
-                                leistung.Klasse = theRow["Klasse"].ToString();
-                                leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                                leistung.Gesamtnote = theRow["Note"].ToString();
-                                leistung.Gesamtpunkte = theRow["Punkte"].ToString();
-                                leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
-                                leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());                                
-                                leistung.HzJz = theRow["HzJz"].ToString();
-                                leistung.Anlage = theRow["Anlage"].ToString();
-                                leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
+                                // Wenn der Schüler nicht in diesem Schuljahr ausgetreten ist ...
+
+                                if (!(austrittsdatum > new DateTime(DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1, 8, 1) && austrittsdatum < DateTime.Now))
+                                {
+                                    leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
+                                    leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N";
+                                    leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
+                                    leistung.Klasse = theRow["Klasse"].ToString();
+                                    leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
+                                    leistung.Gesamtnote = theRow["Note"].ToString();
+                                    leistung.Gesamtpunkte = theRow["Punkte"].ToString();
+                                    leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
+                                    leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
+                                    leistung.HzJz = theRow["HzJz"].ToString();
+                                    leistung.Anlage = theRow["Anlage"].ToString();
+                                    leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
+                                    leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";                                    
+                                }
                             }
                             catch (Exception ex)
                             {
                                 Console.WriteLine("Fehler beim Einlesen der Atlantis-Leistungsdatensätze: ENTER" + ex);
                                 Console.ReadKey();
                             }
-                            this.Add(leistung);
+                                this.Add(leistung);                                                  
                         }
                     }
                     connection.Close();
@@ -357,25 +368,25 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             {
                 foreach (var klasse in interessierendeKlassen)
                 {
-                    foreach (var a in (from t in this where t.Klasse == klasse select t).ToList())
+                    foreach (var a in (from t in this where t.Klasse == klasse where t.SchuelerAktivInDieserKlasse select t).ToList())
                     {
                         var w = (from webuntisLeistung in webuntisLeistungen
                                  where webuntisLeistung.Fach == a.Fach
                                  where webuntisLeistung.Klasse == a.Klasse
                                  where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                                 where a.Gesamtpunkte == ""
+                                 where a.Gesamtnote == ""
                                  select webuntisLeistung).FirstOrDefault();
 
                         if (w != null && w.Gesamtnote != "")
-                        {                            
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
-                            
+                        {
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+
                             if (a.EinheitNP == "P")
                             {
-                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|>" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
                             }
                             i++;
-                        }
+                        }                       
                     }
                 }
                 
@@ -458,6 +469,14 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             {
                 gesamtnote = "1";
             }
+            if (gesamtpunkte == "84")
+            {
+                gesamtnote = "A";
+            }
+            if (gesamtpunkte == "99")
+            {
+                gesamtnote = "-";
+            }
             return gesamtnote;
         }
 
@@ -471,29 +490,29 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             {
                 foreach (var a in this)
                 {
-                    if (a.LeistungId == 4175637)
+                    if (a.SchuelerAktivInDieserKlasse)
                     {
-                        string aa = "";
-                    }
-                    var w = (from webuntisLeistung in webuntisLeistungen
-                                where webuntisLeistung.Fach == a.Fach
-                                where webuntisLeistung.Klasse == a.Klasse
-                                where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                                where a.Gesamtnote != ""
-                                where a.Gesamtnote != webuntisLeistung.Gesamtnote
-                                select webuntisLeistung).FirstOrDefault();
+                        var w = (from webuntisLeistung in webuntisLeistungen
+                                 where webuntisLeistung.Fach == a.Fach
+                                 where webuntisLeistung.Klasse == a.Klasse
+                                 where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
+                                 where a.Gesamtnote != ""
+                                 where a.Gesamtnote != webuntisLeistung.Gesamtnote
+                                 where webuntisLeistung.Gesamtnote != ""
+                                 select webuntisLeistung).FirstOrDefault();
 
-                    if (w != null)
-                    {
-                        UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
-                        
-                        if (a.EinheitNP == "P")
+                        if (w != null)
                         {
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
-                        }
+                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
 
-                        i++;
-                    }
+                            if (a.EinheitNP == "P")
+                            {
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                            }
+
+                            i++;
+                        }
+                    }                    
                 }
                 if (i == 0)
                 {
@@ -515,26 +534,29 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             try
             {
                 foreach (var a in this)
-                {   
-                    // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
-
-                    var webuntisLeistung = (from w in webuntisLeistungen
-                                            where w.Fach == a.Fach
-                                            where w.Klasse == a.Klasse
-                                            where w.SchlüsselExtern == a.SchlüsselExtern
-                                            where w.Gesamtpunkte != ""
-                                            select w).FirstOrDefault();
-
-                    if (webuntisLeistung == null)
+                {
+                    if (a.SchuelerAktivInDieserKlasse)
                     {
-                        if (a.Gesamtnote != "")
+                        // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
+                        
+                        var webuntisLeistung = (from w in webuntisLeistungen
+                                                where w.Fach == a.Fach
+                                                where w.Klasse == a.Klasse
+                                                where w.SchlüsselExtern == a.SchlüsselExtern
+                                                where w.Gesamtpunkte != ""
+                                                select w).FirstOrDefault();
+
+                        if (webuntisLeistung == null)
                         {
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
-                            if (a.EinheitNP == "P") 
+                            if (a.Gesamtnote != "")
                             {
-                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
-                            }
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                if (a.EinheitNP == "P")
+                                {
+                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                }
                                 i++;
+                            }
                         }
                     }
                 }
@@ -551,8 +573,10 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen)
         {
-            List<string> alleKlassenVerschiedenenKlassen = (from k in this where k.Gesamtnote != "" select k.Klasse).Distinct().ToList();
-                            
+            List<string> alleVerschiedenenUntisKlassenMitNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
+
+            List<string> alleVerschiedenenAtlantisKlassen = (from k in this select k.Klasse).Distinct().ToList();
+
             List<string> interessierendeKlassen = new List<string>();
 
             try
@@ -561,13 +585,13 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 Console.WriteLine("Sie müssen nun eine Auswahl der gewünschte(n) Klasse(n) treffen:.");
                 Console.WriteLine("");
                 Console.WriteLine("     '*'               gibt alle Noten aus allen Klassen mit Notenblatt aus.");
-                Console.WriteLine("     '" + alleKlassenVerschiedenenKlassen[0] + "'          gibt alle Noten der Klasse " + alleKlassenVerschiedenenKlassen[0] + " aus.");
-                if (alleKlassenVerschiedenenKlassen.Count > 1)
+                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0] + "'          gibt alle Noten der Klasse " + alleVerschiedenenUntisKlassenMitNoten[0] + " aus.");
+                if (alleVerschiedenenUntisKlassenMitNoten.Count > 1)
                 {
-                    Console.WriteLine("     '" + (alleKlassenVerschiedenenKlassen[0] + "," + alleKlassenVerschiedenenKlassen[1] + "'").PadRight(16) + " gibt alle Noten beider Klassen aus.");
+                    Console.WriteLine("     '" + (alleVerschiedenenUntisKlassenMitNoten[0] + "," + alleVerschiedenenUntisKlassenMitNoten[1] + "'").PadRight(16) + " gibt alle Noten beider Klassen aus.");
                 }                
-                Console.WriteLine("     '" + alleKlassenVerschiedenenKlassen[0].Substring(0,1) + "'               gibt die Noten aller Klassen aus, die mit '" + alleKlassenVerschiedenenKlassen[0].Substring(0,1) + "' beginnen.");
-                Console.WriteLine("     '" + alleKlassenVerschiedenenKlassen[0].Substring(0, 1) + ",G'             gibt aller Klassen aus, die mit '" + alleKlassenVerschiedenenKlassen[0].Substring(0, 1) + "' oder 'G' beginnen.");
+                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + "'               gibt die Noten aller Klassen aus, die mit '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + "' beginnen.");
+                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0, 1) + ",G'             gibt aller Klassen aus, die mit '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0, 1) + "' oder 'G' beginnen.");
                 Console.WriteLine("");
                 Console.Write(" Wählen Sie  " + (Properties.Settings.Default.Klassenwahl == "" ? " : " : "[ " + Properties.Settings.Default.Klassenwahl + " ] : "));
                 
@@ -586,10 +610,10 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 {
                     if (eingabe == "*")
                     {
-                        interessierendeKlassen.AddRange(alleKlassenVerschiedenenKlassen);
+                        interessierendeKlassen.AddRange(alleVerschiedenenUntisKlassenMitNoten);
                         Properties.Settings.Default.Klassenwahl = "*";
                         Properties.Settings.Default.Save();
-                        if (alleKlassenVerschiedenenKlassen.Count > 0)
+                        if (alleVerschiedenenUntisKlassenMitNoten.Count > 0)
                         {
                             string alleKlassenString = "";
 
@@ -598,14 +622,14 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                 alleKlassenString += iK + ",";
                             }
 
-                            Console.WriteLine("Insgesamt ausgewählte Klassen (in denen auch Noten angelegt sind): " + interessierendeKlassen.Count);
+                            Console.WriteLine("Insgesamt ausgewählte Klassen (in denen auch Webuntis-Gesamtnoten angelegt sind): " + interessierendeKlassen.Count);
                             Console.WriteLine("Die ausgewählten Klassen sind: " + alleKlassenString.TrimEnd(',') );
 
                             var anlagen = "";
 
                             foreach (var item in interessierendeKlassen)
                             {
-                                foreach (var an in (from a in alleWebuntisLeistungen where a.Klasse == item select a.Anlage).ToList())
+                                foreach (var an in (from a in this where a.Klasse == item where a.Anlage != null select a.Anlage).ToList())
                                 {
                                     if (!anlagen.Contains(an.Substring(0,3)))
                                     {
@@ -622,7 +646,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                             do
                             {
-                                Console.Write(" Wählen Sie. '*' wählt alle Anlagen aus  " + (Properties.Settings.Default.Anlagen == "" ? "[ " + anlagen.TrimEnd(',') + " ] : " : "[ " + Properties.Settings.Default.Anlagen.TrimEnd(',') + " ] : "));
+                                Console.Write(" Wählen Sie. '*' wählt alle Anlagen aus. 'B,C,D' ist auch möglich.  " + (Properties.Settings.Default.Anlagen == "" ? "[ " + anlagen.TrimEnd(',') + " ] : " : "[ " + Properties.Settings.Default.Anlagen.TrimEnd(',') + " ] : "));
 
                                 var eingabeAnlagen = Console.ReadLine();
 
@@ -638,13 +662,26 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                 {   
                                     alleKlassenString = "";
 
-                                    foreach (var item in interessierendeKlassen)
+                                    foreach (var klasse in interessierendeKlassen)
                                     {
-                                        if ((from a in alleWebuntisLeistungen where a.Klasse == item where eingabeAnlagen.ToUpper().Split(',').Contains(a.Anlage.Substring(0, 3)) select a).Any() || eingabeAnlagen == "*")
+                                        foreach (var a in eingabeAnlagen.ToUpper().Split(','))
                                         {
-                                            iKNeu.Add(item);
-                                            alleKlassenString += item + ",";
-                                        }
+                                            if (eingabeAnlagen == "*")
+                                            {
+                                                iKNeu.Add(klasse);
+                                            }
+                                            else
+                                            {
+                                                if (a.Length == 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 1)).FirstOrDefault())
+                                                {
+                                                    iKNeu.Add(klasse);
+                                                }
+                                                if (a.Length > 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 3)).FirstOrDefault())
+                                                {
+                                                    iKNeu.Add(klasse);
+                                                }
+                                            }                                            
+                                        }                                        
                                     }
 
                                     if (iKNeu.Count > 0)
@@ -678,7 +715,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                         var klassenOhneNotenblattString = "";
                         var klassenOhneLeistungsdatensätzeString = "";
 
-                        foreach (var klasse in alleKlassenVerschiedenenKlassen)
+                        foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
                         {
                             // Wenn die Klasse zur Eingabe passt ...
 
@@ -761,8 +798,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                             z++;
                             zeile.TrimEnd(',');
                         }
-                                                                        
-                        string o = "/* " + zeile;
+
+                        zeile = zeile.TrimEnd(' ');
+                        string o = "/* " + zeile.TrimEnd(',');
                         Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
 
                     } while (z < interessierendeKlassen.Count); 
@@ -773,7 +811,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 {
                     Console.WriteLine("");
                     Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt und ein Zeugnisformular angelegt ist.");
-                    return alleKlassenVerschiedenenKlassen;
+                    return alleVerschiedenenUntisKlassenMitNoten;
                 }
             }
             catch (Exception ex)

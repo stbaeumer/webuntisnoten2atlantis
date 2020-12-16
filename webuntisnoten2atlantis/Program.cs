@@ -53,7 +53,7 @@ namespace webuntisnoten2atlantis
 
                     do
                     {
-                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleAtlantisLeistungen);
+                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen);
                         
                         webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen
                                                      where interessierendeKlassen.Contains(a.Klasse)
@@ -68,7 +68,12 @@ namespace webuntisnoten2atlantis
                                                         where interessierendeKlassen.Contains(a.Klasse)
                                                         select a));
 
-                    } while (webuntisLeistungen.Count > 0 ? false : true);
+                        if (webuntisLeistungen.Count == 0)
+                        {
+                            Console.WriteLine("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
+                        }
+
+                    } while (webuntisLeistungen.Count <= 0);
 
                     // Korrekturen
                                        
