@@ -26,7 +26,7 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
 
-                Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201213");
+                Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201216");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" Webuntisnoten2atlantis erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge- ");
@@ -98,7 +98,7 @@ namespace webuntisnoten2atlantis
                     Console.WriteLine("");
                     Console.WriteLine("Weitere Klassen auswählen mit ENTER. Programm beenden mit ESC.");
 
-                } while (Console.ReadKey().Key == ConsoleKey.Enter ? true : false);
+                } while (Console.ReadKey().Key == ConsoleKey.Enter);
             }
             catch (Exception ex)
             {
@@ -141,28 +141,32 @@ namespace webuntisnoten2atlantis
 
         private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv)
         {
-            Console.WriteLine("Die Datei " + inputAbwesenheitenCsv + " existiert nicht oder ist nicht von heute.");
-            Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-            Console.WriteLine(" 1. Administration > Export klicken");
-            Console.WriteLine(" 2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-            Console.WriteLine(" 4. !!! Zeitraum begrenzen bis zur Zeugniskonferenz !!!");
-            Console.WriteLine(" 5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
-            Console.WriteLine("ENTER beendet das Programm.");
+            Console.WriteLine("");
+            Console.WriteLine("  Die Datei " + inputAbwesenheitenCsv + " existiert nicht oder ist nicht von heute.");
+            Console.WriteLine("  Exportieren Sie die Datei frisch aus dem Digitalen Klassenbuch, indem Sie als Administrator:");
+            Console.WriteLine("   1. Administration > Export klicken");
+            Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+            Console.WriteLine("   4. !!! Zeitraum begrenzen bis (drei Tage vor der) Zeugniskonferenz !!!");
+            Console.WriteLine("   5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("");
+            Console.WriteLine(" ENTER beendet das Programm.");
             Console.ReadKey();
             Environment.Exit(0);
         }
 
         private static void RenderNotenexportCsv(string inputNotenCsv)
         {
-            Console.WriteLine("Die Datei " + inputNotenCsv + " existiert nicht oder ist nicht von heute.");
-            Console.WriteLine("Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-            Console.WriteLine(" 1. Klassenbuch > Berichte klicken");
-            Console.WriteLine(" 2. Alle Klassen auswählen");
-            Console.WriteLine(" 3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-            Console.WriteLine(" 4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-            Console.WriteLine(" 5. Hinter \"Noten pro Schüler\" auf CSV klicken.");
-            Console.WriteLine(" 6. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
-            Console.WriteLine("ENTER beendet das Programm.");
+            Console.WriteLine("");
+            Console.WriteLine("  Die Datei " + inputNotenCsv + " existiert nicht oder ist nicht von heute.");
+            Console.WriteLine("  Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
+            Console.WriteLine("   1. Klassenbuch > Berichte klicken");
+            Console.WriteLine("   2. Alle Klassen auswählen");
+            Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+            Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+            Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken.");
+            Console.WriteLine("   6. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("");
+            Console.WriteLine("  ENTER beendet das Programm.");
             Console.ReadKey();
             Environment.Exit(0);
         }
