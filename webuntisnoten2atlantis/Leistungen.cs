@@ -573,28 +573,84 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen)
         {
+            int auswahl;
+
+            do
+            {
+                Console.WriteLine("Bitte auswählen:");
+                Console.WriteLine("");
+                Console.WriteLine(" 1. Alle Klassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 2. Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 3. Alle Teilzeitklassen");
+                Console.WriteLine(" 4. Bestimmte Klassen");
+                Console.WriteLine(" 5. Etwas anderes");
+                Console.WriteLine(" oder ENTER, um den Vorschlag zu akzeptieren.");
+                Console.Write("Ihre Auswahl " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 6 ? "[ " + Properties.Settings.Default.Auswahl + "] :" : ": "));
+
+                var key = Console.ReadKey();
+                Console.WriteLine("");
+
+                if (int.TryParse(key.KeyChar.ToString(), out auswahl))
+                {
+                    if (Convert.ToInt32(key.KeyChar.ToString()) > 0 && 5 < Convert.ToInt32(key.KeyChar.ToString()))
+                    {
+                        Properties.Settings.Default.Auswahl = Convert.ToInt32(key.KeyChar.ToString());
+                        Properties.Settings.Default.Save();
+                        auswahl = Convert.ToInt32(key.KeyChar.ToString());
+                    }
+                }
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    auswahl = Properties.Settings.Default.Auswahl;
+                }
+            } while (auswahl < 0 || auswahl > 5);
+
+
             List<string> alleVerschiedenenUntisKlassenMitNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
-
             List<string> alleVerschiedenenAtlantisKlassen = (from k in this select k.Klasse).Distinct().ToList();
-
             List<string> interessierendeKlassen = new List<string>();
 
-            try
+            foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
             {
-                Console.WriteLine("");
-                Console.WriteLine("Sie müssen nun eine Auswahl der gewünschte(n) Klasse(n) treffen:.");
-                Console.WriteLine("");
-                Console.WriteLine("     '*'               gibt alle Noten aus allen Klassen mit Notenblatt aus.");
-                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0] + "'          gibt alle Noten der Klasse " + alleVerschiedenenUntisKlassenMitNoten[0] + " aus.");
-                if (alleVerschiedenenUntisKlassenMitNoten.Count > 1)
+                if (auswahl == 1)
                 {
-                    Console.WriteLine("     '" + (alleVerschiedenenUntisKlassenMitNoten[0] + "," + alleVerschiedenenUntisKlassenMitNoten[1] + "'").PadRight(16) + " gibt alle Noten beider Klassen aus.");
-                }                
-                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + "'               gibt die Noten aller Klassen aus, die mit '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + "' beginnen.");
-                Console.WriteLine("     '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0, 1) + ",G'             gibt aller Klassen aus, die mit '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0, 1) + "' oder 'G' beginnen.");
-                Console.WriteLine("");
+                    interessierendeKlassen.Add(klasse);
+                }
+                if (auswahl == 2)
+                {
+                    if ((from a in this where a.Klasse == klasse where !a.Anlage.StartsWith("A") select a).Any())
+                    {
+                        interessierendeKlassen.Add(klasse);
+                    }
+                }
+                if (auswahl == 3)
+                {
+                    if ((from a in this where a.Klasse == klasse where a.Anlage.StartsWith("A") select a).Any())
+                    {
+                        interessierendeKlassen.Add(klasse);
+                    }
+                }
+            }
+
+            if (auswahl == 4)
+            {
+                interessierendeKlassen.AddRange(KlassenAuswählen(alleVerschiedenenUntisKlassenMitNoten));
+            }
+
+            AusgabeSchreiben(interessierendeKlassen);
+
+            return alleVerschiedenenUntisKlassenMitNoten;
+        }
+
+        private List<string> KlassenAuswählen(List<string> alleVerschiedenenUntisKlassenMitNoten)
+        {
+            List<string> klassenliste = new List<string>();
+            string klassenlisteString = "";
+
+            do
+            {
                 Console.Write(" Wählen Sie  " + (Properties.Settings.Default.Klassenwahl == "" ? " : " : "[ " + Properties.Settings.Default.Klassenwahl + " ] : "));
-                
+
                 string eingabe = Console.ReadLine().ToUpper();
 
                 if (eingabe == "")
@@ -602,222 +658,62 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                     eingabe = Properties.Settings.Default.Klassenwahl;
                 }
 
-                Properties.Settings.Default.Klassenwahl = "";
+                foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
+                {
+                    foreach (var a in eingabe.ToUpper().Split(','))
+                    {
+                        if (a.Length == 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 1)).FirstOrDefault())
+                        {
+                            klassenliste.Add(klasse);
+                            klassenlisteString += ",";
+                        }
+                        else
+                        {
+                            if ((from aa in this where aa.Klasse == klasse select aa.Klasse).Any())
+                            {
+                                klassenliste.Add(klasse);
+                                klassenlisteString += ",";
+                            }                            
+                        }
+                    }
+                }
+
+                Properties.Settings.Default.Klassenwahl = klassenlisteString.TrimEnd(',');
                 Properties.Settings.Default.Save();
                 Console.WriteLine("");
 
-                if (eingabe != "")
-                {
-                    if (eingabe == "*")
-                    {
-                        interessierendeKlassen.AddRange(alleVerschiedenenUntisKlassenMitNoten);
-                        Properties.Settings.Default.Klassenwahl = "*";
-                        Properties.Settings.Default.Save();
-                        if (alleVerschiedenenUntisKlassenMitNoten.Count > 0)
-                        {
-                            string alleKlassenString = "";
+            } while (klassenliste.Count == 0);
+            return klassenliste;
+        }
 
-                            foreach (var iK in interessierendeKlassen)
-                            {
-                                alleKlassenString += iK + ",";
-                            }
+        private void AusgabeSchreiben(List<string> interessierendeKlassen)
+        {
+            int z = 0;
 
-                            Console.WriteLine("Insgesamt ausgewählte Klassen (in denen auch Webuntis-Gesamtnoten angelegt sind): " + interessierendeKlassen.Count);
-                            Console.WriteLine("Die ausgewählten Klassen sind: " + alleKlassenString.TrimEnd(',') );
-
-                            var anlagen = "";
-
-                            foreach (var item in interessierendeKlassen)
-                            {
-                                foreach (var an in (from a in this where a.Klasse == item where a.Anlage != null select a.Anlage).ToList())
-                                {
-                                    if (!anlagen.Contains(an.Substring(0,3)))
-                                    {
-                                        anlagen += an.Substring(0,3) + ",";
-                                    }
-                                } 
-                            }
-
-                            Console.WriteLine("");
-                            Console.WriteLine("Sie können nun die Verarbeitung mit ENTER starten oder die Anlagen einschränken");
-                            Console.WriteLine("");
-
-                            var iKNeu = new List<string>();
-
-                            do
-                            {
-                                Console.Write(" Wählen Sie. '*' wählt alle Anlagen aus. 'B,C,D' ist auch möglich.  " + (Properties.Settings.Default.Anlagen == "" ? "[ " + anlagen.TrimEnd(',') + " ] : " : "[ " + Properties.Settings.Default.Anlagen.TrimEnd(',') + " ] : "));
-
-                                var eingabeAnlagen = Console.ReadLine();
-
-                                if (eingabeAnlagen == "")
-                                {
-                                    if (anlagen.TrimEnd(',') != "")
-                                    {
-                                        eingabeAnlagen = anlagen.TrimEnd(',');
-                                    }
-                                }
-
-                                if (eingabeAnlagen != "")
-                                {   
-                                    alleKlassenString = "";
-
-                                    foreach (var klasse in interessierendeKlassen)
-                                    {
-                                        foreach (var a in eingabeAnlagen.ToUpper().Split(','))
-                                        {
-                                            if (eingabeAnlagen == "*")
-                                            {
-                                                iKNeu.Add(klasse);
-                                            }
-                                            else
-                                            {
-                                                if (a.Length == 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 1)).FirstOrDefault())
-                                                {
-                                                    iKNeu.Add(klasse);
-                                                }
-                                                if (a.Length > 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 3)).FirstOrDefault())
-                                                {
-                                                    iKNeu.Add(klasse);
-                                                }
-                                            }                                            
-                                        }                                        
-                                    }
-
-                                    if (iKNeu.Count > 0)
-                                    {
-                                        interessierendeKlassen = new List<string>();
-                                        interessierendeKlassen = iKNeu;
-                                        Console.WriteLine("");
-                                        Console.WriteLine("Insgesamt ausgewählte Klassen (in denen auch Noten angelegt sind): " + interessierendeKlassen.Count + " ...");
-                                        Console.WriteLine("Die ausgewählten Klassen sind: " + alleKlassenString.TrimEnd(','));
-                                        Console.WriteLine("Die Verarbeitung startet ...");
-                                        Properties.Settings.Default.Anlagen = anlagen.TrimEnd(',');
-                                        Properties.Settings.Default.Save();
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("");
-                                        Console.WriteLine("Es konnte keine einzige Klasse zu Ihrer Auswahl '" + eingabeAnlagen.ToUpper() + "' zugeordnet werden. Wiederholen Sie ...");
-                                        Console.WriteLine("");
-                                    }                                    
-                                }
-                            } while (iKNeu.Count == 0);                            
-                        }
-                        else
-                        {
-                            Console.WriteLine("Sie wollen die Leistungsdaten aller Klassen auslesen, aber keine einzige Klasse hat Leistungsdaten.");
-                        }
-                    }
-                    else
-                    {
-                        var interessierendeKlassenString = "";
-                        var klassenOhneNotenblattString = "";
-                        var klassenOhneLeistungsdatensätzeString = "";
-
-                        foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
-                        {
-                            // Wenn die Klasse zur Eingabe passt ...
-
-                            if ((from k in eingabe.Split(',') where klasse.StartsWith(k) select k).FirstOrDefault() != null)
-                            {
-                                // ... und auch Noten in Webuntis erfasst sind:
-
-                                if ((from w in alleWebuntisLeistungen where w.Klasse == klasse select w).Any())
-                                {
-                                    interessierendeKlassen.Add(klasse);
-                                    interessierendeKlassenString += klasse + ",";
-                                    Properties.Settings.Default.Klassenwahl += klasse + ",";
-                                    Properties.Settings.Default.Save();
-                                }
-                                else
-                                {
-                                    klassenOhneLeistungsdatensätzeString += klasse + ",";
-                                }
-                            }
-                        }
-
-                        Properties.Settings.Default.Klassenwahl = Properties.Settings.Default.Klassenwahl.TrimEnd(',');
-                        Properties.Settings.Default.Save();
-
-                        if (klassenOhneLeistungsdatensätzeString != "")
-                        {
-                            Global.Output.Add("/* [!] Folgende Klassen passen zu Ihrem Suchmuster. Allerdings liegen in Webuntis keine Leistungsdatensätze vor:\n    " + klassenOhneLeistungsdatensätzeString.TrimEnd(',') + "\n*/");
-                        }
-
-                        foreach (var w in (from w in alleWebuntisLeistungen select w.Klasse).Distinct())
-                        {
-                            if (!(from x in this where x.Klasse == w select x).Any())
-                            {
-                                if ((from i in interessierendeKlassen where i == w select i).Any())
-                                {
-                                    klassenOhneNotenblattString += w + ",";
-                                }
-                            }
-                        }
-
-                        if (klassenOhneNotenblattString != "")
-                        {
-                            Global.Output.Add("/* [!] Folgende Klassen passen zu Ihrem Suchmuster. Allerdings ist kein Notenblatt angelegt in Atlantis zugerdnet:\n    " + klassenOhneNotenblattString.TrimEnd(',') + "\n */");
-                        }
-
-                        if (interessierendeKlassenString == "")
-                        {
-                            Console.WriteLine("Es ist keine einzige Klasse bereit zur Verarbeitung. Ist kein Notenblatt angelegt? Ist der Klassenname korrekt?");
-                        }
-                        else
-                        {
-                            if (Properties.Settings.Default.Klassenwahl == "*")
-                            {
-                        
-                            }
-                            else
-                            {
-                                Console.WriteLine("Die Verarbeitung startet für ausgewählte Klasse" + (interessierendeKlassen.Count > 1 ? "n " : " ") + interessierendeKlassenString.TrimEnd(',') + " ...");
-                            }                            
-                        }
-                        Console.WriteLine("");
-                    }
-
-                    int z = 0;
-
-                    do
-                    {
-                        var zeile = "";
-
-                        try
-                        {
-                            while ((zeile + interessierendeKlassen[z] + ", ").Length <= 78)
-                            {
-                                zeile += interessierendeKlassen[z] + ", ";
-                                z++;
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            z++;
-                            zeile.TrimEnd(',');
-                        }
-
-                        zeile = zeile.TrimEnd(' ');
-                        string o = "/* " + zeile.TrimEnd(',');
-                        Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
-
-                    } while (z < interessierendeKlassen.Count); 
-                    
-                    return interessierendeKlassen;
-                }
-                else
-                {
-                    Console.WriteLine("");
-                    Console.WriteLine("Ihre Auswahl: Alle " + (from a in this select a.Klasse).Distinct().Count().ToString().PadLeft(2) + " Klassen, in denen ein Notenblatt und ein Zeugnisformular angelegt ist.");
-                    return alleVerschiedenenUntisKlassenMitNoten;
-                }
-            }
-            catch (Exception ex)
+            do
             {
-                throw ex;
-            }
+                var zeile = "";
+
+                try
+                {
+                    while ((zeile + interessierendeKlassen[z] + ", ").Length <= 78)
+                    {
+                        zeile += interessierendeKlassen[z] + ", ";
+                        z++;
+                    }
+                }
+                catch (Exception)
+                {
+                    z++;
+                    zeile.TrimEnd(',');
+                }
+
+                zeile = zeile.TrimEnd(' ');
+
+                string o = "/* " + zeile.TrimEnd(',');
+                Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+
+            } while (z < interessierendeKlassen.Count);
         }
 
         private void UpdateLeistung(string message, string updateQuery)
