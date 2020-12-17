@@ -96,9 +96,9 @@ namespace webuntisnoten2atlantis
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 
                     Console.WriteLine("");
-                    Console.WriteLine("Weitere Klassen auswählen mit ENTER. Programm beenden mit ESC.");
+                    Console.WriteLine("Weitere Klassen auswählen mit ESC. Programm beenden mit Enter.");
 
-                } while (Console.ReadKey().Key == ConsoleKey.Enter);
+                } while (Console.ReadKey().Key == ConsoleKey.Escape);
             }
             catch (Exception ex)
             {

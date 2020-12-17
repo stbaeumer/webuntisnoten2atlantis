@@ -577,39 +577,46 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
             do
             {
-                Console.WriteLine("Bitte auswählen:");
+                Console.WriteLine("");
+                Console.WriteLine(" Bitte auswählen:");
                 Console.WriteLine("");
                 Console.WriteLine(" 1. Alle Klassen (in denen auch Gesamtnoten eingetragen sind)");
                 Console.WriteLine(" 2. Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
                 Console.WriteLine(" 3. Alle Teilzeitklassen");
                 Console.WriteLine(" 4. Bestimmte Klassen");
-                Console.WriteLine(" 5. Etwas anderes");
-                Console.WriteLine(" oder ENTER, um den Vorschlag zu akzeptieren.");
-                Console.Write("Ihre Auswahl " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 6 ? "[ " + Properties.Settings.Default.Auswahl + "] :" : ": "));
-
-                var key = Console.ReadKey();
+                
                 Console.WriteLine("");
+                Console.Write(" Ihre Auswahl " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 5 ? "[ " + Properties.Settings.Default.Auswahl + " ] : " : ": "));
+                
+                var key = Console.ReadKey();
+                
 
                 if (int.TryParse(key.KeyChar.ToString(), out auswahl))
                 {
-                    if (Convert.ToInt32(key.KeyChar.ToString()) > 0 && 5 < Convert.ToInt32(key.KeyChar.ToString()))
+                    if (Convert.ToInt32(key.KeyChar.ToString()) > 0 && Convert.ToInt32(key.KeyChar.ToString()) < 5)
                     {
                         Properties.Settings.Default.Auswahl = Convert.ToInt32(key.KeyChar.ToString());
                         Properties.Settings.Default.Save();
                         auswahl = Convert.ToInt32(key.KeyChar.ToString());
+                        //Console.WriteLine(auswahl);
                     }
                 }
                 if (key.Key == ConsoleKey.Enter)
                 {
                     auswahl = Properties.Settings.Default.Auswahl;
                 }
-            } while (auswahl < 0 || auswahl > 5);
-
+                if (auswahl < 1 || auswahl > 4)
+                {                    
+                    Console.WriteLine("");
+                    Console.Write(" ... Ungültige Auswahl! ");
+                    Console.WriteLine("");
+                }
+            } while (auswahl < 1 || auswahl > 4);
 
             List<string> alleVerschiedenenUntisKlassenMitNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
             List<string> alleVerschiedenenAtlantisKlassen = (from k in this select k.Klasse).Distinct().ToList();
             List<string> interessierendeKlassen = new List<string>();
-
+                        
             foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
             {
                 if (auswahl == 1)
@@ -639,50 +646,57 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
             AusgabeSchreiben(interessierendeKlassen);
 
-            return alleVerschiedenenUntisKlassenMitNoten;
+            return interessierendeKlassen;
         }
 
         private List<string> KlassenAuswählen(List<string> alleVerschiedenenUntisKlassenMitNoten)
         {
             List<string> klassenliste = new List<string>();
             string klassenlisteString = "";
+            string eingabestring = "";
 
             do
             {
-                Console.Write(" Wählen Sie  " + (Properties.Settings.Default.Klassenwahl == "" ? " : " : "[ " + Properties.Settings.Default.Klassenwahl + " ] : "));
+                Console.WriteLine("");
+                Console.WriteLine("");
+                Console.WriteLine("     Geben Sie einen oder mehrere Klassennamen oder auch deren Anfangsbuchstaben ein.");
+                Console.WriteLine("");
+                Console.Write("     Wählen Sie" + (Properties.Settings.Default.Klassenwahl == "" ? " : " : " [ " + Properties.Settings.Default.Klassenwahl + " ] : "));
 
-                string eingabe = Console.ReadLine().ToUpper();
+                string eingaben = Console.ReadLine().ToUpper();
 
-                if (eingabe == "")
+                if (eingaben == "")
                 {
-                    eingabe = Properties.Settings.Default.Klassenwahl;
+                    eingaben = Properties.Settings.Default.Klassenwahl;
                 }
-
-                foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
+         
+                foreach (var eingabe in eingaben.ToUpper().Split(','))
                 {
-                    foreach (var a in eingabe.ToUpper().Split(','))
+                    foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
                     {
-                        if (a.Length == 1 && a == (from aa in this where aa.Klasse == klasse select aa.Anlage.Substring(0, 1)).FirstOrDefault())
-                        {
+                        if (klasse.StartsWith(eingabe))
+                        {                            
                             klassenliste.Add(klasse);
-                            klassenlisteString += ",";
-                        }
-                        else
-                        {
-                            if ((from aa in this where aa.Klasse == klasse select aa.Klasse).Any())
+                            klassenlisteString += klasse + ",";
+                            if (!eingabestring.Contains("," +eingabe) && !eingabestring.StartsWith(eingabe))
                             {
-                                klassenliste.Add(klasse);
-                                klassenlisteString += ",";
+                                eingabestring += eingabe + ",";
                             }                            
                         }
-                    }
+                    }                    
                 }
-
-                Properties.Settings.Default.Klassenwahl = klassenlisteString.TrimEnd(',');
-                Properties.Settings.Default.Save();
+                                
                 Console.WriteLine("");
 
+                if (klassenliste.Count == 0)
+                {
+                    Console.Write(" ... Ungültige Auswahl ! ");
+                }
             } while (klassenliste.Count == 0);
+
+            Properties.Settings.Default.Klassenwahl = eingabestring.TrimEnd(',');
+            Properties.Settings.Default.Save();
+
             return klassenliste;
         }
 
