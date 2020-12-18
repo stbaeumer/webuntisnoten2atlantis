@@ -83,7 +83,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 8) ? "JZ" : "HZ";
+                var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 Console.Write(("Leistungsdaten aus Atlantis (" + typ + ")").PadRight(71, '.'));
 
@@ -107,6 +107,7 @@ DBA.schue_sj.vorgang_akt_satz_jn AS SchuelerAktivInDieserKlasse,
 (substr(schue_sj.s_berufs_nr,4,5)) AS Fachklasse,
 DBA.klasse.s_klasse_art AS Anlage,
 DBA.noten_kopf.s_typ_nok AS HzJz,
+DBA.noten_kopf.dat_notenkonferenz AS Konferenzdatum,
 DBA.klasse.klasse AS Klasse
 FROM(((DBA.noten_kopf JOIN DBA.schue_sj ON DBA.noten_kopf.pj_id = DBA.schue_sj.pj_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id ) JOIN DBA.schueler ON DBA.noten_einzel.pu_id = DBA.schueler.pu_id
 WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_typ_vorgang = 'A' AND (s_typ_nok = 'JZ' OR s_typ_nok = 'HZ') ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
@@ -119,7 +120,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                         if (typ == theRow["HzJz"].ToString())
                         {
                             DateTime austrittsdatum = theRow["ausgetreten"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["ausgetreten"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-
+                            
                             Leistung leistung = new Leistung();
 
                             try
@@ -140,6 +141,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                     leistung.HzJz = theRow["HzJz"].ToString();
                                     leistung.Anlage = theRow["Anlage"].ToString();
                                     leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
+                                    leistung.Konferenzdatum = theRow["Konferenzdatum"].ToString().Length < 3 ? new DateTime() : (DateTime.ParseExact(theRow["Konferenzdatum"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).AddHours(15);
                                     leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";                                    
                                 }
                             }
@@ -578,12 +580,12 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             do
             {
                 Console.WriteLine("");
-                Console.WriteLine(" Bitte (in denen auch Gesamtnoten eingetragen sind) auswählen:");
+                Console.WriteLine(" Bitte auswählen:");
                 Console.WriteLine("");
-                Console.WriteLine(" 1. Alle Klassen");
-                Console.WriteLine(" 2. Alle Vollzeitklassen");
-                Console.WriteLine(" 3. Alle Teilzeitklassen");
-                Console.WriteLine(" 4. Bestimmte Klassen");
+                Console.WriteLine(" 1. Alle Klassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 2. Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 3. Alle Teilzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 4. Bestimmte Klassen (in denen auch Gesamtnoten eingetragen sind)");
                 
                 Console.WriteLine("");
                 Console.Write(" Ihre Auswahl " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 5 ? "[ " + Properties.Settings.Default.Auswahl + " ] : " : ": "));
@@ -644,9 +646,70 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 interessierendeKlassen.AddRange(KlassenAuswählen(alleVerschiedenenUntisKlassenMitNoten));
             }
 
-            AusgabeSchreiben(interessierendeKlassen);
+            interessierendeKlassen = ZeugnisdatumPrüfen(interessierendeKlassen);
+
+            AusgabeSchreiben("Ausgewertete Klassen: ", interessierendeKlassen);
 
             return interessierendeKlassen;
+        }
+
+        private List<string> ZeugnisdatumPrüfen(List<string> interessierendeKlassen)
+        {
+            List<string> interessierendeKlassenGefiltert = new List<string>();
+
+            List<string> klassenMitZurückliegenderZeugniskonferenz = new List<string>();
+
+            foreach (var klasse in interessierendeKlassen)
+            {
+                foreach (var a in (from t in this where t.Klasse == klasse select t).ToList())
+                {
+                    // Wenn die Notenkonferenz -je nach Halbjahr ...
+
+                    if (a != null && a.HzJz == "HZ")
+                    {
+                        // ... in der Vergangenheit liegen
+                        if (a.Konferenzdatum > new DateTime((DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1), 08, 01) && a.Konferenzdatum < DateTime.Now)
+                        {
+                            // ... wird die Leistung nicht berücksichtigt
+
+                            if (!(from k in klassenMitZurückliegenderZeugniskonferenz where k.StartsWith(klasse) select k).Any())
+                            {
+                                klassenMitZurückliegenderZeugniskonferenz.Add(klasse + "(" + a.Konferenzdatum.ToShortDateString() + ")");
+                            }
+                        }
+                        else
+                        {
+                            if (!(from k in interessierendeKlassenGefiltert where k == klasse select k).Any())
+                            {
+                                interessierendeKlassenGefiltert.Add(klasse);
+                            }                            
+                        }
+                    }
+
+                    if (a != null && a.HzJz == "JZ")
+                    {
+                        // ... in der Vergangenheit liegen
+                        if (a.Konferenzdatum > new DateTime((DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 : DateTime.Now.Year), 02, 01) && a.Konferenzdatum < DateTime.Now)
+                        {
+                            // ... wird die Leistung nicht berücksichtigt
+                            if (!(from k in klassenMitZurückliegenderZeugniskonferenz where k.StartsWith(klasse) select k).Any())
+                            {
+                                klassenMitZurückliegenderZeugniskonferenz.Add(klasse+"("+a.Konferenzdatum.ToShortDateString()+")");
+                            }
+                        }
+                        else
+                        {
+                            interessierendeKlassenGefiltert.Add(klasse);
+                        }
+                    }
+                }
+            }
+                        
+            if (klassenMitZurückliegenderZeugniskonferenz.Count > 0)
+            {
+                AusgabeSchreiben("Folgende Klassen passen zu Ihrem Suchmuster, werden aber wegen der zurückliegenden Notenkonferenz nicht angefasst:", klassenMitZurückliegenderZeugniskonferenz);
+            }
+            return interessierendeKlassenGefiltert;
         }
 
         private List<string> KlassenAuswählen(List<string> alleVerschiedenenUntisKlassenMitNoten)
@@ -654,16 +717,17 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             List<string> klassenliste = new List<string>();
             string klassenlisteString = "";
             string eingabestring = "";
+            string eingaben = "";
 
             do
             {
                 Console.WriteLine("");
                 Console.WriteLine("");
-                Console.WriteLine("     Geben Sie einen oder mehrere Klassennamen oder auch deren Anfangsbuchstaben ein.");
+                Console.WriteLine("     Geben Sie einen oder mehrere Klassennamen oder auch nur deren Anfangsbuchstaben ein.");
                 Console.WriteLine("");
                 Console.Write("     Wählen Sie" + (Properties.Settings.Default.Klassenwahl == "" ? " : " : " [ " + Properties.Settings.Default.Klassenwahl + " ] : "));
 
-                string eingaben = Console.ReadLine().ToUpper();
+                eingaben = Console.ReadLine().ToUpper();
 
                 if (eingaben == "")
                 {
@@ -690,7 +754,11 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                 if (klassenliste.Count == 0)
                 {
-                    Console.Write(" ... Ungültige Auswahl ! ");
+                    Console.WriteLine("      [!] Ihr Suchkriterium '" + eingaben + "' passt auf keine einzige Klasse.");
+                    Console.WriteLine("          Beachten Sie, dass nur Klassen gewählt werden können, für die Gesamtnoten existieren.");
+                    Console.WriteLine("          Gültige Eingaben können sein: '" + alleVerschiedenenUntisKlassenMitNoten[0] + "' " + (alleVerschiedenenUntisKlassenMitNoten.Count > 1 ? "oder '" + alleVerschiedenenUntisKlassenMitNoten[0] + "," + alleVerschiedenenUntisKlassenMitNoten[1] : "") +"' oder '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + ",G'");
+                    Console.WriteLine("          Wählbare Klassen sind:");
+                    WählbareKlassen(alleVerschiedenenUntisKlassenMitNoten);
                 }
             } while (klassenliste.Count == 0);
 
@@ -700,7 +768,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             return klassenliste;
         }
 
-        private void AusgabeSchreiben(List<string> interessierendeKlassen)
+        private void WählbareKlassen(List<string> alleVerschiedenenUntisKlassenMitNoten)
         {
             int z = 0;
 
@@ -710,9 +778,68 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                 try
                 {
-                    while ((zeile + interessierendeKlassen[z] + ", ").Length <= 78)
+                    while ((zeile + alleVerschiedenenUntisKlassenMitNoten[z] + ", ").Length <= 78)
                     {
-                        zeile += interessierendeKlassen[z] + ", ";
+                        zeile += alleVerschiedenenUntisKlassenMitNoten[z] + ", ";
+                        z++;
+                    }
+                }
+                catch (Exception)
+                {
+                    z++;
+                    zeile.TrimEnd(',');
+                }
+
+                zeile = "          " + zeile.TrimEnd(' ');
+
+                Console.WriteLine(zeile);
+
+            } while (z < alleVerschiedenenUntisKlassenMitNoten.Count);
+        }
+
+        private void AusgabeSchreiben(string text, List<string> klassen)
+        {
+            Global.Output.Add("");
+            int z = 0;
+
+            do
+            {
+                var zeile = "";
+                
+                try
+                {
+                    while ((zeile + text.Split(' ')[z] + ", ").Length <= 78)
+                    {
+                        zeile += text.Split(' ')[z] + " ";
+                        z++;
+                    }
+                }
+                catch (Exception)
+                {
+                    z++;
+                    zeile.TrimEnd(',');
+                }
+
+                zeile = zeile.TrimEnd(' ');
+
+                string o = "/* " + zeile.TrimEnd(' ');
+                Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+
+            } while (z < text.Split(' ').Count());
+
+
+
+            z = 0;
+            
+            do
+            {
+                var zeile = " ";                
+
+                try
+                {
+                    while ((zeile + klassen[z] + ", ").Length <= 78)
+                    {
+                        zeile += klassen[z] + ", ";
                         z++;
                     }
                 }
@@ -727,7 +854,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 string o = "/* " + zeile.TrimEnd(',');
                 Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
 
-            } while (z < interessierendeKlassen.Count);
+            } while (z < klassen.Count);
         }
 
         private void UpdateLeistung(string message, string updateQuery)

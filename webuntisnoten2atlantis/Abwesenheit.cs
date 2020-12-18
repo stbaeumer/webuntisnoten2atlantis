@@ -11,5 +11,6 @@ namespace webuntisnoten2atlantis
         public double StundenAbwesendUnentschuldigt { get; internal set; }
         public int StudentId { get; internal set; }
         public string Zeugnisart { get; internal set; }
+        public string HzJz { get; internal set; }
     }
 }

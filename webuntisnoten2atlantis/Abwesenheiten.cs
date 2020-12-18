@@ -58,6 +58,8 @@ namespace webuntisnoten2atlantis
             {
                 Console.Write("Abwesenheiten aus Atlantis ".PadRight(71, '.'));
 
+                var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
+
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
@@ -68,6 +70,7 @@ DBA.schue_sj.pu_id AS StudentId,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
 DBA.noten_kopf.nok_id AS NotenkopfId,
+DBA.noten_kopf.s_typ_nok AS HzJz,
 DBA.noten_kopf.s_art_nok AS Zeugnisart,
 DBA.noten_kopf.fehlstunden_anzahl AS Fehlstunden,
 DBA.noten_kopf.fehlstunden_ents_unents AS FehlstundenUnentschuldigt
@@ -84,15 +87,19 @@ DBA.schueler.name_2 ASC ", connection);
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        Abwesenheit abwesenheit = new Abwesenheit();
-                        abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
-                        abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
-                        abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
-                        abwesenheit.Klasse = theRow["Klasse"].ToString();
-                        abwesenheit.StundenAbwesend = theRow["Fehlstunden"].ToString() == "" ? 0 : Convert.ToDouble(theRow["Fehlstunden"]);
-                        abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
-                        abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
-                        this.Add(abwesenheit);
+                        if (typ == theRow["HzJz"].ToString())
+                        {
+                            Abwesenheit abwesenheit = new Abwesenheit();
+                            abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
+                            abwesenheit.NotenkopfId = Convert.ToInt32(theRow["NotenkopfId"]);
+                            abwesenheit.Name = theRow["Nachname"] + " " + theRow["Vorname"];
+                            abwesenheit.Klasse = theRow["Klasse"].ToString();
+                            abwesenheit.StundenAbwesend = theRow["Fehlstunden"].ToString() == "" ? 0 : Convert.ToDouble(theRow["Fehlstunden"]);
+                            abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
+                            abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
+                            abwesenheit.HzJz = theRow["HzJz"].ToString();
+                            this.Add(abwesenheit);
+                        }
                     }
                     connection.Close();
                 }

@@ -28,7 +28,7 @@ namespace webuntisnoten2atlantis
 
                 Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201216");
                 Console.WriteLine("=====================================================================================================");
-                Console.WriteLine(" Webuntisnoten2atlantis erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
+                Console.WriteLine(" *Webuntisnoten2atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge- ");
                 Console.WriteLine(" samtnote von Webuntis übergeben!");
                 Console.WriteLine("=====================================================================================================");
@@ -76,7 +76,7 @@ namespace webuntisnoten2atlantis
                     } while (webuntisLeistungen.Count <= 0);
 
                     // Korrekturen
-                                       
+                                        
                     webuntisLeistungen.ReligionKorrigieren();
                     webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
