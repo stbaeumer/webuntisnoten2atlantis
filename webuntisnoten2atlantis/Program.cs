@@ -147,7 +147,7 @@ namespace webuntisnoten2atlantis
             Console.WriteLine("   1. Administration > Export klicken");
             Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
             Console.WriteLine("   4. !!! Zeitraum begrenzen (z.B. bis drei Tage vor der) Zeugniskonferenz !!!");
-            Console.WriteLine("   5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("   5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern");
             Console.WriteLine("");
             Console.WriteLine(" ENTER beendet das Programm.");
             Console.ReadKey();
@@ -163,8 +163,8 @@ namespace webuntisnoten2atlantis
             Console.WriteLine("   2. Alle Klassen auswählen");
             Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
             Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-            Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken.");
-            Console.WriteLine("   6. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern.");
+            Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+            Console.WriteLine("   6. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern");
             Console.WriteLine("");
             Console.WriteLine("  ENTER beendet das Programm.");
             Console.ReadKey();
