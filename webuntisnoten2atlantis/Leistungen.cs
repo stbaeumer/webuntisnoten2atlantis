@@ -283,6 +283,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                             leistung.Klasse = aLeistung.Klasse;
                             leistung.Fach = aLeistung.Fach;
                             leistung.Gesamtnote = "-";
+                            leistung.Gesamtpunkte = "99";
                             leistung.Bemerkung = "";
                             leistung.Benutzer = "";
                             leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
@@ -553,6 +554,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                             if (a.Gesamtnote != "")
                             {
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                            
                                 if (a.EinheitNP == "P")
                                 {
                                     UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
@@ -582,6 +584,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 Console.WriteLine("");
                 Console.WriteLine(" Bitte auswählen:");
                 Console.WriteLine("");
+                Console.WriteLine(" 0. Verarbeitungshinweise zeigen");
                 Console.WriteLine(" 1. Alle Klassen (in denen auch Gesamtnoten eingetragen sind)");
                 Console.WriteLine(" 2. Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
                 Console.WriteLine(" 3. Alle Teilzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
@@ -611,6 +614,28 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                 {                    
                     Console.WriteLine("");
                     Console.Write(" ... Ungültige Auswahl! ");
+                    Console.WriteLine("");
+                }
+                if (auswahl == 0)
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine(" *********************************************************************************************");
+                    Console.WriteLine(" Verarbeitungshinweise");
+                    Console.WriteLine(" =====================");
+                    Console.WriteLine(" * Es wird automatisch (in Abhängigkeit vom aktuellen Datum) zwischen HZ und JZ entschieden.");
+                    Console.WriteLine("   Zwischen Februar und September werden Jahreszeugnisse (JZ) verarbeitet.");
+                    Console.WriteLine("   Ansonsten Halbjahreszeugnisse (HZ).");
+                    
+                    Console.WriteLine(" * Wenn einem Untis-Unterricht zwei Berufe zugeordnet sind und der Unterricht in Atlantis je");
+                    Console.WriteLine("   nach Beruf zu unterschiedlichen Fächern führt, dann sollte der Untis-Unterricht als Binde- ");
+                    Console.WriteLine("   strichfach angelegt werden. Beispiel: Untisfach ABC-DEF wird in Atlantis zu ABC oder DEF.");
+                    
+                    Console.WriteLine(" * ER und KR oder auch ER G1 usw. werden in Atlantis dem Fach REL zugeordnet");
+                    Console.WriteLine(" * Wenn ein Schüler Religion abgewählt hat, dann wird seine Note auf '-' gesetzt");
+                    Console.WriteLine(" * Noten in der Gym werden als Note und als Punkte gesetzt.");
+                    Console.WriteLine(" * Wenn bei Sprachen keine 1:1-Zuordnung möglich ist, dann wird versucht die Niveautufe");
+                    Console.WriteLine("   abzuschneiden.");
+                    Console.WriteLine(" *********************************************************************************************");
                     Console.WriteLine("");
                 }
             } while (auswahl < 1 || auswahl > 4);
