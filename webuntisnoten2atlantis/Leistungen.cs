@@ -578,10 +578,10 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             do
             {
                 Console.WriteLine("");
-                Console.WriteLine(" Bitte auswählen:");
+                Console.WriteLine(" Bitte (in denen auch Gesamtnoten eingetragen sind) auswählen:");
                 Console.WriteLine("");
-                Console.WriteLine(" 1. Alle Klassen (in denen auch Gesamtnoten eingetragen sind)");
-                Console.WriteLine(" 2. Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)");
+                Console.WriteLine(" 1. Alle Klassen");
+                Console.WriteLine(" 2. Alle Vollzeitklassen");
                 Console.WriteLine(" 3. Alle Teilzeitklassen");
                 Console.WriteLine(" 4. Bestimmte Klassen");
                 

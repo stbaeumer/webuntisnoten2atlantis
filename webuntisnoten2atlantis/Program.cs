@@ -114,39 +114,39 @@ namespace webuntisnoten2atlantis
         {
             if (!File.Exists(inputAbwesenheitenCsv))
             {
-                RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
+                RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv, "existiert nicht");
             }
             else
             {
                 if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
                 {
-                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv);
+                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv, "ist nicht aktuell von heute");
                 }
             }
 
             if (!File.Exists(inputNotenCsv))
             {
-                RenderNotenexportCsv(inputNotenCsv);
+                RenderNotenexportCsv(inputNotenCsv, "existiert nicht");
             }
             else
             {
                 if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
                 {
-                    RenderNotenexportCsv(inputNotenCsv);
+                    RenderNotenexportCsv(inputNotenCsv, "ist nicht aktuell von heute");
                 }
             }
 
             Console.WriteLine("");
         }
 
-        private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv)
+        private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv, string meldung)
         {
             Console.WriteLine("");
-            Console.WriteLine("  Die Datei " + inputAbwesenheitenCsv + " existiert nicht oder ist nicht von heute.");
+            Console.WriteLine("  Die Datei " + inputAbwesenheitenCsv + " " + meldung + ".");
             Console.WriteLine("  Exportieren Sie die Datei frisch aus dem Digitalen Klassenbuch, indem Sie als Administrator:");
             Console.WriteLine("   1. Administration > Export klicken");
             Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-            Console.WriteLine("   4. !!! Zeitraum begrenzen bis (drei Tage vor der) Zeugniskonferenz !!!");
+            Console.WriteLine("   4. !!! Zeitraum begrenzen (z.B. bis drei Tage vor der) Zeugniskonferenz !!!");
             Console.WriteLine("   5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern.");
             Console.WriteLine("");
             Console.WriteLine(" ENTER beendet das Programm.");
@@ -154,10 +154,10 @@ namespace webuntisnoten2atlantis
             Environment.Exit(0);
         }
 
-        private static void RenderNotenexportCsv(string inputNotenCsv)
+        private static void RenderNotenexportCsv(string inputNotenCsv, string meldung)
         {
             Console.WriteLine("");
-            Console.WriteLine("  Die Datei " + inputNotenCsv + " existiert nicht oder ist nicht von heute.");
+            Console.WriteLine("  Die Datei " + inputNotenCsv + " " + meldung + ".");
             Console.WriteLine("  Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
             Console.WriteLine("   1. Klassenbuch > Berichte klicken");
             Console.WriteLine("   2. Alle Klassen auswählen");
