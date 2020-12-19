@@ -19,6 +19,7 @@ namespace webuntisnoten2atlantis
             {
                 string inputNotenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
                 string inputAbwesenheitenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\AbsenceTimesTotal.csv";
+                string zeitstempel = DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
                 List<string> aktSj = new List<string>
                 {
@@ -35,11 +36,16 @@ namespace webuntisnoten2atlantis
 
                 CheckCsv(inputAbwesenheitenCsv, inputNotenCsv);
 
-                Leistungen alleWebuntisLeistungen = new Leistungen(inputNotenCsv);
-                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(inputAbwesenheitenCsv);
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);                
+                string pfad = SetPfad(zeitstempel, inputAbwesenheitenCsv, inputNotenCsv);
 
+                string outputSql = pfad + "\\webuntisnoten2atlantis_" + zeitstempel + ".SQL";
+
+
+                Leistungen alleWebuntisLeistungen = new Leistungen(pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
+                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
+                                
                 do
                 {                    
                     Leistungen webuntisLeistungen = new Leistungen();
@@ -48,8 +54,6 @@ namespace webuntisnoten2atlantis
                     Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
                     var interessierendeKlassen = new List<string>();
-
-                    string outputSql = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\webuntisnoten2atlantis_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".SQL";
 
                     do
                     {
@@ -98,7 +102,7 @@ namespace webuntisnoten2atlantis
                     Console.WriteLine("");
                     Console.WriteLine("Weitere Klassen auswählen mit ESC. Programm beenden mit Enter.");
 
-                } while (Console.ReadKey().Key == ConsoleKey.Escape);
+                } while (Console.ReadKey().Key == ConsoleKey.Escape);                
             }
             catch (Exception ex)
             {
@@ -109,7 +113,46 @@ namespace webuntisnoten2atlantis
                 Environment.Exit(0);
             }
         }
-        
+
+        private static string SetPfad(string zeitstempel, string inputNotenCsv, string inputAbwesenheitenCsv)
+        {
+            var pfad = @"\\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien";
+
+            if (Properties.Settings.Default.Pfad != "")
+            {
+                pfad = Properties.Settings.Default.Pfad;
+            }
+
+            if (!Directory.Exists(pfad))
+            {
+                do
+                {
+                    Console.WriteLine(" Wo sollen die Dateien gespeichert werden? [ " + pfad + " ]");
+                    pfad = Console.ReadLine();
+                    if (pfad == "")
+                    {
+                        pfad = @"\\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien";
+                    }
+                    try
+                    {
+                        Directory.CreateDirectory(pfad);
+                        Properties.Settings.Default.Pfad = pfad;
+                    }
+                    catch (Exception)
+                    {
+
+                        Console.WriteLine("Der Pfad " + pfad + " kann nicht angelegt werden.");
+                    }
+
+                } while (!Directory.Exists(pfad));
+            }
+
+            File.Copy(inputNotenCsv, pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
+            File.Copy(inputAbwesenheitenCsv, pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
+            
+            return pfad;
+        }
+
         private static void CheckCsv(string inputAbwesenheitenCsv, string inputNotenCsv)
         {
             if (!File.Exists(inputAbwesenheitenCsv))

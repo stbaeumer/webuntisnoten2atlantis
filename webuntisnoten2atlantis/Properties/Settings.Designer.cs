@@ -70,5 +70,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Auswahl"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Pfad {
+            get {
+                return ((string)(this["Pfad"]));
+            }
+            set {
+                this["Pfad"] = value;
+            }
+        }
     }
 }

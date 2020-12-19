@@ -63,7 +63,7 @@ namespace webuntisnoten2atlantis
                                 leistung.Fach = x[3];
                                 leistung.Bemerkung = x[6];
                                 Console.WriteLine("\n\n  [!] Achtung: In den Zeilen " + (i - 1) + "-" + i + " hat vermutlich die Lehrkraft eine Bemerkung mit einem Zeilen-");
-                                Console.WriteLine("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ...\n");
+                                Console.Write("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ... ");
                             }
 
                             if (x.Length == 4)
@@ -71,7 +71,8 @@ namespace webuntisnoten2atlantis
                                 leistung.Benutzer = x[1];
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
                                 leistung.Gesamtpunkte = x[3].Split('.')[0];
-                                leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);                                
+                                leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
+                                Console.WriteLine("ok\n\n");
                                 leistungen.Add(leistung);
                             }
 
