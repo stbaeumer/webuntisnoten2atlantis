@@ -411,13 +411,22 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                         if (w != null && w.Gesamtnote != "")
                         {
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+                            // Ein '-' in Religion wird nur dann gesetzt, wenn bereits andere Schüler eine Gesamtnote bekommen haben
 
-                            if (a.EinheitNP == "P")
+                            if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen 
+                                                                             where we.Klasse == w.Klasse                                                                              
+                                                                             where we.Fach == "REL" 
+                                                                             where (we.Gesamtnote != "" && we.Gesamtnote != "-")
+                                                                             select we).Count() == 0))
                             {
-                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+
+                                if (a.EinheitNP == "P")
+                                {
+                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                }
+                                i++;
                             }
-                            i++;
                         }                       
                     }
                 }
@@ -535,14 +544,23 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                         if (w != null)
                         {
-                            UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+                            // Ein '-' in Religion wird deleted, wenn kein anderer Schüler eine Gesamtnote bekommen haben
 
-                            if (a.EinheitNP == "P")
+                            if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen
+                                                                             where we.Klasse == w.Klasse
+                                                                             where we.Fach == "REL"
+                                                                             where (we.Gesamtnote != "" && we.Gesamtnote != "-")
+                                                                             select we).Count() == 0))
                             {
-                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
-                            }
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtnote + ">" + w.Gesamtnote + "|" + a.Name, "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
 
-                            i++;
+                                if (a.EinheitNP == "P")
+                                {
+                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                }
+
+                                i++;
+                            }   
                         }
                     }                    
                 }
@@ -582,6 +600,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                         {
                             if (a.Gesamtnote != "")
                             {
+
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
                             
                                 if (a.EinheitNP == "P")

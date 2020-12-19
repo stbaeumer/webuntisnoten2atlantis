@@ -41,8 +41,8 @@ namespace webuntisnoten2atlantis
                 string outputSql = pfad + "\\webuntisnoten2atlantis_" + zeitstempel + ".SQL";
 
 
-                Leistungen alleWebuntisLeistungen = new Leistungen(pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
-                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
+                Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");
+                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
                 Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
                                 
@@ -106,7 +106,7 @@ namespace webuntisnoten2atlantis
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Heiliger Bimbam! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
+                Console.WriteLine("Ooops! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
                 Console.WriteLine("");
                 Console.WriteLine(ex);
                 Console.ReadKey();
