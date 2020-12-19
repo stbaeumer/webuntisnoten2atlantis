@@ -40,7 +40,6 @@ namespace webuntisnoten2atlantis
 
                 string outputSql = pfad + "\\webuntisnoten2atlantis_" + zeitstempel + ".SQL";
 
-
                 Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
                 Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
@@ -100,7 +99,7 @@ namespace webuntisnoten2atlantis
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 
                     Console.WriteLine("");
-                    Console.WriteLine("Weitere Klassen auswählen mit ESC. Programm beenden mit Enter.");
+                    Console.WriteLine("Programm beenden mit Enter.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Escape);                
             }
@@ -147,9 +146,18 @@ namespace webuntisnoten2atlantis
                 } while (!Directory.Exists(pfad));
             }
 
+#if DEBUG
+            
             File.Copy(inputNotenCsv, pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
             File.Copy(inputAbwesenheitenCsv, pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
-            
+#else
+            File.Copy(inputNotenCsv, pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
+            File.Copy(inputAbwesenheitenCsv, pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
+#endif
+
+
+
+
             return pfad;
         }
 

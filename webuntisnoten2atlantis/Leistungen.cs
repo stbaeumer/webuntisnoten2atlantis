@@ -72,7 +72,7 @@ namespace webuntisnoten2atlantis
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
                                 leistung.Gesamtpunkte = x[3].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
-                                Console.WriteLine("ok\n\n");
+                                Console.WriteLine("ok\n");
                                 leistungen.Add(leistung);
                             }
 
@@ -164,7 +164,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                     leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                                     leistung.Klasse = theRow["Klasse"].ToString();
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                                    leistung.Gesamtnote = theRow["Note"].ToString();
+                                    leistung.Gesamtnote = theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString();
                                     leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
