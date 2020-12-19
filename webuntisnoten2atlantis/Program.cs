@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
 
 using System;
 using System.Collections.Generic;
@@ -26,9 +26,9 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
 
-                Console.WriteLine(" Webuntisnoten2atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201216");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201216");
                 Console.WriteLine("=====================================================================================================");
-                Console.WriteLine(" *Webuntisnoten2atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
+                Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge- ");
                 Console.WriteLine(" samtnote von Webuntis übergeben!");
                 Console.WriteLine("=====================================================================================================");

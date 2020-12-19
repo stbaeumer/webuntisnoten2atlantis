@@ -4,9 +4,9 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 ## Voraussetzungen
 
-* Klassen- und Fächerbezeichnungen sind identisch in Untis und Atlantis.
-* Notenblatt und Zeugnisformular wurden in Atlantis angelegt.
-* Eine Prüfungsart wurde in Webuntis angelegt, die denselben Namen trägt wie das Zeugnisformular in Atlantis.
+* Klassen- und Fächerbezeichnungen sind (mit Ausnahmen) identisch in Untis und Atlantis.
+* Ein Notenblatt wurde in Atlantis angelegt.
+* Zeugnisnoten wurden als Gesamtnoten Webuntis erfasst.
 * Der Benutzer hat Berechtigung Prüfungen und Fehlzeiten aus Webuntis zu exportieren und SQL-Dateien in Atlantis zu importieren.
 * Die Schülerinnen und Schüler haben in Webuntis die Atlantis-ID als externen Schlüssel gesetzt bekommen.
 
@@ -15,21 +15,23 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 1. Prüfungen aus Webntis exportieren und auf den Desktop legen.
 2. Fehlzeiten aus Webuntis exportieren und auf den Desktop legen.
 2. *WebuntisNoten2Atlantis* starten.
-3. Gewünschte Klassen filtern und mit ENTER bestätigen oder ENTER drücken, um alle Klassen zu wählen.
+3. Optinal gewünschte Klassen filtern.
 4. Erzeugte SQL-Datei in Atlantis importieren.
 
 ### Prüfungen aus Webntis exportieren
 
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Klassenbuch > Berichte* gehen.
-3. Unter der Rubrik *Noten* die gewünschte Prüfungsart *Halbjahreszeugnis* wählen, bzw. *Jahreszeugnis* usw. Der Name der Prüfungsart muss mit dem Wert des Attributs *Auflösung* in der Atlantis-Schlüsselverwaltung übereinstimmen.
-4. Das Icon *CSV-Ausgabe* klicken.
+3. Alle Klassen wählen. Das aktuelle Schuljahr wählen.
+4. Unter der Rubrik *Noten* das Icon *CSV-Ausgabe* klicken. Der Haken bei *Notennamen ausgeben* darf nicht gesetzt sein.
 5. Die Datei *MarksPerLesson.csv* auf dem Desktop speichern und nach Abschluss des Übertrags von dort wieder löschen. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
 
 ```
 Datum	Name	Klasse	Fach	Prüfungsart	Note	Bemerkung	Benutzer	Schlüssel (extern)	Gesamtnote
-28.09.2019	Müller Ina	HHO1	INW	Halbjahreszeugnis	2.0		admin	149565	
+28.09.2019	Müller Ina	HHO1	INW	Halbjahreszeugnis	12.0		BM	149565   11.0	
 ```
+
+Die Gesamtnote steht in der letzten Spalte.  Davor steht die Atlantis-ID.
 
 ### Fehlzeiten aus Webntis exportieren
 
@@ -43,13 +45,12 @@ studentId	name		klasse	klasseId	absentMins	absentMinsNotExcused	absentHours	abse
 		151989	Müller	Ina	HHO1	2984	360	0	8	1
 ```
 
-
 Der externe Schlüssel heißt hier ```studentId``` und entspricht der Atlantis-ID des Schülers.
 
 ### WebuntisNoten2Atlantis bedienen
 
 1. Programm im Visual Studio selbst kompilieren und starten oder *webuntis2Atlantis.exe* herunterladen und starten.
-2. Mit dem Starten des Programms weden die Bedingungen der Open Source Lizenz GPLv3 anerkannt.
+2. Mit dem Starten des Programms werden die Bedingungen der Open Source Lizenz GPLv3 anerkannt.
 3. Optional kann eine Filter auf die gewünschten Klassen gesetzt werden. Das macht sicherlich Sinn, wenn es gilt erste vorsichtige Erfahrungen zu sammeln.
 4. Eine Datei namens *webuntisnoten2atlantis_20190930.SQL* wird auf den Desktop gelegt un öffnet sich im Notepad. 
 
@@ -59,18 +60,22 @@ Die Noten werden _nicht_ unmittelbar vom Programm *WebuntisNoten2Atlantis* in di
 
 Jede Note entspricht einer SQL-Anweisungen in einer Zeile. Die Anweisungen sind alle vollkommen unabhängig voneinander und sehen wie folgt aus:
 ```SQL
-UPDATE noten_einzel SET s_note=3 WHERE noe_id=3760033;/*HHO1,INW,3,Müller I*/
+UPDATE noten_einzel SET s_note='3' WHERE noe_id=3760033;/*HHO1,INW,3,Müller I*/
 ```  
 Hinter dem Semikolon steht ein kurzer Kommentar, der das Prüfen der Datei vereinfachen soll. 
-Die gezeigte Zeile sagt aus, dass die Schülerin Ina Müller aus der Klasse HHO1 im Fach INW die Note 3 eingetragen bekommt. Der Notendatensatz hat die ID 3760033.
+Die gezeigte Zeile sagt aus, dass die Schülerin Ina Müller aus der Klasse HHO1 im Fach INW die Note 3 eingetragen bekommt. Der Notendatensatz hat die ID 3760033. Bei Sschülerinnen oder Schülern der Anlage D wird zusätzlich die Punktzahl in einem zweiten SQL-Statement übergeben.
 Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende Berechtigungen vorausgesetzt) unter *Funktionen>SQL-Anweisung ausführen* in die Datenbank eingelesen werden. 
-Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und dann auszuführen. 
-So kann zunächst bei einer einzelnen Note eines einzelnen Schülers geprüft werden, ob alles funktioniert.
+Evtl. macht es Sinn zunächst alle bis auf eine SQL-Anweisung zu löschen und dann auszuführen. So kann zunächst bei einer einzelnen Note eines einzelnen Schülers geprüft werden, ob alles funktioniert.
 
 ### FAQ
 
 #### Was ist mit den Umlauten passiert?
-Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig ist das Encoding auf Default gestellt.
+Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig ist das Encoding auf *Default* gestellt.
+
+#### Was ist, wenn die Namen der Fächer in Atlantis und Untis nicht übereinstimmen
+Grundsätzlich müssen die Fächerkürzel überinstimmen. *WebuntisNoten2Atlantis* hat aber Routinen, die versuchen eine Matching herzustellen. 
+Bei Sprachen darf beispielsweise in Untis auf die Angabe der Niveaustufe verzichtet werden. Es wird dann automatisch versucht auf die Sprache in Atlantis zu matchen.
+Wenn ein Fach nicht zugeordnet weren kann, wird das gemeldet.
 
 #### Unter welcher Lizenz steht das Programm?
 GNU General Public License v3.0

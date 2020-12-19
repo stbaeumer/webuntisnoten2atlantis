@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2019.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
 
 using System;
 using System.Collections.Generic;
@@ -24,6 +24,8 @@ namespace webuntisnoten2atlantis
 
                 int i = 1;
 
+                Leistung leistung = new Leistung();
+
                 while (true)
                 {
                     string line = reader.ReadLine();                    
@@ -31,28 +33,55 @@ namespace webuntisnoten2atlantis
                     {
                         if (line != null)
                         {
-                            Leistung leistung = new Leistung();
+          
                             var x = line.Split('\t');
                             i++;
 
-                            if (x.Length != 10)
+                            if (x.Length == 10)
                             {
-                                Console.WriteLine("MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
-                                Console.ReadKey();
-                                DateiÖffnen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv");
-                                throw new Exception("MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
+                                leistung = new Leistung();
+                                leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                                leistung.Name = x[1];
+                                leistung.Klasse = x[2];
+                                leistung.Fach = x[3];
+                                leistung.Gesamtpunkte = x[9].Split('.')[0];
+                                leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
+                                leistung.Bemerkung = x[6];
+                                leistung.Benutzer = x[7];
+                                leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
+                                leistungen.Add(leistung);
                             }
 
-                            leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
-                            leistung.Name = x[1];
-                            leistung.Klasse = x[2];
-                            leistung.Fach = x[3];                            
-                            leistung.Gesamtpunkte = x[9].Split('.')[0];
-                            leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
-                            leistung.Bemerkung = x[6];
-                            leistung.Benutzer = x[7];
-                            leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
-                            leistungen.Add(leistung);
+                            // Wenn in den Bemerkungen eine zusätzlicher Umbruch eingebaut wurde:
+
+                            if (x.Length == 7)
+                            {
+                                leistung = new Leistung();
+                                leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                                leistung.Name = x[1];
+                                leistung.Klasse = x[2];
+                                leistung.Fach = x[3];
+                                leistung.Bemerkung = x[6];
+                                Console.WriteLine("\n\n  [!] Achtung: In den Zeilen " + (i - 1) + "-" + i + " hat vermutlich die Lehrkraft eine Bemerkung mit einem Zeilen-");
+                                Console.WriteLine("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ...\n");
+                            }
+
+                            if (x.Length == 4)
+                            {
+                                leistung.Benutzer = x[1];
+                                leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
+                                leistung.Gesamtpunkte = x[3].Split('.')[0];
+                                leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);                                
+                                leistungen.Add(leistung);
+                            }
+
+                            if (x.Length < 4)
+                            {
+                                Console.WriteLine("\n\n[!] MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
+                                Console.ReadKey();
+                                DateiÖffnen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv");
+                                throw new Exception("\n\n[!] MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -326,7 +355,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                     if (!(from a in atlantisLeistungen where a.Fach == webuntisFach select a).Any())
                     {
-                        // Bei Nicht-Bindestrich-Fächern wird geschaut, ob es ein Fach denselben Anfangsbuchstaben gibt, ...
+                        // ... wird geprüft, ob es ein Fach in Atlantis gibt, dass den Anfangsbuchstaben teilt und gleichzeitig keine Entsprechung in Webuntis hat.
 
                         var afa = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a.Fach).Distinct().ToList();
 
@@ -336,8 +365,8 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                         if (afa.Count == 1 && !(from w in this where w.Fach == af.Fach select w).Any())
                         {
-                            string o = "/* Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet.";
-                            Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                            AusgabeSchreiben("Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet. Wenn das nicht gewünscht ist, dann hier mit Suchen & Ersetzen der gewünschte Name gesetzt werden.",new List<string>());
+                            
 
                             foreach (var leistung in this)
                             {
@@ -349,8 +378,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                         }
                         else
                         {
-                            string o = "/* Achtung: In der " + klasse + " kann das Fach " + webuntisFach + " keinem Atlantisfach zugeordnet werden!";
-                            Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach zugeordnet werden:", new List<string>() { webuntisFach });                            
                         }
                     }
                 }
