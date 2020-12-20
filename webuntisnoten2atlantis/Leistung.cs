@@ -26,5 +26,6 @@ namespace webuntisnoten2atlantis
         public string EinheitNP { get; internal set; }
         public bool SchuelerAktivInDieserKlasse { get; internal set; }
         public DateTime Konferenzdatum { get; internal set; }
+        public string Tendenz { get; internal set; }
     }
 }

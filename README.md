@@ -6,7 +6,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 * Klassen- und Fächerbezeichnungen sind (mit Ausnahmen) identisch in Untis und Atlantis.
 * Ein Notenblatt wurde in Atlantis angelegt.
-* Zeugnisnoten wurden als Gesamtnoten Webuntis erfasst.
+* Zeugnisnoten wurden als Gesamtnoten in Webuntis erfasst.
 * Der Benutzer hat Berechtigung Prüfungen und Fehlzeiten aus Webuntis zu exportieren und SQL-Dateien in Atlantis zu importieren.
 * Die Schülerinnen und Schüler haben in Webuntis die Atlantis-ID als externen Schlüssel gesetzt bekommen.
 
@@ -24,7 +24,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 2. Den Pfad *Klassenbuch > Berichte* gehen.
 3. Alle Klassen wählen. Das aktuelle Schuljahr wählen.
 4. Unter der Rubrik *Noten* das Icon *CSV-Ausgabe* klicken. Der Haken bei *Notennamen ausgeben* darf nicht gesetzt sein.
-5. Die Datei *MarksPerLesson.csv* auf dem Desktop speichern und nach Abschluss des Übertrags von dort wieder löschen. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
+5. Die Datei *MarksPerLesson.csv* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
 
 ```
 Datum	Name	Klasse	Fach	Prüfungsart	Note	Bemerkung	Benutzer	Schlüssel (extern)	Gesamtnote
@@ -38,7 +38,7 @@ Die Gesamtnote steht in der letzten Spalte.  Davor steht die Atlantis-ID.
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Administration > Export* gehen.
 3. Hinter *Gesamtfehlzeiten* das Icon *CSV-Ausgabe* klicken.
-5. Die Datei *AbsenceTimesTotal.csv* auf dem Desktop speichern und nach Abschluss des Übertrags von dort wieder löschen. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
+5. Die Datei *AbsenceTimesTotal.csv* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
 
 ```
 studentId	name		klasse	klasseId	absentMins	absentMinsNotExcused	absentHours	absentHoursNotExcused
@@ -52,7 +52,7 @@ Der externe Schlüssel heißt hier ```studentId``` und entspricht der Atlantis-I
 1. Programm im Visual Studio selbst kompilieren und starten oder *webuntis2Atlantis.exe* herunterladen und starten.
 2. Mit dem Starten des Programms werden die Bedingungen der Open Source Lizenz GPLv3 anerkannt.
 3. Optional kann eine Filter auf die gewünschten Klassen gesetzt werden. Das macht sicherlich Sinn, wenn es gilt erste vorsichtige Erfahrungen zu sammeln.
-4. Eine Datei namens *webuntisnoten2atlantis_20190930.SQL* wird auf den Desktop gelegt un öffnet sich im Notepad. 
+4. Eine Datei namens *20190930-webuntisnoten2atlantis.SQL* wird erzeugt und öffnet sich im Notepad. 
 
 
 ### Die Datei webuntisnoten2atlantis_20190930.SQL

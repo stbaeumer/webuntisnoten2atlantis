@@ -46,6 +46,7 @@ namespace webuntisnoten2atlantis
                                 leistung.Fach = x[3];
                                 leistung.Gesamtpunkte = x[9].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
+                                leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
                                 leistung.Bemerkung = x[6];
                                 leistung.Benutzer = x[7];
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
@@ -100,6 +101,58 @@ namespace webuntisnoten2atlantis
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
 
+        private string Gesamtpunkte2Tendenz(string gesamtpunkte)
+        {
+            string tebdenz = "";
+
+            if (gesamtpunkte == "0")
+            {
+                tebdenz = "6";
+            }
+            if (gesamtpunkte == "1")
+            {
+                tebdenz = "-";
+            }
+            if (gesamtpunkte == "3")
+            {
+                tebdenz = "+";
+            }
+            if (gesamtpunkte == "4")
+            {
+                tebdenz = "-";
+            }
+            if (gesamtpunkte == "6")
+            {
+                tebdenz = "+";
+            }
+            if (gesamtpunkte == "7")
+            {
+                tebdenz = "-";
+            }
+            if (gesamtpunkte == "9")
+            {
+                tebdenz = "+";
+            }
+            if (gesamtpunkte == "10")
+            {
+                tebdenz = "-";
+            }
+            if (gesamtpunkte == "12")
+            {
+                tebdenz = "+";
+            }
+            if (gesamtpunkte == "13")
+            {
+                tebdenz = "-";
+            }            
+            if (gesamtpunkte == "15")
+            {
+                tebdenz = "+";
+            }
+            
+            return tebdenz;
+        }
+
         public Leistungen(string connetionstringAtlantis, string aktSj)
         {
             Global.Output.Add("/* ****************************************************************************** */");
@@ -127,6 +180,7 @@ DBA.noten_einzel.kurztext AS Fach,
 DBA.noten_einzel.zeugnistext AS Zeugnistext,
 DBA.noten_einzel.s_note AS Note,
 DBA.noten_einzel.punkte AS Punkte,
+DBA.noten_einzel.s_tendenz AS Tendenz,
 DBA.noten_einzel.s_einheit AS Einheit,
 DBA.schueler.name_1 AS Nachname,
 DBA.schueler.name_2 AS Vorname,
@@ -166,6 +220,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
                                     leistung.Gesamtnote = theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString();
+                                    leistung.Tendenz = theRow["Tendenz"].ToString();
                                     leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
                                     leistung.HzJz = theRow["HzJz"].ToString();
@@ -423,7 +478,16 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                                 if (a.EinheitNP == "P")
                                 {
-                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte=" + w.Gesamtpunkte + " WHERE noe_id=" + a.LeistungId + ";");
+                                    
+                                    if (a.Tendenz !=null)
+                                    {
+                                        UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Tendenz + "|" + a.Name, "UPDATE noten_einzel SET s_tendenz='" + w.Tendenz + "' WHERE noe_id=" + a.LeistungId + ";");
+                                    }
+                                    else
+                                    {
+                                        UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + w.Tendenz + "|" + a.Name, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    }                                    
                                 }
                                 i++;
                             }
@@ -556,7 +620,16 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
 
                                 if (a.EinheitNP == "P")
                                 {
-                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte='" + w.Gesamtpunkte + "' WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Gesamtpunkte + ">" + w.Gesamtpunkte + "|" + a.Name, "UPDATE noten_einzel SET punkte=" + w.Gesamtpunkte + " WHERE noe_id=" + a.LeistungId + ";");
+                                    
+                                    if (a.Tendenz != null)
+                                    {
+                                        UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Tendenz + ">" + w.Tendenz + "|" + a.Name, "UPDATE noten_einzel SET s_tendenz'" + w.Tendenz + "' WHERE noe_id=" + a.LeistungId + ";");
+                                    }
+                                    else
+                                    {
+                                        UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Tendenz + ">NULL|" + a.Name, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    }
                                 }
 
                                 i++;
@@ -602,11 +675,9 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                             {
 
                                 UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
-                            
-                                if (a.EinheitNP == "P")
-                                {
-                                    UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                }
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                UpdateLeistung(a.Klasse + "|" + a.Fach + "|" + a.Name, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+
                                 i++;
                             }
                         }
