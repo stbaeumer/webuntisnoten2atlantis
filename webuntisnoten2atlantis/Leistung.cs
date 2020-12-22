@@ -27,5 +27,8 @@ namespace webuntisnoten2atlantis
         public bool SchuelerAktivInDieserKlasse { get; internal set; }
         public DateTime Konferenzdatum { get; internal set; }
         public string Tendenz { get; internal set; }
+        public int Jahrgang { get; internal set; }
+        public string Schuljahr { get; internal set; }
+        public string Gliederung { get; internal set; }
     }
 }

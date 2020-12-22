@@ -43,7 +43,7 @@ namespace webuntisnoten2atlantis
                 Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
                 Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj);
                                 
                 do
                 {                    
@@ -78,13 +78,22 @@ namespace webuntisnoten2atlantis
 
                     } while (webuntisLeistungen.Count <= 0);
 
+                    // Alte Noten holen
+
+                    webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, aktSj));
+
                     // Korrekturen
-                                        
+
                     webuntisLeistungen.ReligionKorrigieren();
                     webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                     webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
                     webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                    
+
+                    // Sortieren
+
+                    webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
+                    atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
 
                     // Add-Delete-Update
 
@@ -95,6 +104,11 @@ namespace webuntisnoten2atlantis
                     atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+
+                    foreach (var item in (from l in webuntisLeistungen where l.SchlüsselExtern == 149409 select l))
+                    {
+                        Console.WriteLine(item.Klasse + " " + item.Fach + " " + item.Gesamtnote +  " " + item.Schuljahr);
+                    }
 
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 

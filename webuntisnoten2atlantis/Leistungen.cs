@@ -153,7 +153,81 @@ namespace webuntisnoten2atlantis
             return tebdenz;
         }
 
-        public Leistungen(string connetionstringAtlantis, string aktSj)
+        internal Leistungen HoleAlteNoten(Leistungen webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
+        {
+            List<string> holeFächer = new List<string>();
+
+            Leistungen leistungen = new Leistungen();
+
+            foreach (var klasse in interessierendeKlassen)
+            {
+                // Für Klassen der Anlage A, die in diesem Schuljahr in Jahrgang 3 oder 4 sind ... 
+
+                if ((from a in this where klasse == a.Klasse where a.Anlage.StartsWith("A") where a.Jahrgang > 2 where a.Schuljahr == aktSj[0] + "/" + aktSj[1] select a).Any())
+                {
+                    // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen
+
+                    var schuelers = (from w in webuntisLeistungen where w.Klasse == klasse select w.SchlüsselExtern).Distinct().ToList();
+
+                    // für jeden Schüler werden seine Noten der vergangenen Jahre gesucht
+
+                    foreach (var schueler in schuelers)
+                    {                        
+                        var gliederungDesSchuelers = (from a in this where a.SchlüsselExtern == schueler where a.Schuljahr == aktSj[0] + "/" + aktSj[1] where a.Klasse == klasse select a.Gliederung).FirstOrDefault();
+
+                        var vergangeneLeistungenDiesesSchuelers = (from a in this
+                                                                   where a.SchlüsselExtern == schueler
+                                                                   where a.Schuljahr != aktSj[0] + "/" + aktSj[1]
+                                                                   where a.Klasse != null
+                                                                   where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
+                                                                   where a.Gliederung == gliederungDesSchuelers
+                                                                   where a.Gesamtnote != null
+                                                                   where a.Gesamtnote != ""
+                                                                   select a).OrderByDescending(x => x.Jahrgang).ToList();
+
+                        var alleVerschiedenenFächerDiesesSchuelers = (from a in this
+                                                                      where a.Klasse != null
+                                                                      where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
+                                                                      where a.Gliederung == gliederungDesSchuelers
+                                                                      where a.Gesamtnote != null
+                                                                      where a.Gesamtnote != ""
+                                                                      select a.Fach).Distinct().ToList();
+
+                        // ... für jede Leistung der vergangenen Jahre wird geprüft, ob im aktuellen Jahr eine Note in dem Fach existiert ...
+
+                        foreach (var fach in alleVerschiedenenFächerDiesesSchuelers)
+                        {
+                            // ... wenn bisher keine Webuntisleistung in diesem Fach existiert, ...
+
+                            if (!(from w in webuntisLeistungen where w.SchlüsselExtern == schueler where w.Fach == fach select w.Fach).Any() && vergangeneLeistungenDiesesSchuelers.Count > 0)
+                            {
+                                // ... wird die jüngste Atlantisleistung mit Note in diesem Fach geholt ...
+
+                                Leistung leistung = (from v in vergangeneLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
+                                                                
+                                if (!(from h in holeFächer where h.StartsWith(value: leistung.Fach + "(" + leistung.Klasse) select h).Any())
+                                {
+                                    holeFächer.Add(leistung.Fach + "(" + leistung.Klasse + "|" + leistung.Schuljahr + ")");
+                                }
+
+                                leistung.Klasse = klasse;
+
+                                leistungen.Add(leistung);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (holeFächer.Count() > 0)
+            {
+                AusgabeSchreiben("Fächer aus vorherigen Schuljahren : ", holeFächer);
+            }   
+
+            return leistungen;
+        }
+
+        public Leistungen(string connetionstringAtlantis, List<string> aktSj)
         {
             Global.Output.Add("/* ****************************************************************************** */");
             Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.Sie können alle No- */");
@@ -188,20 +262,37 @@ DBA.schueler.pu_id AS SchlüsselExtern,
 DBA.schue_sj.s_religions_unterricht AS Religion,
 DBA.schue_sj.dat_austritt AS ausgetreten,
 DBA.schue_sj.vorgang_akt_satz_jn AS SchuelerAktivInDieserKlasse,
+DBA.schue_sj.vorgang_schuljahr AS Schuljahr,
 (substr(schue_sj.s_berufs_nr,4,5)) AS Fachklasse,
 DBA.klasse.s_klasse_art AS Anlage,
+DBA.klasse.jahrgang AS Jahrgang,
+DBA.schue_sj.s_gliederungsplan_kl AS Gliederung,
 DBA.noten_kopf.s_typ_nok AS HzJz,
 DBA.noten_kopf.dat_notenkonferenz AS Konferenzdatum,
 DBA.klasse.klasse AS Klasse
 FROM(((DBA.noten_kopf JOIN DBA.schue_sj ON DBA.noten_kopf.pj_id = DBA.schue_sj.pj_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id ) JOIN DBA.schueler ON DBA.noten_einzel.pu_id = DBA.schueler.pu_id
-WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_typ_vorgang = 'A' AND (s_typ_nok = 'JZ' OR s_typ_nok = 'HZ') ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
+WHERE s_art_fach <> 'U' AND schue_sj.s_typ_vorgang = 'A' AND (s_typ_nok = 'JZ' OR s_typ_nok = 'HZ') AND
+(  
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.ToInt32(aktSj[1]) - 0) + @"')
+OR
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 1) + "/" + (Convert.ToInt32(aktSj[1]) - 1) + @"' AND (klasse.jahrgang = 'A011' OR klasse.jahrgang = 'A012' OR klasse.jahrgang = 'A013')  AND s_note IS NOT NULL)
+OR
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 2) + "/" + (Convert.ToInt32(aktSj[1]) - 2) + @"' AND (klasse.jahrgang = 'A011' OR klasse.jahrgang = 'A012') AND s_note IS NOT NULL)
+OR
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 3) + "/" + (Convert.ToInt32(aktSj[1]) - 3) + @"' AND (klasse.jahrgang = 'A011') AND s_note IS NOT NULL)
+)
+ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
+
 
                     connection.Open();
                     schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        if (typ == theRow["HzJz"].ToString())
+                        // Leistungen des aktuellen Abschnitts sind abhängig vom aktuellen Monat.
+                        // Leistungen vergangener Jahre sind immer "JZ"
+
+                        if (typ == theRow["HzJz"].ToString() || (theRow["Schuljahr"].ToString() != (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.ToInt32(aktSj[1]) - 0) && theRow["HzJz"].ToString() == "JZ"))
                         {
                             DateTime austrittsdatum = theRow["ausgetreten"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["ausgetreten"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                             
@@ -215,10 +306,13 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                 {
                                     leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
                                     leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N";
+                                    leistung.Schuljahr = theRow["Schuljahr"].ToString();
+                                    leistung.Gliederung = theRow["Gliederung"].ToString();
+                                    leistung.Jahrgang = Convert.ToInt32(theRow["Jahrgang"].ToString().Substring(3,1));
                                     leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                                     leistung.Klasse = theRow["Klasse"].ToString();
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                                    leistung.Gesamtnote = theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();
+                                    leistung.Gesamtnote = theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();                                    
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString();
                                     leistung.Tendenz = theRow["Tendenz"].ToString();
                                     leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
@@ -227,7 +321,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
                                     leistung.Anlage = theRow["Anlage"].ToString();
                                     leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
                                     leistung.Konferenzdatum = theRow["Konferenzdatum"].ToString().Length < 3 ? new DateTime() : (DateTime.ParseExact(theRow["Konferenzdatum"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).AddHours(15);
-                                    leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";                                    
+                                    leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";
                                 }
                             }
                             catch (Exception ex)
@@ -455,7 +549,7 @@ WHERE vorgang_schuljahr = '" + aktSj + "' AND s_art_fach <> 'U' AND schue_sj.s_t
             {
                 foreach (var klasse in interessierendeKlassen)
                 {
-                    foreach (var a in (from t in this where t.Klasse == klasse where t.SchuelerAktivInDieserKlasse select t).ToList())
+                    foreach (var a in (from t in this where t.Klasse == klasse where t.SchuelerAktivInDieserKlasse select t).OrderBy(x=>x.Name).ToList())
                     {
                         var w = (from webuntisLeistung in webuntisLeistungen
                                  where webuntisLeistung.Fach == a.Fach
