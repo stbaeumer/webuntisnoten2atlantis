@@ -12,13 +12,13 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 ## Vorgehen
 
-1. Prüfungen aus Webntis exportieren und auf den Desktop legen.
+1. Prüfungen aus Webuntis exportieren und auf den Desktop legen.
 2. Fehlzeiten aus Webuntis exportieren und auf den Desktop legen.
 2. *WebuntisNoten2Atlantis* starten.
 3. Optinal gewünschte Klassen filtern.
 4. Erzeugte SQL-Datei in Atlantis importieren.
 
-### Prüfungen aus Webntis exportieren
+### Prüfungen aus Webuntis exportieren
 
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Klassenbuch > Berichte* gehen.
@@ -33,7 +33,7 @@ Datum	Name	Klasse	Fach	Prüfungsart	Note	Bemerkung	Benutzer	Schlüssel (extern)	
 
 Die Gesamtnote steht in der letzten Spalte.  Davor steht die Atlantis-ID.
 
-### Fehlzeiten aus Webntis exportieren
+### Fehlzeiten aus Webuntis exportieren
 
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Administration > Export* gehen.
@@ -76,6 +76,9 @@ Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisc
 Grundsätzlich müssen die Fächerkürzel überinstimmen. *WebuntisNoten2Atlantis* hat aber Routinen, die versuchen eine Matching herzustellen. 
 Bei Sprachen darf beispielsweise in Untis auf die Angabe der Niveaustufe verzichtet werden. Es wird dann automatisch versucht auf die Sprache in Atlantis zu matchen.
 Wenn ein Fach nicht zugeordnet weren kann, wird das gemeldet.
+
+#### Kann *WebuntisNoten2Atlantis* Noten aus Vorjahreszeugnissen ziehen?
+Ja
 
 #### Unter welcher Lizenz steht das Programm?
 GNU General Public License v3.0
