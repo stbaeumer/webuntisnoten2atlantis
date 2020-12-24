@@ -12,5 +12,7 @@ namespace webuntisnoten2atlantis
         public int StudentId { get; internal set; }
         public string Zeugnisart { get; internal set; }
         public string HzJz { get; internal set; }
+        public string Beschreibung { get; internal set; }
+
     }
 }

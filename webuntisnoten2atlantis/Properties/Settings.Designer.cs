@@ -82,5 +82,29 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Pfad"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Abschlussklassen {
+            get {
+                return ((string)(this["Abschlussklassen"]));
+            }
+            set {
+                this["Abschlussklassen"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int AbschlussklassenAuswahl {
+            get {
+                return ((int)(this["AbschlussklassenAuswahl"]));
+            }
+            set {
+                this["AbschlussklassenAuswahl"] = value;
+            }
+        }
     }
 }

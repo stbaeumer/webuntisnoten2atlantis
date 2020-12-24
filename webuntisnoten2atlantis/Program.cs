@@ -56,7 +56,7 @@ namespace webuntisnoten2atlantis
 
                     do
                     {
-                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen);
+                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, aktSj);
                         
                         webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen
                                                      where interessierendeKlassen.Contains(a.Klasse)
@@ -104,11 +104,6 @@ namespace webuntisnoten2atlantis
                     atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
-
-                    foreach (var item in (from l in webuntisLeistungen where l.SchlüsselExtern == 149409 select l))
-                    {
-                        Console.WriteLine(item.Klasse + " " + item.Fach + " " + item.Gesamtnote +  " " + item.Schuljahr);
-                    }
 
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 

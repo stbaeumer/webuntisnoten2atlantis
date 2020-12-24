@@ -30,5 +30,27 @@ namespace webuntisnoten2atlantis
         public int Jahrgang { get; internal set; }
         public string Schuljahr { get; internal set; }
         public string Gliederung { get; internal set; }
+        public bool Abschlussklasse { get; internal set; }
+        public string Beschreibung { get; internal set; }
+
+        internal bool IstAbschlussklasse()
+        {
+            if (Anlage.StartsWith("A"))
+            {
+                // Klassen im Jahrgang 4 sind immer Abschlussklasse
+
+                if (Jahrgang == 4)
+                {
+                    return true;
+                }
+
+                if (Jahrgang == 3 && !Klasse.StartsWith("M") && !Klasse.StartsWith("E") && HzJz == "Jz")
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
     }
 }
