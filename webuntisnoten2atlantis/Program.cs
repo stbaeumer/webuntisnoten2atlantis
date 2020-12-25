@@ -79,17 +79,16 @@ namespace webuntisnoten2atlantis
                     } while (webuntisLeistungen.Count <= 0);
 
                     // Alte Noten holen
-
+                                        
                     webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, aktSj));
 
                     // Korrekturen
-
+                                        
                     webuntisLeistungen.ReligionKorrigieren();
                     webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                     webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
                     webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                    
-
                     // Sortieren
 
                     webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
@@ -98,7 +97,7 @@ namespace webuntisnoten2atlantis
                     // Add-Delete-Update
 
                     atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
-                    atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen);
+                    atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, aktSj);
                     atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
 
                     atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
@@ -108,7 +107,8 @@ namespace webuntisnoten2atlantis
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 
                     Console.WriteLine("");
-                    Console.WriteLine("Programm beenden mit Enter.");
+                    Console.WriteLine("");
+                    Console.WriteLine("  Programm beenden mit Enter.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Escape);                
             }

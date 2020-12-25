@@ -32,6 +32,7 @@ namespace webuntisnoten2atlantis
         public string Gliederung { get; internal set; }
         public bool Abschlussklasse { get; internal set; }
         public string Beschreibung { get; internal set; }
+        public bool GeholteNote { get; internal set; }
 
         internal bool IstAbschlussklasse()
         {
