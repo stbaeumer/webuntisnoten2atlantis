@@ -107,7 +107,7 @@ namespace webuntisnoten2atlantis
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 
                     Console.WriteLine("");
-                    Console.WriteLine("");
+                    Console.WriteLine("  -----------------------------------------------------------------");
                     Console.WriteLine("  Programm beenden mit Enter.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Escape);                
