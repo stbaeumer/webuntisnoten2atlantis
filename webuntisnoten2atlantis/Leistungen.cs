@@ -105,10 +105,6 @@ namespace webuntisnoten2atlantis
         {
             string tendenz = "";
 
-            if (gesamtpunkte == "0")
-            {
-                tendenz = null;
-            }
             if (gesamtpunkte == "1")
             {
                 tendenz = "-";
@@ -171,7 +167,7 @@ namespace webuntisnoten2atlantis
                 {
                     // Für Klassen der Anlage A, die in diesem Schuljahr in Jahrgang 3 oder 4 sind ... 
 
-                    if ((from a in this where klasse == a.Klasse where a.Anlage.StartsWith("A") where a.Abschlussklasse where a.Schuljahr == aktSj[0] + "/" + aktSj[1] select a).Any())
+                    if ((from a in this where klasse == a.Klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) where a.Abschlussklasse where a.Schuljahr == aktSj[0] + "/" + aktSj[1] select a).Any())
                     {
                         // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen
 
@@ -524,7 +520,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             }
         }
 
-        internal void Religionsabwähler(Leistungen atlantisLeistungen)
+        internal void ReligionsabwählerBehandeln(Leistungen atlantisLeistungen)
         {
             // Für die verschiednenen Klassen ...
 
@@ -576,7 +572,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             }            
         }
         
-        internal void ReligionKorrigieren()
+        internal void ReligionZuordnen()
         {
             foreach (var leistung in this)
             {
@@ -894,7 +890,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             int auswahl;
             List<string> optionen = new List<string>() {
             @"Verarbeitungshinweise zeigen",
-                "Alle Klassen         (in denen auch Gesamtnoten eingetragen sind",
+                "Alle Klassen         (in denen auch Gesamtnoten eingetragen sind)",
                 "Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
                 "Alle Teilzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
                 "Bestimmte Klassen    (in denen auch Gesamtnoten eingetragen sind)"
@@ -978,14 +974,14 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 }
                 if (auswahl == 2)
                 {
-                    if ((from a in this where a.Klasse == klasse where !a.Anlage.StartsWith("A") select a).Any())
+                    if ((from a in this where a.Klasse == klasse where !a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
                     {
                         interessierendeKlassen.Add(klasse);
                     }
                 }
                 if (auswahl == 3)
                 {
-                    if ((from a in this where a.Klasse == klasse where a.Anlage.StartsWith("A") select a).Any())
+                    if ((from a in this where a.Klasse == klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
                     {
                         interessierendeKlassen.Add(klasse);
                     }
@@ -1212,7 +1208,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             try
             {
                 string o = updateQuery + "/*" + message;
-                Global.Output.Add((o.Substring(0, Math.Min(81, o.Length))).PadRight(81) + " */");
+                Global.Output.Add((o.Substring(0, Math.Min(100, o.Length))).PadRight(100) + " */");
             }
             catch (Exception ex)
             {

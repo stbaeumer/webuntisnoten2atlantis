@@ -106,5 +106,53 @@ namespace webuntisnoten2atlantis.Properties {
                 this["AbschlussklassenAuswahl"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DBUser {
+            get {
+                return ((string)(this["DBUser"]));
+            }
+            set {
+                this["DBUser"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Klassenart {
+            get {
+                return ((string)(this["Klassenart"]));
+            }
+            set {
+                this["Klassenart"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AbschlussklassenAnfangsbuchstaben {
+            get {
+                return ((string)(this["AbschlussklassenAnfangsbuchstaben"]));
+            }
+            set {
+                this["AbschlussklassenAnfangsbuchstaben"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Einstellungen {
+            get {
+                return ((string)(this["Einstellungen"]));
+            }
+            set {
+                this["Einstellungen"] = value;
+            }
+        }
     }
 }

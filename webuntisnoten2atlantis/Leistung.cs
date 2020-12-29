@@ -36,7 +36,7 @@ namespace webuntisnoten2atlantis
 
         internal bool IstAbschlussklasse()
         {
-            if (Anlage.StartsWith("A"))
+            if (Anlage.StartsWith(Properties.Settings.Default.Klassenart))
             {
                 // Klassen im Jahrgang 4 sind immer Abschlussklasse
 

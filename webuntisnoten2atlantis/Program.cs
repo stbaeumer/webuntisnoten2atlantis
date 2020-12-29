@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 
@@ -9,7 +10,7 @@ namespace webuntisnoten2atlantis
 {
     class Program
     {
-        public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=DBA";
+        public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=";
 
         static void Main(string[] args)
         {
@@ -30,9 +31,40 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201222");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
-                Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge- ");
+                Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
                 Console.WriteLine(" samtnote von Webuntis übergeben!");
                 Console.WriteLine("=====================================================================================================");
+
+                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == "")
+                {
+                    Settings();
+                }
+                else
+                {
+                    Console.Write("\nEinstellungen öffnen und bearbeiten? (j/n) " + (Properties.Settings.Default.Einstellungen == "n" ? "[ n ] : " : "[ j ] : "));
+                    
+                    var key = Console.ReadKey();
+                    var k = "";
+
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        k = Properties.Settings.Default.Einstellungen;
+                    }
+
+                    if (key.Key == ConsoleKey.J || k == "j")
+                    {
+                        k = "j";
+                        Properties.Settings.Default.Einstellungen = "j";
+                        Properties.Settings.Default.Save();
+                        Settings();
+                    }
+                    else
+                    {
+                        Properties.Settings.Default.Einstellungen = "n";
+                        Properties.Settings.Default.Save();
+                        Console.WriteLine("");
+                    }
+                }
 
                 CheckCsv(inputAbwesenheitenCsv, inputNotenCsv);
 
@@ -42,8 +74,8 @@ namespace webuntisnoten2atlantis
 
                 Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis, aktSj[0] + "/" + aktSj[1]);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis, aktSj);
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj[0] + "/" + aktSj[1]);
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj);
                                 
                 do
                 {                    
@@ -58,18 +90,10 @@ namespace webuntisnoten2atlantis
                     {
                         interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, aktSj);
                         
-                        webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen
-                                                     where interessierendeKlassen.Contains(a.Klasse)
-                                                     select a));
-                        webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten                                                        
-                                                        where interessierendeKlassen.Contains(a.Klasse)
-                                                        select a));
-                        atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen                                                     
-                                                     where interessierendeKlassen.Contains(a.Klasse)
-                                                     select a));
-                        atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten                                                        
-                                                        where interessierendeKlassen.Contains(a.Klasse)
-                                                        select a));
+                        webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
+                        webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
+                        atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
+                        atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
 
                         if (webuntisLeistungen.Count == 0)
                         {
@@ -84,11 +108,12 @@ namespace webuntisnoten2atlantis
 
                     // Korrekturen
                                         
-                    webuntisLeistungen.ReligionKorrigieren();
-                    webuntisLeistungen.Religionsabwähler(atlantisLeistungen);
+                    webuntisLeistungen.ReligionZuordnen();
+                    webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                     webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
                     webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                    
+                    
                     // Sortieren
 
                     webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
@@ -108,7 +133,7 @@ namespace webuntisnoten2atlantis
 
                     Console.WriteLine("");
                     Console.WriteLine("  -----------------------------------------------------------------");
-                    Console.WriteLine("  Programm beenden mit Enter.");
+                    Console.WriteLine("  Verarbeitung ageschlossen. Programm beenden mit Enter.");
 
                 } while (Console.ReadKey().Key == ConsoleKey.Escape);                
             }
@@ -120,6 +145,101 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+
+        private static void Settings()
+        {
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("Einstellungen vornehmen: ");
+            Console.WriteLine("");
+            
+            do
+            {
+                Console.Write(" 1. Wie heißt der Datenbankbenutzer? " + (Properties.Settings.Default.DBUser == "" ? "" : "[ " + Properties.Settings.Default.DBUser + " ]  "));
+                var dbuser = Console.ReadLine();
+
+                if (dbuser == "")
+                {
+                    dbuser = Properties.Settings.Default.DBUser;
+                }
+                else
+                {
+                    Properties.Settings.Default.DBUser = dbuser.ToLower();
+                }
+
+                try
+                {
+                    using (OdbcConnection connection = new OdbcConnection(ConnectionStringAtlantis + Properties.Settings.Default.DBUser))
+                    {
+                        connection.Open();
+                        connection.Close();
+                    }
+                }
+                catch (Exception)
+                {
+                    Properties.Settings.Default.DBUser = "";
+                    Console.WriteLine("     Der Datenbankuser scheint nicht zu funktionieren. Flasche Eingabe? Ist Atlantis auf diesem Rechner nicht installiert?");
+                }
+
+                Properties.Settings.Default.Save();
+
+            } while (Properties.Settings.Default.DBUser == "");
+            Console.WriteLine("");
+            do
+            {
+                Console.WriteLine(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");
+                Console.WriteLine("    Typischerweise beginnt die Organisationsform der Teilzeitklassen in Atlantis mit 'A'.");
+                Console.Write("    Wie lautet der Anfangsbuchstabe der Organisationsform Ihrer Teilzeitklassen? " + (Properties.Settings.Default.Klassenart == "" ? "" : "[ " + Properties.Settings.Default.Klassenart + " ]  "));
+                var dbuser = Console.ReadLine();
+
+                if (dbuser == "")
+                {
+                    dbuser = Properties.Settings.Default.Klassenart;
+                }
+                else
+                {
+                    Properties.Settings.Default.Klassenart = dbuser.Substring(0, 1).ToUpper();
+                }
+
+                Properties.Settings.Default.Save();
+
+            } while (Properties.Settings.Default.Klassenart == "");
+
+            Console.WriteLine("");
+
+            do
+            {
+                Console.WriteLine(" 3. Bei 3,5-jährigen Teilzeit-Bildungsgängen müssen zum Halbjahr im 4.Jahrgang die alten Noten geholt werden.");
+                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");                
+                Console.Write("    Wie lauten die Anfangsbuchstaben oder Klassennamen der 3,5-Jährigen? " + (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "" ? "" : "[ " + Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben + " ]  "));
+
+                var aks = Console.ReadLine();
+                List<string> aksl = new List<string>();
+
+                if (aks == "")
+                {
+                    aks = Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben;
+                }
+                else
+                {
+                    foreach (var item in aks.Trim(' ').Split(','))
+                    {
+                        aksl.Add(item.ToUpper());
+                    }
+
+                    Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben = "";
+
+                    foreach (var item in aksl)
+                    {
+                        Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben = Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben + item + ",";
+                    }
+
+                    Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben = Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben.TrimEnd(',');
+                    Properties.Settings.Default.Save();
+                    var ddd = Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben;
+                }
+            } while (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "");
         }
 
         private static string SetPfad(string zeitstempel, string inputNotenCsv, string inputAbwesenheitenCsv)

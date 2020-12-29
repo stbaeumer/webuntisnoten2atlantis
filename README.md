@@ -64,7 +64,7 @@ Jede Note entspricht einer SQL-Anweisungen in einer Zeile. Die Anweisungen sind 
 UPDATE noten_einzel SET s_note='3' WHERE noe_id=3760033;/*HBW20A,INW,3,Müller I*/
 ```  
 Hinter dem Semikolon steht ein kurzer Kommentar, der das inhaltliche Prüfen des Befehls vereinfachen soll. 
-Die gezeigte Zeile sagt aus, dass die Schülerin Ina Müller aus der Klasse HHO1 im Fach INW die Note 3 eingetragen bekommt. Der Notendatensatz hat die ID 3760033. Bei Schülerinnen oder Schülern der Anlage D wird zusätzlich die Punktzahl und die Tendenz in einem zweiten SQL-Statement übergeben. WebuntisNoten2Atlantis sorgt dafür, dass die Einträge in der Datenbank widerspruchsfrei bleiben.
+Die gezeigte Zeile sagt aus, dass die Schülerin Ina Müller aus der Klasse HBW20A im Fach INW die Note 3 eingetragen bekommt. Der Notendatensatz hat die ID 3760033. Bei Schülerinnen oder Schülern der Anlage D wird zusätzlich die Punktzahl und die Tendenz in einem zweiten SQL-Statement übergeben. WebuntisNoten2Atlantis sorgt dafür, dass die Einträge in der Datenbank widerspruchsfrei bleiben.
 Nach der sorgfältigen Prüfung der Datei kann sie in Altlantis (entsprechende Berechtigungen vorausgesetzt) unter *Funktionen>SQL-Anweisung ausführen* in die Datenbank eingelesen werden. 
 Evtl. macht es Sinn zunächst alle Zeilen bis auf eine Befehlszeile zu löschen und dann auszuführen. So kann zunächst bei einer einzelnen Note eines einzelnen Schülers geprüft werden, ob alles funktioniert.
 
