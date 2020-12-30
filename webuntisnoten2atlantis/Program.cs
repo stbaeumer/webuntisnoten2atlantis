@@ -28,7 +28,7 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
 
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201222");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201230");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -39,32 +39,32 @@ namespace webuntisnoten2atlantis
                 {
                     Settings();
                 }
-                else
-                {
-                    Console.Write("\nEinstellungen öffnen und bearbeiten? (j/n) " + (Properties.Settings.Default.Einstellungen == "n" ? "[ n ] : " : "[ j ] : "));
+                //else
+                //{
+                //    Console.Write("\nEinstellungen öffnen und bearbeiten? (j/n) " + (Properties.Settings.Default.Einstellungen == "n" ? "[ n ] : " : "[ j ] : "));
                     
-                    var key = Console.ReadKey();
-                    var k = "";
+                //    var key = Console.ReadKey();
+                //    var k = "";
 
-                    if (key.Key == ConsoleKey.Enter)
-                    {
-                        k = Properties.Settings.Default.Einstellungen;
-                    }
+                //    if (key.Key == ConsoleKey.Enter)
+                //    {
+                //        k = Properties.Settings.Default.Einstellungen;
+                //    }
 
-                    if (key.Key == ConsoleKey.J || k == "j")
-                    {
-                        k = "j";
-                        Properties.Settings.Default.Einstellungen = "j";
-                        Properties.Settings.Default.Save();
-                        Settings();
-                    }
-                    else
-                    {
-                        Properties.Settings.Default.Einstellungen = "n";
-                        Properties.Settings.Default.Save();
-                        Console.WriteLine("");
-                    }
-                }
+                //    if (key.Key == ConsoleKey.J || k == "j")
+                //    {
+                //        k = "j";
+                //        Properties.Settings.Default.Einstellungen = "j";
+                //        Properties.Settings.Default.Save();
+                //        Settings();
+                //    }
+                //    else
+                //    {
+                //        Properties.Settings.Default.Einstellungen = "n";
+                //        Properties.Settings.Default.Save();
+                //        Console.WriteLine("");
+                //    }
+                //}
 
                 CheckCsv(inputAbwesenheitenCsv, inputNotenCsv);
 
@@ -72,11 +72,11 @@ namespace webuntisnoten2atlantis
 
                 string outputSql = pfad + "\\webuntisnoten2atlantis_" + zeitstempel + ".SQL";
 
-                Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");
-                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj[0] + "/" + aktSj[1]);
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj);
-                                
+                Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");                
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj[0] + "/" + aktSj[1]);
+                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
+
                 do
                 {                    
                     Leistungen webuntisLeistungen = new Leistungen();
@@ -133,8 +133,8 @@ namespace webuntisnoten2atlantis
 
                     Console.WriteLine("");
                     Console.WriteLine("  -----------------------------------------------------------------");
-                    Console.WriteLine("  Verarbeitung ageschlossen. Programm beenden mit Enter.");
-
+                    Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
+                    Environment.Exit(0);
                 } while (Console.ReadKey().Key == ConsoleKey.Escape);                
             }
             catch (Exception ex)

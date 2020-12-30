@@ -97,6 +97,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage("Webuntisleistungen: ".PadRight(30,'.') + (" " + leistungen.Count.ToString()).PadLeft(30, '.'));
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
@@ -258,7 +259,10 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                if (abschlussklassen.Length > 0)
+                AusgabeSchreiben("Noten aus Fächern aus vorherigen Schuljahren wurden geholt: ", holeFächer);
+
+                //if (abschlussklassen.Length > 0)
+                if (false)
                 {
                     int auswahl;
 
@@ -321,13 +325,13 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, List<string> aktSj)
         {
-            Global.Output.Add("/* ****************************************************************************** */");
-            Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.Sie können alle No- */");
-            Global.Output.Add("/* ten und Fehlzeiten aus Webuntis nach Atlantis importieren, indem Sie diese Da- */");
-            Global.Output.Add("/* tei in Atlantis unter Funktionen>SQL-Anweisung hochladen.                      */");
-            Global.Output.Add("/* Published under the terms of GPLv3. Hoping for the best!                       */");
-            Global.Output.Add("/* " + (System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString()).PadRight(78) + " */");
-            Global.Output.Add("/* ****************************************************************************** */");
+            Global.Output.Add("/* ************************************************************************************************* */");
+            Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.                                       */");
+            Global.Output.Add("/* Sie können alle Noten und Fehlzeiten aus Webuntis nach Atlantis importieren, indem Sie diese Da-  */");
+            Global.Output.Add("/* tei in Atlantis unter Funktionen>SQL-Anweisung hochladen.                                         */");
+            Global.Output.Add("/* Published under the terms of GPLv3. Hoping for the best!                                          */");
+            Global.Output.Add("/* " + (System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString()).PadRight(97) + " */");
+            Global.Output.Add("/* ************************************************************************************************* */");
             Global.Output.Add("");
 
             try
@@ -405,7 +409,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                     leistung.Klasse = theRow["Klasse"].ToString();
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
                                     leistung.Gesamtnote = theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();                                    
-                                    leistung.Gesamtpunkte = theRow["Punkte"].ToString();
+                                    leistung.Gesamtpunkte = theRow["Punkte"].ToString() == "" ? null : theRow["Punkte"].ToString();
                                     leistung.Tendenz = theRow["Tendenz"].ToString() == "" ? null : theRow["Tendenz"].ToString();
                                     leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
@@ -435,6 +439,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage("Atlantisleistungen: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
         internal void SprachenZuordnen(Leistungen atlantisLeistungen)
@@ -682,10 +687,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     }
                 }
                 
-                if (i == 0)
-                {
-                    UpdateLeistung("                               ***keine***", "");   
-                }
+                //if (i == 0)
+                //{
+                //    UpdateLeistung("                               ***keine***", "");   
+                //}
             }
             catch (Exception ex)
             {
@@ -820,10 +825,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                     }                    
                 }
-                if (i == 0)
-                {
-                    UpdateLeistung("                               ***keine***", "");
-                }
+                //if (i == 0)
+                //{
+                //    UpdateLeistung("                               ***keine***", "");
+                //}
             }
             catch (Exception ex)
             {
@@ -860,12 +865,16 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                                 if (!a.GeholteNote)
                                 {
-                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 2)).PadRight(2) + "|" + (a.Gesamtnote == null ? "NU" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NU" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 2)).PadRight(2) + "|" + ((a.Gesamtpunkte == null ? "NU" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NU" + a.Beschreibung, "UPDATE noten_einzel SET    punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
+                                    if (a.Gesamtpunkte != null)
+                                    {
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    }
+                                    
                                     if (a.Tendenz != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 2)).PadRight(2) + "|" + (a.Tendenz == null ? "NU" : " " + a.Tendenz) + ">NU" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
                                     }                                    
 
                                     i++;
@@ -874,10 +883,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                     }
                 }
-                if (i == 0)
-                {
-                    UpdateLeistung("                               ***keine***", "");
-                }
+                //if (i == 0)
+                //{
+                //    UpdateLeistung("                               ***keine***", "");
+                //}
             }
             catch (Exception ex)
             {
@@ -887,115 +896,116 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen, List<string> aktSj)
         {
-            int auswahl;
-            List<string> optionen = new List<string>() {
-            @"Verarbeitungshinweise zeigen",
-                "Alle Klassen         (in denen auch Gesamtnoten eingetragen sind)",
-                "Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
-                "Alle Teilzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
-                "Bestimmte Klassen    (in denen auch Gesamtnoten eingetragen sind)"
-            };
+            //int auswahl;
+            //List<string> optionen = new List<string>() {
+            //@"Verarbeitungshinweise zeigen",
+            //    "Alle Klassen         (in denen auch Gesamtnoten eingetragen sind)",
+            //    "Alle Vollzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
+            //    "Alle Teilzeitklassen (in denen auch Gesamtnoten eingetragen sind)",
+            //    "Bestimmte Klassen    (in denen auch Gesamtnoten eingetragen sind)"
+            //};
 
-            do
-            {
-                Console.WriteLine("");
-                Console.WriteLine(" Auswahl:");
-                Console.WriteLine("");
-                for (int i = 0; i < optionen.Count; i++)
-                {
-                    Console.WriteLine(optionen.IndexOf(optionen[i]) + ". " + optionen[i]);
-                }
-                
-                Console.WriteLine("");
-                Console.Write(" Bitte wählen Sie " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 5 ? "[ " + Properties.Settings.Default.Auswahl + " ] : " : ": "));
-                
-                var key = Console.ReadKey();
+            //do
+            //{
+            //    Console.WriteLine("");
+            //    Console.WriteLine(" Auswahl:");
+            //    Console.WriteLine("");
+            //    for (int i = 0; i < optionen.Count; i++)
+            //    {
+            //        Console.WriteLine(optionen.IndexOf(optionen[i]) + ". " + optionen[i]);
+            //    }
 
-                if (int.TryParse(key.KeyChar.ToString(), out auswahl))
-                {
-                    if (Convert.ToInt32(key.KeyChar.ToString()) > 0 && Convert.ToInt32(key.KeyChar.ToString()) < 5)
-                    {
-                        Properties.Settings.Default.Auswahl = Convert.ToInt32(key.KeyChar.ToString());
-                        Properties.Settings.Default.Save();
-                        auswahl = Convert.ToInt32(key.KeyChar.ToString());                        
-                    }
-                }
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    auswahl = Properties.Settings.Default.Auswahl;
+            //    Console.WriteLine("");
+            //    Console.Write(" Bitte wählen Sie " + (Properties.Settings.Default.Auswahl > 0 && Properties.Settings.Default.Auswahl < 5 ? "[ " + Properties.Settings.Default.Auswahl + " ] : " : ": "));
 
-                    // Cursor an das Ende der Zeile setzen.
+            //    var key = Console.ReadKey();
 
-                    Console.SetCursorPosition(26, Console.CursorTop);
-                }
-                if (auswahl < 0 || auswahl > 4)
-                {                    
-                    Console.WriteLine("");
-                    Console.Write(" ... Ungültige Auswahl! ");
-                    Console.WriteLine("");
-                }
-                else
-                {
-                    Console.WriteLine("  Sie haben Nr. " + auswahl + " gewählt ...");
-                }
-                if (auswahl == 0)
-                {
-                    Console.WriteLine("");
-                    Console.WriteLine(" *********************************************************************************************");
-                    Console.WriteLine(" Verarbeitungshinweise");
-                    Console.WriteLine(" =====================");
-                    Console.WriteLine(" * Es wird automatisch (in Abhängigkeit vom aktuellen Datum) zwischen HZ und JZ entschieden.");
-                    Console.WriteLine("   Zwischen Februar und September werden Jahreszeugnisse (JZ) verarbeitet.");
-                    Console.WriteLine("   Ansonsten Halbjahreszeugnisse (HZ).");
-                    
-                    Console.WriteLine(" * Wenn einem Untis-Unterricht zwei Berufe zugeordnet sind und der Unterricht in Atlantis je");
-                    Console.WriteLine("   nach Beruf zu unterschiedlichen Fächern führt, dann sollte der Untis-Unterricht als Binde- ");
-                    Console.WriteLine("   strichfach angelegt werden. Beispiel: Untisfach ABC-DEF wird in Atlantis zu ABC oder DEF.");
-                    
-                    Console.WriteLine(" * ER und KR oder auch ER G1 usw. werden in Atlantis dem Fach REL zugeordnet");
-                    Console.WriteLine(" * Wenn ein Schüler Religion abgewählt hat, dann wird seine Note auf '-' gesetzt");
-                    Console.WriteLine(" * Noten in der Gym werden als Note und als Punkte gesetzt.");
-                    Console.WriteLine(" * Wenn bei Sprachen keine 1:1-Zuordnung möglich ist, dann wird versucht die Niveautufe");
-                    Console.WriteLine("   abzuschneiden.");
-                    Console.WriteLine(" *********************************************************************************************");
-                    Console.WriteLine("");
-                }
-            } while (auswahl < 1 || auswahl > 4);
+            //    if (int.TryParse(key.KeyChar.ToString(), out auswahl))
+            //    {
+            //        if (Convert.ToInt32(key.KeyChar.ToString()) > 0 && Convert.ToInt32(key.KeyChar.ToString()) < 5)
+            //        {
+            //            Properties.Settings.Default.Auswahl = Convert.ToInt32(key.KeyChar.ToString());
+            //            Properties.Settings.Default.Save();
+            //            auswahl = Convert.ToInt32(key.KeyChar.ToString());                        
+            //        }
+            //    }
+            //    if (key.Key == ConsoleKey.Enter)
+            //    {
+            //        auswahl = Properties.Settings.Default.Auswahl;
 
-            List<string> alleVerschiedenenUntisKlassenMitNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
-            List<string> alleVerschiedenenAtlantisKlassen = (from k in this select k.Klasse).Distinct().ToList();
-            List<string> interessierendeKlassen = new List<string>();
-                        
-            foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
-            {
-                if (auswahl == 1)
-                {
-                    interessierendeKlassen.Add(klasse);
-                }
-                if (auswahl == 2)
-                {
-                    if ((from a in this where a.Klasse == klasse where !a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
-                    {
-                        interessierendeKlassen.Add(klasse);
-                    }
-                }
-                if (auswahl == 3)
-                {
-                    if ((from a in this where a.Klasse == klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
-                    {
-                        interessierendeKlassen.Add(klasse);
-                    }
-                }
-            }
+            //        // Cursor an das Ende der Zeile setzen.
 
-            if (auswahl == 4)
-            {
-                interessierendeKlassen.AddRange(KlassenAuswählen(alleVerschiedenenUntisKlassenMitNoten));
-            }
+            //        Console.SetCursorPosition(26, Console.CursorTop);
+            //    }
+            //    if (auswahl < 0 || auswahl > 4)
+            //    {                    
+            //        Console.WriteLine("");
+            //        Console.Write(" ... Ungültige Auswahl! ");
+            //        Console.WriteLine("");
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine("  Sie haben Nr. " + auswahl + " gewählt ...");
+            //    }
+            //    if (auswahl == 0)
+            //    {
+            //        Console.WriteLine("");
+            //        Console.WriteLine(" *********************************************************************************************");
+            //        Console.WriteLine(" Verarbeitungshinweise");
+            //        Console.WriteLine(" =====================");
+            //        Console.WriteLine(" * Es wird automatisch (in Abhängigkeit vom aktuellen Datum) zwischen HZ und JZ entschieden.");
+            //        Console.WriteLine("   Zwischen Februar und September werden Jahreszeugnisse (JZ) verarbeitet.");
+            //        Console.WriteLine("   Ansonsten Halbjahreszeugnisse (HZ).");
+
+            //        Console.WriteLine(" * Wenn einem Untis-Unterricht zwei Berufe zugeordnet sind und der Unterricht in Atlantis je");
+            //        Console.WriteLine("   nach Beruf zu unterschiedlichen Fächern führt, dann sollte der Untis-Unterricht als Binde- ");
+            //        Console.WriteLine("   strichfach angelegt werden. Beispiel: Untisfach ABC-DEF wird in Atlantis zu ABC oder DEF.");
+
+            //        Console.WriteLine(" * ER und KR oder auch ER G1 usw. werden in Atlantis dem Fach REL zugeordnet");
+            //        Console.WriteLine(" * Wenn ein Schüler Religion abgewählt hat, dann wird seine Note auf '-' gesetzt");
+            //        Console.WriteLine(" * Noten in der Gym werden als Note und als Punkte gesetzt.");
+            //        Console.WriteLine(" * Wenn bei Sprachen keine 1:1-Zuordnung möglich ist, dann wird versucht die Niveautufe");
+            //        Console.WriteLine("   abzuschneiden.");
+            //        Console.WriteLine(" *********************************************************************************************");
+            //        Console.WriteLine("");
+            //    }
+            //} while (auswahl < 1 || auswahl > 4);
+
+            //List<string> alleVerschiedenenUntisKlassenMitNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
+            //List<string> alleVerschiedenenAtlantisKlassen = (from k in this select k.Klasse).Distinct().ToList();
+            //List<string> interessierendeKlassen = new List<string>();
+
+            //foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
+            //{
+            //    if (auswahl == 1)
+            //    {
+            //        interessierendeKlassen.Add(klasse);
+            //    }
+            //    if (auswahl == 2)
+            //    {
+            //        if ((from a in this where a.Klasse == klasse where !a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
+            //        {
+            //            interessierendeKlassen.Add(klasse);
+            //        }
+            //    }
+            //    if (auswahl == 3)
+            //    {
+            //        if ((from a in this where a.Klasse == klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) select a).Any())
+            //        {
+            //            interessierendeKlassen.Add(klasse);
+            //        }
+            //    }
+            //}
+            //if (auswahl == 4)
+            //{
+            //    interessierendeKlassen.AddRange(KlassenAuswählen(alleVerschiedenenUntisKlassenMitNoten));
+            //}
+
+            var interessierendeKlassen = (from k in alleWebuntisLeistungen where k.Gesamtnote != "" where k.Klasse != null select k.Klasse).Distinct().ToList();
 
             interessierendeKlassen = ZeugnisdatumPrüfen(interessierendeKlassen);
 
-            AusgabeSchreiben("Ausgewertete Klassen: " + optionen[auswahl] + ":", interessierendeKlassen);
+            AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", interessierendeKlassen);
 
             return interessierendeKlassen;
         }
@@ -1054,7 +1064,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         
             if (klassenMitZurückliegenderZeugniskonferenz.Count > 0)
             {
-                AusgabeSchreiben("Folgende Klassen passen zu Ihrem Suchmuster, werden aber wegen der zurückliegenden Notenkonferenz nicht angefasst:", klassenMitZurückliegenderZeugniskonferenz);
+                AusgabeSchreiben("Für folgende Klassen sind zwar Noten in Webuntis eingetragen, wegen der zurückliegenden Notenkonferenzen werden sie aber nicht angefasst:", klassenMitZurückliegenderZeugniskonferenz);
             }
             return interessierendeKlassenGefiltert;
         }
@@ -1154,7 +1164,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 
                 try
                 {
-                    while ((zeile + text.Split(' ')[z] + ", ").Length <= 78)
+                    while ((zeile + text.Split(' ')[z] + ", ").Length <= 97)
                     {
                         zeile += text.Split(' ')[z] + " ";
                         z++;
@@ -1169,7 +1179,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 zeile = zeile.TrimEnd(' ');
 
                 string o = "/* " + zeile.TrimEnd(' ');
-                Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
 
             } while (z < text.Split(' ').Count());
 
@@ -1183,7 +1193,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                 try
                 {
-                    while ((zeile + klassen[z] + ", ").Length <= 78)
+                    while ((zeile + klassen[z] + ", ").Length <= 97)
                     {
                         zeile += klassen[z] + ", ";
                         z++;
@@ -1198,7 +1208,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 zeile = zeile.TrimEnd(' ');
 
                 string o = "/* " + zeile.TrimEnd(',');
-                Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
 
             } while (z < klassen.Count);
         }
@@ -1207,7 +1217,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
         {
             try
             {
-                string o = updateQuery + "/*" + message;
+                string o = updateQuery + "/* " + message;
                 Global.Output.Add((o.Substring(0, Math.Min(100, o.Length))).PadRight(100) + " */");
             }
             catch (Exception ex)

@@ -10,9 +10,15 @@ namespace webuntisnoten2atlantis
 
         internal static void PrintMessage(string message)
         {
-            Output.Add("");
-            Output.Add("/* " + (message.PadRight(60)).PadLeft(78) + " */");
-            Output.Add("");
+            if (message.ToLower().Contains("zu"))
+            {
+                Output.Add("");
+            }
+            Output.Add("/* " + message.PadRight(97) + " */");
+            if (message.ToLower().Contains("zu"))
+            {
+                Output.Add("");
+            }
         }
     }
 }

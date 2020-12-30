@@ -49,6 +49,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage("Webuntisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
             }
         }
 
@@ -59,6 +60,8 @@ namespace webuntisnoten2atlantis
                 Console.Write("Abwesenheiten aus Atlantis ".PadRight(71, '.'));
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
+
+                Global.PrintMessage("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: " + typ);
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -109,6 +112,7 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage("Atlantisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
         public Abwesenheiten()
@@ -153,10 +157,10 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                if (i == 0)
-                {
-                    UpdateAbwesenheit("                               ***keine***", "");
-                }
+                //if (i == 0)
+                //{
+                //    UpdateAbwesenheit("                               ***keine***", "");
+                //}
             }
             catch (Exception ex)
             {
@@ -203,10 +207,10 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                if (i == 0)
-                {
-                    UpdateAbwesenheit("                               ***keine***", "");
-                }
+                //if (i == 0)
+                //{
+                //    UpdateAbwesenheit("                               ***keine***", "");
+                //}
             }
             catch (Exception ex)
             {
@@ -245,10 +249,10 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                if (i == 0)
-                {
-                    UpdateAbwesenheit("                               ***keine***", "");
-                }
+                //if (i == 0)
+                //{
+                //    UpdateAbwesenheit("                               ***keine***", "");
+                //}
             }
             catch (Exception ex)
             {
@@ -260,7 +264,7 @@ DBA.schueler.name_2 ASC ", connection);
         {
             try
             {
-                string o = updateQuery + "/*" + message;
+                string o = updateQuery + "/* " + message;
                 Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
             }
             catch (Exception ex)
