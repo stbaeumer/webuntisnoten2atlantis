@@ -1005,7 +1005,21 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
             interessierendeKlassen = ZeugnisdatumPrüfen(interessierendeKlassen);
 
-            AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", interessierendeKlassen);
+            List<string> ik = new List<string>();
+
+            foreach (var item in interessierendeKlassen)
+            {
+                if ((from a in this where a.Abschlussklasse == true where a.Anlage.StartsWith("A") where a.Klasse == item select a).Any())
+                {
+                    ik.Add(item + " (Abschlussklasse)");
+                }
+                else
+                {
+                    ik.Add(item);
+                }
+            }
+
+            AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", ik);
 
             return interessierendeKlassen;
         }
