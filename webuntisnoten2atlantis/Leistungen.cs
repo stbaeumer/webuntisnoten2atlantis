@@ -1011,7 +1011,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 if ((from a in this where a.Abschlussklasse == true where a.Anlage.StartsWith("A") where a.Klasse == item select a).Any())
                 {
-                    ik.Add(item + " (Abschlussklasse)");
+                    ik.Add(item + " (Abschlusszeugnis)");
                 }
                 else
                 {
