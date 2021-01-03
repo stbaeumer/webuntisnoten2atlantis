@@ -12,8 +12,15 @@ namespace webuntisnoten2atlantis
         public string Fach { get; internal set; }
         /// <summary>
         /// Die Gesamtnote ist ein string, weil auch ein '-' dort stehen kann.
+        /// Wenn keine Note erteilt wurde ist der Wert null.
+        /// Zulässige Werte: 1,2,3,4,5,6, NULL, A, -, 
         /// </summary>
         public string Gesamtnote { get; internal set; }
+        /// <summary>
+        /// Wenn keine Punkte erteilt wurden, ist die Punktzahl null
+        /// Zuläassige Werte: 0,1,2,...14,15,99(='-')
+        /// </summary>
+        public string Gesamtpunkte { get; internal set; }
         public string Bemerkung { get; internal set; }
         public string Benutzer { get; internal set; }
         public int SchlüsselExtern { get; internal set; }
@@ -22,7 +29,6 @@ namespace webuntisnoten2atlantis
         public string HzJz { get; internal set; }
         public string Anlage { get; internal set; }
         public string Zeugnistext { get; internal set; }
-        public string Gesamtpunkte { get; internal set; }
         public string EinheitNP { get; internal set; }
         public bool SchuelerAktivInDieserKlasse { get; internal set; }
         public DateTime Konferenzdatum { get; internal set; }

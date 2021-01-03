@@ -39,33 +39,7 @@ namespace webuntisnoten2atlantis
                 {
                     Settings();
                 }
-                //else
-                //{
-                //    Console.Write("\nEinstellungen öffnen und bearbeiten? (j/n) " + (Properties.Settings.Default.Einstellungen == "n" ? "[ n ] : " : "[ j ] : "));
-                    
-                //    var key = Console.ReadKey();
-                //    var k = "";
-
-                //    if (key.Key == ConsoleKey.Enter)
-                //    {
-                //        k = Properties.Settings.Default.Einstellungen;
-                //    }
-
-                //    if (key.Key == ConsoleKey.J || k == "j")
-                //    {
-                //        k = "j";
-                //        Properties.Settings.Default.Einstellungen = "j";
-                //        Properties.Settings.Default.Save();
-                //        Settings();
-                //    }
-                //    else
-                //    {
-                //        Properties.Settings.Default.Einstellungen = "n";
-                //        Properties.Settings.Default.Save();
-                //        Console.WriteLine("");
-                //    }
-                //}
-
+                
                 CheckCsv(inputAbwesenheitenCsv, inputNotenCsv);
 
                 string pfad = SetPfad(zeitstempel, inputAbwesenheitenCsv, inputNotenCsv);
