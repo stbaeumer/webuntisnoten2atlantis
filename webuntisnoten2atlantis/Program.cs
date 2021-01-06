@@ -1,5 +1,7 @@
 ﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
 
+using Microsoft.Exchange.WebServices.Data;
+using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
@@ -103,13 +105,74 @@ namespace webuntisnoten2atlantis
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
+                    Console.Write("Sollen Meetings in Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j]" : "[n]"));
+                                        
+                    var meeting = Console.ReadKey();
+
+                    if (meeting.Key != ConsoleKey.J && Properties.Settings.Default.Meeting != "j")
+                    {
+                        Properties.Settings.Default.Meeting = "n";
+                        Properties.Settings.Default.Save();
+                        
+                    }
+                    if (meeting.Key == ConsoleKey.J || Properties.Settings.Default.Meeting == "j")
+                    {
+                        Properties.Settings.Default.Meeting = "j";
+                        Properties.Settings.Default.Save();
+                        // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
+                        Console.WriteLine("");
+                        Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj);
+
+                        var konferenzen = ReadExcel(@"C:\Users\bm\Berufskolleg Borken\Kollegium - General\03 Schulleitung\3.04 Termine\2020-21\14 Zeugniskonferenzen HZ\\Zeugniskonferenzen HZ.xlsx");
+
+                        ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
+
+                        Console.Write("Bitte das O365-Kennwort für " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " eingeben:");
+                        string pw = Console.ReadLine();
+                        Console.WriteLine("");
+                        string mail = (from l in lehrers where System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1] == l.Kuerzel select l.Mail).FirstOrDefault();
+                        service.Credentials = new WebCredentials(mail, pw);
+                        service.UseDefaultCredentials = false;
+                        service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
+
+                        foreach (var konferenz in konferenzen)
+                        {                                         
+                            var le = (from l in lehrers where System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1] == l.Kuerzel select l).FirstOrDefault();
+                            konferenz.Lehrers = alleWebuntisLeistungen.LehrerDieserKlasse(konferenz, lehrers);
+                            le.ToOutlook(service, konferenz);
+                        }
+
+                        // Fehlende Klassen in der Exceldatei werden ausgegeben
+
+
+
+                        // Überzählige Klassen in der Excelliste werden ausgegeben
+
+
+
+                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
+
+
+
+                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
+
+
+
+                        // ... und alle verschiedenen Lehrer werden ermittelt.
+
+
+                        // ... und jeweils ein Appointment eingetragen
+
+
+                    }
+
                     alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
 
                     Console.WriteLine("");
                     Console.WriteLine("  -----------------------------------------------------------------");
                     Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
                     Environment.Exit(0);
-                } while (Console.ReadKey().Key == ConsoleKey.Escape);                
+                } while (Console.ReadKey().Key == ConsoleKey.Escape);
             }
             catch (Exception ex)
             {
@@ -121,13 +184,102 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static void Settings()
+        private static bool RedirectionUrlValidationCallback(string redirectionUrl)
         {
-            Console.WriteLine("");
-            Console.WriteLine("");
-            Console.WriteLine("Einstellungen vornehmen: ");
-            Console.WriteLine("");
-            
+            // The default for the validation callback is to reject the URL.
+            bool result = false;
+            Uri redirectionUri = new Uri(redirectionUrl);
+            // Validate the contents of the redirection URL. In this simple validation
+            // callback, the redirection URL is considered valid if it is using HTTPS
+            // to encrypt the authentication credentials. 
+            if (redirectionUri.Scheme == "https")
+            {
+                result = true;
+            }
+            return result;
+        }
+
+        public static Termine ReadExcel(string pfad)
+        {
+            Termine termine = new Termine();
+
+            if (File.Exists(pfad))
+            {
+                Global.WaitForFile(pfad);
+            }
+            else
+            {
+                Console.WriteLine("Die Datei " + pfad + ".xlsx soll jetzt eingelesen werden, kann aber nicht gefunden werden.");
+            }
+
+            Application excel = new Application();
+            Workbook workbook = excel.Workbooks.Open(pfad);
+            Worksheet worksheet = (Worksheet)workbook.Worksheets.get_Item(1);
+            Range xlRange = worksheet.UsedRange;
+
+            try
+            {                
+                Console.Write("Lese Exceldatei " + pfad + " ... ");
+
+                // InSpalte D und K stehen die verschiednenen Klassen
+
+                int rowCount = xlRange.Rows.Count;
+
+                for (int spalte = 1; spalte < 9; spalte += 7)
+                {
+                    DateTime zeit = new DateTime();
+                    string raum = "";
+                    string bildungsgang = "";
+                    var datum = Convert.ToString(xlRange.Cells[2, spalte].Value2);
+
+                    for (int zeile = 4; zeile < rowCount + 1; zeile++)
+                    {
+                        var termin = new Termin();
+
+                        bildungsgang = Convert.ToString(xlRange.Cells[zeile, spalte + 1].Value2) ?? bildungsgang;
+                        termin.Bildungsgang = bildungsgang;
+                        termin.Klasse = Convert.ToString(xlRange.Cells[zeile, spalte + 2].Value2);
+                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2));
+                        termin.Uhrzeit = zeit;
+                        raum = Convert.ToString(xlRange.Cells[zeile, spalte + 5].Value2) ?? raum;
+                        termin.Raum = raum;
+                        if (termin.Klasse != null)
+                        {
+                            termine.Add(termin);
+                        }
+                    }
+                }
+                
+                workbook.Close(0);
+                excel.Quit();
+                Console.WriteLine(" ... ok.");
+                return termine;
+
+            }
+            catch (Exception ex)
+            {                
+                Console.WriteLine(ex.ToString());
+                workbook.Close(0);
+                excel.Quit();
+                Console.ReadKey();                
+                return termine;
+            }
+        }
+
+        private static DateTime GetZeit(DateTime uhrzeit, dynamic datum, dynamic dynamic)
+        {
+            try
+            {
+                return DateTime.FromOADate(double.Parse(datum) + double.Parse(dynamic));
+            }
+            catch (Exception)
+            {
+                return dynamic ?? uhrzeit.AddMinutes(10);
+            }
+        }
+
+        private static void Settings()
+        {   
             do
             {
                 Console.Write(" 1. Wie heißt der Datenbankbenutzer? " + (Properties.Settings.Default.DBUser == "" ? "" : "[ " + Properties.Settings.Default.DBUser + " ]  "));
@@ -135,7 +287,7 @@ namespace webuntisnoten2atlantis
 
                 if (dbuser == "")
                 {
-                    dbuser = Properties.Settings.Default.DBUser;
+                    _ = Properties.Settings.Default.DBUser;
                 }
                 else
                 {

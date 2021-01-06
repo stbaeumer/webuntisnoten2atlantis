@@ -48,7 +48,7 @@ namespace webuntisnoten2atlantis
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                 leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
                                 leistung.Bemerkung = x[6];
-                                leistung.Benutzer = x[7];
+                                leistung.Lehrkraft = x[7];
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
                                 leistungen.Add(leistung);
                             }
@@ -69,7 +69,7 @@ namespace webuntisnoten2atlantis
 
                             if (x.Length == 4)
                             {
-                                leistung.Benutzer = x[1];
+                                leistung.Lehrkraft = x[1];
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
                                 leistung.Gesamtpunkte = x[3].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
@@ -154,105 +154,6 @@ namespace webuntisnoten2atlantis
             return tendenz;
         }
 
-
-        private string Gesamtnote2Tendenz(string gesamtnote)
-        {
-            if (gesamtnote == null)
-            {
-                return null;
-            }
-            if (gesamtnote.EndsWith("-"))
-            {
-                return "-";
-            }
-
-            if (gesamtnote.EndsWith("+"))
-            {
-                return "+";
-            }
-
-            return null;
-        }
-
-        private string Gesamtnote2Gesamtpunkte(string gesamtnote)
-        {
-            if (gesamtnote.EndsWith("-"))
-            {
-                gesamtnote = gesamtnote.Replace("-", "");
-                
-                if (gesamtnote == "1")
-                {
-                    return "13";
-                }
-                if (gesamtnote == "2")
-                {
-                    return "10";
-                }
-                if (gesamtnote == "3")
-                {
-                    return "7";
-                }
-                if (gesamtnote == "4")
-                {
-                    return "4";
-                }
-                if (gesamtnote == "5")
-                {
-                    return "1";
-                }                
-            }
-
-            if (gesamtnote.EndsWith("+"))
-            {
-                gesamtnote = gesamtnote.Replace("+", "");
-                if (gesamtnote == "1")
-                {
-                    return "15";
-                }
-                if (gesamtnote == "2")
-                {
-                    return "12";
-                }
-                if (gesamtnote == "3")
-                {
-                    return "9";
-                }
-                if (gesamtnote == "4")
-                {
-                    return "6";
-                }
-                if (gesamtnote == "5")
-                {
-                    return "3";
-                }
-            }
-
-            if (gesamtnote == "1")
-            {
-                return "14";
-            }
-            if (gesamtnote == "2")
-            {
-                return "11";
-            }
-            if (gesamtnote == "3")
-            {
-                return "8";
-            }
-            if (gesamtnote == "4")
-            {
-                return "5";
-            }
-            if (gesamtnote == "5")
-            {
-                return "2";
-            }
-
-            return null;
-        }
-
-
-
         internal Leistungen HoleAlteNoten(Leistungen webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
         {
             try
@@ -269,11 +170,11 @@ namespace webuntisnoten2atlantis
 
                     if ((from a in this where klasse == a.Klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) where a.Abschlussklasse where a.Schuljahr == aktSj[0] + "/" + aktSj[1] select a).Any())
                     {
-                        // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen
+                        // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen.
 
                         var schuelers = (from w in webuntisLeistungen where w.Klasse == klasse select w.SchlüsselExtern).Distinct().ToList();
 
-                        // für jeden Schüler werden seine Noten der vergangenen Jahre gesucht
+                        // Für jeden Schüler werden seine Noten der vergangenen Jahre gesucht ...
 
                         foreach (var schueler in schuelers)
                         {
@@ -337,8 +238,8 @@ namespace webuntisnoten2atlantis
                                     leistung.Fach = fach;
                                     leistung.GeholteNote = true;
                                     leistung.Gesamtnote = vLeistung.Gesamtnote;
-                                    leistung.Gesamtpunkte = Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
-                                    leistung.Tendenz = Gesamtnote2Tendenz(leistung.Tendenz);
+                                    leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
+                                    leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
                                     leistung.Gliederung = vLeistung.Gliederung;
                                     leistung.HzJz = vLeistung.HzJz;
                                     leistung.Jahrgang = aLeistung.Jahrgang;
@@ -367,6 +268,30 @@ namespace webuntisnoten2atlantis
                 throw ex;
             }
             
+        }
+
+        internal Lehrers LehrerDieserKlasse(Termin konferenz, Lehrers lehrers)
+        {
+            Lehrers lehrersInDerKlasse = new Lehrers();
+
+            foreach (var w in this)
+            {
+                if (w.Klasse == konferenz.Klasse)
+                {
+                    foreach (var l in lehrers)
+                    {
+                        if (l.Kuerzel == w.Lehrkraft)
+                        {
+                            if (!(from t in lehrersInDerKlasse where t.Kuerzel == l.Kuerzel select t).Any())
+                            {
+                                lehrersInDerKlasse.Add(l);
+                            }
+                        }
+                    }
+                }                           
+            }
+
+            return lehrersInDerKlasse;
         }
 
         public Leistungen(string connetionstringAtlantis, List<string> aktSj)
@@ -610,7 +535,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                             leistung.Gesamtnote = "-";
                             leistung.Gesamtpunkte = "99";
                             leistung.Bemerkung = "";
-                            leistung.Benutzer = "";
+                            leistung.Lehrkraft = "";
                             leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
                             this.Add(leistung);
                         }
@@ -961,11 +886,12 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 foreach (var a in (from t in this where t.Klasse == klasse select t).ToList())
                 {
-                    // Wenn die Notenkonferenz -je nach Halbjahr ...
+                    // Wenn die Notenkonferenz -je nach Halbjahr- ...
 
                     if (a != null && a.HzJz == "HZ")
                     {
-                        // ... in der Vergangenheit liegen
+                        // ... in der Vergangenheit liegen ...
+
                         if (a.Konferenzdatum > new DateTime((DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1), 08, 01) && a.Konferenzdatum < DateTime.Now)
                         {
                             // ... wird die Leistung nicht berücksichtigt

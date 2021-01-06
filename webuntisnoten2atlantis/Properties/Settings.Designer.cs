@@ -154,5 +154,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Einstellungen"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Meeting {
+            get {
+                return ((string)(this["Meeting"]));
+            }
+            set {
+                this["Meeting"] = value;
+            }
+        }
     }
 }
