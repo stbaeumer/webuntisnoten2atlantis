@@ -13,11 +13,12 @@ namespace webuntisnoten2atlantis
     class Program
     {
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=";
+        public static string Passwort = "";
 
         static void Main(string[] args)
         {
             Global.Output = new List<string>();
-
+                        
             try
             {
                 string inputNotenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
@@ -105,7 +106,8 @@ namespace webuntisnoten2atlantis
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
-                    Console.Write("Sollen Meetings in Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j]" : "[n]"));
+                    Console.WriteLine("");
+                    Console.Write("Sollen Meetings in Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
                                         
                     var meeting = Console.ReadKey();
 
@@ -127,11 +129,11 @@ namespace webuntisnoten2atlantis
 
                         ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
 
-                        Console.Write("Bitte das O365-Kennwort für " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " eingeben:");
-                        string pw = Console.ReadLine();
+                        CheckPassword("Bitte das O365-Kennwort für " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " eingeben: ");
+                        
                         Console.WriteLine("");
                         string mail = (from l in lehrers where System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1] == l.Kuerzel select l.Mail).FirstOrDefault();
-                        service.Credentials = new WebCredentials(mail, pw);
+                        service.Credentials = new WebCredentials(mail, Passwort);
                         service.UseDefaultCredentials = false;
                         service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
 
@@ -181,6 +183,52 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine(ex);
                 Console.ReadKey();
                 Environment.Exit(0);
+            }
+        }
+
+        static void CheckPassword(string EnterText)
+        {
+            try
+            {
+                Console.Write(EnterText);
+                Passwort = "";
+                do
+                {
+                    ConsoleKeyInfo key = Console.ReadKey(true);
+                    // Backspace Should Not Work  
+                    if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
+                    {
+                        Passwort += key.KeyChar;
+                        Console.Write("*");
+                    }
+                    else
+                    {
+                        if (key.Key == ConsoleKey.Backspace && Passwort.Length > 0)
+                        {
+                            Passwort = Passwort.Substring(0, (Passwort.Length - 1));
+                            Console.Write("\b \b");
+                        }
+                        else if (key.Key == ConsoleKey.Enter)
+                        {
+                            if (string.IsNullOrWhiteSpace(Passwort))
+                            {
+                                Console.WriteLine("");
+                                Console.WriteLine("Empty value not allowed.");
+                                CheckPassword(EnterText);
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("");
+                                break;
+                            }
+                        }
+                    }
+                } while (true);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
