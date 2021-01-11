@@ -5,8 +5,10 @@ using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace webuntisnoten2atlantis
 {
@@ -14,6 +16,14 @@ namespace webuntisnoten2atlantis
     {
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=";
         public static string Passwort = "";
+        public static string User = System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1];
+        public static string Zeitstempel = DateTime.Now.ToString("yyMMdd-HHmmss");
+        public static List<string> AktSj = new List<string>
+                {
+                    (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
+                    (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
+                };
+        public static string ExcelPath = @"C:\Users\" + User + @"\Berufskolleg Borken\Kollegium - General\03 Schulleitung\3.04 Termine\2020-21\14 Zeugniskonferenzen HZ\\Zeugniskonferenzen HZ.xlsx";
 
         static void Main(string[] args)
         {
@@ -21,16 +31,6 @@ namespace webuntisnoten2atlantis
                         
             try
             {
-                string inputNotenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv";
-                string inputAbwesenheitenCsv = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\AbsenceTimesTotal.csv";
-                string zeitstempel = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-
-                List<string> aktSj = new List<string>
-                {
-                    (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
-                    (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
-                };
-
                 Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201230");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
@@ -42,17 +42,20 @@ namespace webuntisnoten2atlantis
                 {
                     Settings();
                 }
-                
-                CheckCsv(inputAbwesenheitenCsv, inputNotenCsv);
 
-                string pfad = SetPfad(zeitstempel, inputAbwesenheitenCsv, inputNotenCsv);
+                string targetPath = SetTargetPath();
+                Process notepadPlus = new Process();
+                notepadPlus.StartInfo.FileName = "notepad++.exe";                
+                notepadPlus.Start();
+                Thread.Sleep(2000);
+                string targetAbsenceTimesTotal = CheckFile(targetPath, User, "AbsenceTimesTotal");
+                string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");                
+                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis.SQL");
 
-                string outputSql = pfad + "\\webuntisnoten2atlantis_" + zeitstempel + ".SQL";
-
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj);
-                Leistungen alleWebuntisLeistungen = new Leistungen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\MarksPerLesson.csv");                
-                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj[0] + "/" + aktSj[1]);
-                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\AbsenceTimesTotal.csv");
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
+                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);                
+                Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
+                Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(targetAbsenceTimesTotal);
 
                 do
                 {                    
@@ -65,7 +68,7 @@ namespace webuntisnoten2atlantis
 
                     do
                     {
-                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, aktSj);
+                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
                         
                         webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
                         webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
@@ -81,9 +84,9 @@ namespace webuntisnoten2atlantis
 
                     // Alte Noten holen
                                         
-                    webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, aktSj));
+                    webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, AktSj));
 
-                    // Korrekturen
+                    // Korrekturen durchführen
                                         
                     webuntisLeistungen.ReligionZuordnen();
                     webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
@@ -99,76 +102,85 @@ namespace webuntisnoten2atlantis
                     // Add-Delete-Update
 
                     atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
-                    atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, aktSj);
+                    atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
                     atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
 
                     atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                     atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
-                    Console.WriteLine("");
-                    Console.Write("Sollen Meetings in Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
-                                        
-                    var meeting = Console.ReadKey();
-
-                    if (meeting.Key != ConsoleKey.J && Properties.Settings.Default.Meeting != "j")
+                    if (User.ToUpper() == "BM")
                     {
-                        Properties.Settings.Default.Meeting = "n";
-                        Properties.Settings.Default.Save();
-                        
-                    }
-                    if (meeting.Key == ConsoleKey.J || Properties.Settings.Default.Meeting == "j")
-                    {
-                        Properties.Settings.Default.Meeting = "j";
-                        Properties.Settings.Default.Save();
-                        // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
                         Console.WriteLine("");
-                        Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, aktSj);
+                        Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unterrichten,");
+                        Console.WriteLine("werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interessierenden Konferenzen");
+                        Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
+                        Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
 
-                        var konferenzen = ReadExcel(@"C:\Users\bm\Berufskolleg Borken\Kollegium - General\03 Schulleitung\3.04 Termine\2020-21\14 Zeugniskonferenzen HZ\\Zeugniskonferenzen HZ.xlsx");
+                        var meeting = Console.ReadKey();
 
-                        ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
+                        if (meeting.Key == ConsoleKey.N)
+                        {
+                            Properties.Settings.Default.Meeting = "n";
+                            Properties.Settings.Default.Save();
+                        }
+                        if (meeting.Key == ConsoleKey.J)
+                        {
+                            Properties.Settings.Default.Meeting = "j";
+                            Properties.Settings.Default.Save();
+                        }
+                        if (Properties.Settings.Default.Meeting == "j")
+                        {
+                            Properties.Settings.Default.Meeting = "j";
+                            Properties.Settings.Default.Save();
+                            // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
+                            Console.WriteLine("");
+                            Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                        CheckPassword("Bitte das O365-Kennwort für " + System.Security.Principal.WindowsIdentity.GetCurrent().Name + " eingeben: ");
-                        
-                        Console.WriteLine("");
-                        string mail = (from l in lehrers where System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1] == l.Kuerzel select l.Mail).FirstOrDefault();
-                        service.Credentials = new WebCredentials(mail, Passwort);
-                        service.UseDefaultCredentials = false;
-                        service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
+                            var konferenzen = ReadExcel(ExcelPath);
 
-                        foreach (var konferenz in konferenzen)
-                        {                                         
-                            var le = (from l in lehrers where System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1] == l.Kuerzel select l).FirstOrDefault();
-                            konferenz.Lehrers = alleWebuntisLeistungen.LehrerDieserKlasse(konferenz, lehrers);
-                            le.ToOutlook(service, konferenz);
+                            ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
+
+                            CheckPassword("Bitte das O365-Kennwort für " + User + " eingeben: ");
+
+                            Console.WriteLine("");
+                            string mail = (from l in lehrers where User == l.Kuerzel select l.Mail).FirstOrDefault();
+                            service.Credentials = new WebCredentials(mail, Passwort);
+                            service.UseDefaultCredentials = false;
+                            service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
+
+                            konferenzen.Lehrers(lehrers, alleWebuntisLeistungen);
+                            konferenzen.TerminkollisionenFinden();
+                            konferenzen.ToOutlook(service, mail);
+
+
+                            // Fehlende Klassen in der Exceldatei werden ausgegeben
+
+
+
+                            // Überzählige Klassen in der Excelliste werden ausgegeben
+
+
+
+                            // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
+
+
+
+                            // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
+
+
+
+                            // ... und alle verschiedenen Lehrer werden ermittelt.
+
+
+                            // ... und jeweils ein Appointment eingetragen
+
                         }
 
-                        // Fehlende Klassen in der Exceldatei werden ausgegeben
-
-
-
-                        // Überzählige Klassen in der Excelliste werden ausgegeben
-
-
-
-                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
-
-
-
-                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
-
-
-
-                        // ... und alle verschiedenen Lehrer werden ermittelt.
-
-
-                        // ... und jeweils ein Appointment eingetragen
-
 
                     }
 
-                    alleAtlantisLeistungen.ErzeugeSqlDatei(outputSql);
+                    alleAtlantisLeistungen.ErzeugeSqlDatei( new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
                     Console.WriteLine("");
                     Console.WriteLine("  -----------------------------------------------------------------");
@@ -184,6 +196,57 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+
+        private static string CheckFile(string targetPath, string user, string kriterium)
+        {
+            var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads") where f.Contains(kriterium) orderby File.GetCreationTime(f) select f).LastOrDefault();
+            
+            if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
+            {
+                Console.WriteLine("");
+                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Doenload-Ordner ist nicht von heute") + ".");
+                Console.WriteLine("  Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
+
+                if (kriterium.Contains("MarksPerLesson"))
+                {   
+                    Console.WriteLine("   1. Administration > Export klicken");
+                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                    Console.WriteLine("   3. !!! Zeitraum begrenzen (also die Woche der) Zeugniskonferenz herauslassen !!!");
+                    Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");                    
+                }
+
+                if (kriterium.Contains("AbsenceTimesTotal"))
+                {
+                    Console.WriteLine("   1. Klassenbuch > Berichte klicken");
+                    Console.WriteLine("   2. Alle Klassen auswählen");
+                    Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+                    Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+                    Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                }
+
+                Console.WriteLine("");
+                Console.WriteLine(" ENTER beendet das Programm.");
+                Console.ReadKey();
+                Environment.Exit(0);
+
+            }
+            var targetFile = Path.Combine(targetPath, Zeitstempel + "_" + kriterium + ".CSV");
+
+            if (File.Exists(targetFile))
+            { 
+                File.Delete(targetFile); 
+            }
+            File.Copy(sourceFile, targetFile);
+
+            Process notepadPlus = new Process();
+            notepadPlus.StartInfo.FileName = "notepad++.exe";
+            //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
+            notepadPlus.StartInfo.Arguments = targetFile;
+            notepadPlus.Start();
+            Thread.Sleep(2000);
+            return Path.Combine(targetFile);
         }
 
         static void CheckPassword(string EnterText)
@@ -273,24 +336,26 @@ namespace webuntisnoten2atlantis
 
                 int rowCount = xlRange.Rows.Count;
 
-                for (int spalte = 1; spalte < 9; spalte += 7)
+                for (int spalte = 1; spalte < 8; spalte += 6)
                 {
                     DateTime zeit = new DateTime();
                     string raum = "";
                     string bildungsgang = "";
+
                     var datum = Convert.ToString(xlRange.Cells[2, spalte].Value2);
 
-                    for (int zeile = 4; zeile < rowCount + 1; zeile++)
+                    for (int zeile = 3; zeile < rowCount + 1; zeile++)
                     {
                         var termin = new Termin();
-
+                        
                         bildungsgang = Convert.ToString(xlRange.Cells[zeile, spalte + 1].Value2) ?? bildungsgang;
                         termin.Bildungsgang = bildungsgang;
                         termin.Klasse = Convert.ToString(xlRange.Cells[zeile, spalte + 2].Value2);
-                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2));
+                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 3].Value2));                        
                         termin.Uhrzeit = zeit;
-                        raum = Convert.ToString(xlRange.Cells[zeile, spalte + 5].Value2) ?? raum;
+                        raum = Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2) ?? raum;
                         termin.Raum = raum;
+
                         if (termin.Klasse != null)
                         {
                             termine.Add(termin);
@@ -416,9 +481,9 @@ namespace webuntisnoten2atlantis
             } while (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "");
         }
 
-        private static string SetPfad(string zeitstempel, string inputNotenCsv, string inputAbwesenheitenCsv)
+        private static string SetTargetPath()
         {
-            var pfad = @"\\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien";
+            var pfad = @"\\fs01\SoftwarehausHeider\webuntisNoten2Atlantis\Dateien";
 
             if (Properties.Settings.Default.Pfad != "")
             {
@@ -433,7 +498,7 @@ namespace webuntisnoten2atlantis
                     pfad = Console.ReadLine();
                     if (pfad == "")
                     {
-                        pfad = @"\\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien";
+                        pfad = @"\\fs01\SoftwarehausHeider\webuntisNoten2Atlantis\Dateien";
                     }
                     try
                     {
@@ -449,80 +514,7 @@ namespace webuntisnoten2atlantis
                 } while (!Directory.Exists(pfad));
             }
 
-#if DEBUG
-            
-            File.Copy(inputNotenCsv, pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
-            File.Copy(inputAbwesenheitenCsv, pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
-#else
-            File.Copy(inputNotenCsv, pfad + @"\" + zeitstempel + "-MarksPerLesson.csv");
-            File.Copy(inputAbwesenheitenCsv, pfad + @"\" + zeitstempel + "-AbsenceTimesTotal.csv");
-#endif
-
-
-
-
             return pfad;
-        }
-
-        private static void CheckCsv(string inputAbwesenheitenCsv, string inputNotenCsv)
-        {
-            if (!File.Exists(inputAbwesenheitenCsv))
-            {
-                RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv, "existiert nicht");
-            }
-            else
-            {
-                if (System.IO.File.GetLastWriteTime(inputAbwesenheitenCsv).Date != DateTime.Now.Date)
-                {
-                    RenderInputAbwesenheitenCsv(inputAbwesenheitenCsv, "ist nicht aktuell von heute");
-                }
-            }
-
-            if (!File.Exists(inputNotenCsv))
-            {
-                RenderNotenexportCsv(inputNotenCsv, "existiert nicht");
-            }
-            else
-            {
-                if (System.IO.File.GetLastWriteTime(inputNotenCsv).Date != DateTime.Now.Date)
-                {
-                    RenderNotenexportCsv(inputNotenCsv, "ist nicht aktuell von heute");
-                }
-            }
-
-            Console.WriteLine("");
-        }
-
-        private static void RenderInputAbwesenheitenCsv(string inputAbwesenheitenCsv, string meldung)
-        {
-            Console.WriteLine("");
-            Console.WriteLine("  Die Datei " + inputAbwesenheitenCsv + " " + meldung + ".");
-            Console.WriteLine("  Exportieren Sie die Datei frisch aus dem Digitalen Klassenbuch, indem Sie als Administrator:");
-            Console.WriteLine("   1. Administration > Export klicken");
-            Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-            Console.WriteLine("   4. !!! Zeitraum begrenzen (z.B. bis drei Tage vor der) Zeugniskonferenz !!!");
-            Console.WriteLine("   5. Die Datei \"AbsenceTimesTotal.csv\" auf dem Desktop speichern");
-            Console.WriteLine("");
-            Console.WriteLine(" ENTER beendet das Programm.");
-            Console.ReadKey();
-            Environment.Exit(0);
-        }
-
-        private static void RenderNotenexportCsv(string inputNotenCsv, string meldung)
-        {
-            Console.WriteLine("");
-            Console.WriteLine("  Die Datei " + inputNotenCsv + " " + meldung + ".");
-            Console.WriteLine("  Exportieren Sie die Datei aus dem Digitalen Klassenbuch, indem Sie");
-            Console.WriteLine("   1. Klassenbuch > Berichte klicken");
-            Console.WriteLine("   2. Alle Klassen auswählen");
-            Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-            Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-            Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-            Console.WriteLine("   6. Die Datei \"MarksPerLesson.csv\" auf dem Desktop speichern");
-            Console.WriteLine("");
-            Console.WriteLine("  ENTER beendet das Programm.");
-            Console.ReadKey();
-            Environment.Exit(0);
-        }
+        }  
     }
 }

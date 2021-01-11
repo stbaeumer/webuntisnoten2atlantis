@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,11 @@ namespace webuntisnoten2atlantis
 {
     public class Leistungen : List<Leistung>
     {
-        public Leistungen(string datei)
+        public Leistungen(string targetMarksPerLesson)
         {
             var leistungen = new Leistungen();
 
-            using (StreamReader reader = new StreamReader(datei))
+            using (StreamReader reader = new StreamReader(targetMarksPerLesson))
             {
                 string überschrift = reader.ReadLine();
 
@@ -79,10 +80,10 @@ namespace webuntisnoten2atlantis
 
                             if (x.Length < 4)
                             {
-                                Console.WriteLine("\n\n[!] MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
+                                Console.WriteLine("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                                 Console.ReadKey();
-                                DateiÖffnen(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\MarksPerLesson.csv");
-                                throw new Exception("\n\n[!] MarksPerLesson.csv: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.csv korrigiert werden.");
+                                OpenFiles(new List<string>() { targetMarksPerLesson });
+                                throw new Exception("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                             }
                         }
                     }
@@ -294,14 +295,14 @@ namespace webuntisnoten2atlantis
             return lehrersInDerKlasse;
         }
 
-        public Leistungen(string connetionstringAtlantis, List<string> aktSj)
+        public Leistungen(string connetionstringAtlantis, List<string> aktSj, string user)
         {
             Global.Output.Add("/* ************************************************************************************************* */");
             Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.                                       */");
             Global.Output.Add("/* Sie können alle Noten und Fehlzeiten aus Webuntis nach Atlantis importieren, indem Sie diese Da-  */");
             Global.Output.Add("/* tei in Atlantis unter Funktionen>SQL-Anweisung hochladen.                                         */");
             Global.Output.Add("/* Published under the terms of GPLv3. Hoping for the best!                                          */");
-            Global.Output.Add("/* " + (System.Security.Principal.WindowsIdentity.GetCurrent().Name + " " + DateTime.Now.ToString()).PadRight(97) + " */");
+            Global.Output.Add("/* " + (user + " " + DateTime.Now.ToString()).PadRight(97) + " */");
             Global.Output.Add("/* ************************************************************************************************* */");
             Global.Output.Add("");
 
@@ -1093,11 +1094,11 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             }
         }
 
-        internal void ErzeugeSqlDatei(string outputSql)
+        internal void ErzeugeSqlDatei(List<string> files)
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(outputSql, true, Encoding.Default))
+                using (StreamWriter writer = new StreamWriter(files[2], true, Encoding.Default))
                 {
                     foreach (var o in Global.Output)
                     {
@@ -1110,19 +1111,33 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 throw ex;
             }
 
-            DateiÖffnen(outputSql);
+            OpenFiles(files);
         }
 
-        private void DateiÖffnen(string pfad)
+        private void OpenFiles(List<string> files)
         {
             try
             {
-                System.Diagnostics.Process.Start(@"C:\Program Files (x86)\Notepad++\Notepad++.exe", pfad);
+                Process notepadPlus = new Process();
+                notepadPlus.StartInfo.FileName = "notepad++.exe";
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    if (i==0)
+                    {
+                        notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
+                    }
+                    else
+                    {
+                        notepadPlus.StartInfo.Arguments = files[i];
+                    }
+                }
+                notepadPlus.Start();
             }
             catch (Exception)
             {
-                System.Diagnostics.Process.Start("Notepad.exe", pfad);
+                System.Diagnostics.Process.Start("Notepad.exe", files[0]);
             }
-        }
+        }        
     }
 }

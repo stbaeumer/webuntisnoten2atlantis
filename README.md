@@ -25,7 +25,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 2. Den Pfad *Klassenbuch > Berichte* gehen.
 3. Alle Klassen wählen. Das aktuelle Schuljahr wählen.
 4. Unter der Rubrik *Noten* das Icon *CSV-Ausgabe* klicken. Der Haken bei *Notennamen ausgeben* darf nicht gesetzt sein. 
-5. Die Datei *MarksPerLesson.csv* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und es kann dauern, bis Webuntis die Datei bereitstellt. Die Datei hat folgenden Aufbau:
+5. Die Datei *MarksPerLesson.CSV* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und es kann dauern, bis Webuntis die Datei bereitstellt. Die Datei hat folgenden Aufbau:
 
 ```
 Datum	Name	Klasse	Fach	Prüfungsart	Note	Bemerkung	Benutzer	Schlüssel (extern)	Gesamtnote
@@ -39,7 +39,7 @@ Die Gesamtnote steht in der letzten Spalte als Punktzahl von ```0``` bis ```15``
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Administration > Export* gehen.
 3. Hinter *Gesamtfehlzeiten* das Icon *CSV-Ausgabe* klicken.
-5. Die Datei *AbsenceTimesTotal.csv* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
+5. Die Datei *AbsenceTimesTotal.CSV* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
 
 ```
 studentId	name		klasse	klasseId	absentMins	absentMinsNotExcused	absentHours	absentHoursNotExcused
