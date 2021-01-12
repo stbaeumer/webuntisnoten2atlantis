@@ -42,6 +42,11 @@ namespace webuntisnoten2atlantis
         public bool Abschlussklasse { get; internal set; }
         public string Beschreibung { get; internal set; }
         public bool GeholteNote { get; internal set; }
+        public bool HatBemerkung { get; internal set; }
+        /// <summary>
+        /// Wenn Schüler der Anlage A die Zeugnisart A01AS gesetzt haben, dann werden für sie alte Noten geholt.
+        /// </summary>
+        public string Zeugnisart { get; internal set; }
 
         internal bool IstAbschlussklasse()
         {

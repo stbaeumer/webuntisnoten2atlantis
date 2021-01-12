@@ -155,6 +155,33 @@ namespace webuntisnoten2atlantis
             return tendenz;
         }
 
+        internal void FehlendeZeugnisbemerkungBeiStrich(Leistungen atlantisLeistungen)
+        {
+            List<string> fehlendeBemerkungen = new List<string>();
+            
+            foreach (var webuntisLeistung in this)
+            {
+                var x = (from a in atlantisLeistungen 
+                         where a.Klasse == webuntisLeistung.Klasse 
+                         where a.Anlage != "A"
+                         where a.Name == webuntisLeistung.Name 
+                         where a.Fach == webuntisLeistung.Fach
+                         where a.Fach != "REL"
+                         where a.HatBemerkung 
+                         where (a.Gesamtnote == "99" || webuntisLeistung.Gesamtpunkte == "99" || a.Gesamtnote == "-" || webuntisLeistung.Gesamtnote == "-")
+                         select a).FirstOrDefault();
+
+                if (x != null)
+                {
+                    fehlendeBemerkungen.Add(x.Name +"(" + x.Klasse + "," + x.Fach + "," + webuntisLeistung.Lehrkraft + "),");
+                }                
+            }
+            if (fehlendeBemerkungen.Count > 0)
+            {
+                AusgabeSchreiben("Es gibt Schüler*innen in Vollzeitklassen, die einen '-' in einem Nicht-Reli-Fach als Noten bekommen, ohne dass eine entsprechende Zeugnisbemerkung vorliegt:", fehlendeBemerkungen);
+            }
+        }
+
         internal Leistungen HoleAlteNoten(Leistungen webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
         {
             try
@@ -166,14 +193,27 @@ namespace webuntisnoten2atlantis
                 string abschlussklassen = "";
 
                 foreach (var klasse in interessierendeKlassen)
-                {
-                    // Für Klassen der Anlage A, die in diesem Schuljahr in Jahrgang 3 oder 4 sind ... 
+                {                    
+                    // Für Klassen der Anlage A, die in diesem Schuljahr in Jahrgang 3 oder 4 sind oder deren Schüler ein Abschlusszeugnis bekommen ... 
 
-                    if ((from a in this where klasse == a.Klasse where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) where a.Abschlussklasse where a.Schuljahr == aktSj[0] + "/" + aktSj[1] select a).Any())
+                    if ((from a in this where klasse == a.Klasse 
+                         where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) 
+                         where (a.Abschlussklasse || a.Zeugnisart == "A01AS") 
+                         where a.Schuljahr == aktSj[0] + "/" + aktSj[1] 
+                         select a).Any())
                     {
                         // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen.
 
-                        var schuelers = (from w in webuntisLeistungen where w.Klasse == klasse select w.SchlüsselExtern).Distinct().ToList();
+                        var schuelers = (from w in webuntisLeistungen 
+                                         where w.Klasse == klasse 
+                                         where (from a in this
+                                                where a.SchlüsselExtern == w.SchlüsselExtern
+                                                where klasse == a.Klasse
+                                                where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart)
+                                                where (a.Abschlussklasse || a.Zeugnisart == "A01AS")
+                                                where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                                select a).Any()
+                                         select w.SchlüsselExtern).Distinct().ToList();
 
                         // Für jeden Schüler werden seine Noten der vergangenen Jahre gesucht ...
 
@@ -336,6 +376,11 @@ DBA.klasse.s_klasse_art AS Anlage,
 DBA.klasse.jahrgang AS Jahrgang,
 DBA.schue_sj.s_gliederungsplan_kl AS Gliederung,
 DBA.noten_kopf.s_typ_nok AS HzJz,
+DBA.noten_kopf.nok_id AS NOK_ID,
+DBA.noten_kopf.s_art_nok AS Zeugnisart,
+DBA.noten_kopf.bemerkung_block_1 AS Bemerkung1,
+DBA.noten_kopf.bemerkung_block_2 AS Bemerkung2,
+DBA.noten_kopf.bemerkung_block_3 AS Bemerkung3,
 DBA.noten_kopf.dat_notenkonferenz AS Konferenzdatum,
 DBA.klasse.klasse AS Klasse
 FROM(((DBA.noten_kopf JOIN DBA.schue_sj ON DBA.noten_kopf.pj_id = DBA.schue_sj.pj_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_einzel ON DBA.noten_kopf.nok_id = DBA.noten_einzel.nok_id ) JOIN DBA.schueler ON DBA.noten_einzel.pu_id = DBA.schueler.pu_id
@@ -372,10 +417,12 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                                 if (!(austrittsdatum > new DateTime(DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1, 8, 1) && austrittsdatum < DateTime.Now))
                                 {
+                                    
                                     leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);                         
                                     leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N";
                                     leistung.Schuljahr = theRow["Schuljahr"].ToString();
                                     leistung.Gliederung = theRow["Gliederung"].ToString();
+                                    leistung.HatBemerkung = (theRow["Bemerkung1"].ToString() + theRow["Bemerkung2"].ToString() + theRow["Bemerkung3"].ToString()).Contains("Fehlzeiten") ? true : false;
                                     leistung.Jahrgang = Convert.ToInt32(theRow["Jahrgang"].ToString().Substring(3,1));
                                     leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                                     leistung.Klasse = theRow["Klasse"].ToString();
@@ -387,12 +434,13 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
                                     leistung.HzJz = theRow["HzJz"].ToString();
                                     leistung.Anlage = theRow["Anlage"].ToString();
+                                    leistung.Zeugnisart = theRow["Zeugnisart"].ToString();
                                     leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
                                     leistung.Konferenzdatum = theRow["Konferenzdatum"].ToString().Length < 3 ? new DateTime() : (DateTime.ParseExact(theRow["Konferenzdatum"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).AddHours(15);
                                     leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";
                                     leistung.Abschlussklasse = leistung.IstAbschlussklasse();
                                     leistung.Beschreibung = "";
-                                    leistung.GeholteNote = false;                                    
+                                    leistung.GeholteNote = false;
                                 }
                             }
                             catch (Exception ex)
@@ -589,7 +637,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         {
                             AusgabeSchreiben("Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet. Wenn das nicht gewünscht ist, dann hier mit Suchen & Ersetzen der gewünschte Name gesetzt werden.",new List<string>());
                             
-
                             foreach (var leistung in this)
                             {
                                 if (leistung.Fach == webuntisFach && leistung.Klasse == klasse)
@@ -825,6 +872,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                                 if (!a.GeholteNote)
                                 {
+                                    if (a.Klasse == "BT20A")
+                                    {
+                                        string aa = "";
+                                    }
                                     UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
                                     if (a.Gesamtpunkte != null)

@@ -31,7 +31,7 @@ namespace webuntisnoten2atlantis
                         
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20201230");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210112");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -50,7 +50,7 @@ namespace webuntisnoten2atlantis
                 Thread.Sleep(2000);
                 string targetAbsenceTimesTotal = CheckFile(targetPath, User, "AbsenceTimesTotal");
                 string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");                
-                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis.SQL");
+                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
 
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
                 Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);                
@@ -92,7 +92,8 @@ namespace webuntisnoten2atlantis
                     webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                     webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
-                    webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                    
+                    webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                 
+                    webuntisLeistungen.FehlendeZeugnisbemerkungBeiStrich(atlantisLeistungen);
                     
                     // Sortieren
 
@@ -200,7 +201,7 @@ namespace webuntisnoten2atlantis
 
         private static string CheckFile(string targetPath, string user, string kriterium)
         {
-            var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads") where f.Contains(kriterium) orderby File.GetCreationTime(f) select f).LastOrDefault();
+            var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads", "*.csv", SearchOption.AllDirectories) where f.Contains(kriterium) orderby File.GetCreationTime(f) select f).LastOrDefault();
             
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
@@ -232,7 +233,7 @@ namespace webuntisnoten2atlantis
                 Environment.Exit(0);
 
             }
-            var targetFile = Path.Combine(targetPath, Zeitstempel + "_" + kriterium + ".CSV");
+            var targetFile = Path.Combine(targetPath, Zeitstempel + "_" + kriterium + "_" + user + ".CSV");
 
             if (File.Exists(targetFile))
             { 
