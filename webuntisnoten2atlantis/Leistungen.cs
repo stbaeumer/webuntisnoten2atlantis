@@ -338,9 +338,8 @@ namespace webuntisnoten2atlantis
         public Leistungen(string connetionstringAtlantis, List<string> aktSj, string user)
         {
             Global.Output.Add("/* ************************************************************************************************* */");
-            Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis.                                       */");
-            Global.Output.Add("/* Sie können alle Noten und Fehlzeiten aus Webuntis nach Atlantis importieren, indem Sie diese Da-  */");
-            Global.Output.Add("/* tei in Atlantis unter Funktionen>SQL-Anweisung hochladen.                                         */");
+            Global.Output.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis. Sie können die Datei in Atlantis im-  */");
+            Global.Output.Add("/* portieren, indem Sie sie in Atlantis unter Funktionen>SQL-Anweisung hochladen.                    */");
             Global.Output.Add("/* Published under the terms of GPLv3. Hoping for the best!                                          */");
             Global.Output.Add("/* " + (user + " " + DateTime.Now.ToString()).PadRight(97) + " */");
             Global.Output.Add("/* ************************************************************************************************* */");
@@ -852,7 +851,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             try
             {
                 foreach (var a in this)
-                {
+                {                    
                     if (a.SchuelerAktivInDieserKlasse)
                     {
                         // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
