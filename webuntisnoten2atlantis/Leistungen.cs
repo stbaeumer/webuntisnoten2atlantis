@@ -74,7 +74,7 @@ namespace webuntisnoten2atlantis
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
                                 leistung.Gesamtpunkte = x[3].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
-                                Console.WriteLine("ok\n");
+                                Console.WriteLine("hat geklappt\n");
                                 leistungen.Add(leistung);
                             }
 
@@ -615,7 +615,8 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 // ... und deren verschiedene Fächer aus Webuntis, in denen auch Noten gegeben wurden (also kein FU) ... 
 
-                foreach (var webuntisFach in (from t in this where t.Klasse == klasse
+                foreach (var webuntisFach in (from t in this 
+                                              where t.Klasse == klasse
                                               where t.Gesamtnote != null
                                               where t.Fach != "KR" && t.Fach != "ER" && !t.Fach.StartsWith("KR ") && !t.Fach.StartsWith("ER ") && !t.Fach.Contains("-")
                                               select t.Fach).Distinct())
@@ -646,7 +647,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                         else
                         {
-                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach zugeordnet werden:", new List<string>() { webuntisFach });                            
+                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { webuntisFach });                            
                         }
                     }
                 }
@@ -901,10 +902,46 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen, List<string> aktSj)
         {
             var interessierendeKlassen = (from k in alleWebuntisLeistungen where k.Gesamtnote != null where k.Klasse != null select k.Klasse).Distinct().ToList();
-
+                        
             interessierendeKlassen = AddKonferenzdatum(interessierendeKlassen);
 
             AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", AddAbsckusszeugnis(interessierendeKlassen));
+
+
+            var kl = new List<string>();
+
+            // Alle interessierenden Klassen werden durchlaufen ...
+
+            foreach (var iKlasse in interessierendeKlassen)
+            {
+                // ... wenn in einer interessierenden Klasse mehr als 3 Fächer bereits Noten bekommen haben, wird angenommen, dass
+                //     eine Zeugnisdruck ansteht, dann ...
+
+                if ((from k in alleWebuntisLeistungen where k.Klasse == iKlasse where k.Gesamtnote != null select k.Fach).Distinct().Count() > 3)
+                {
+                    // ... werden diejenigen Fächer ermittelt, in denen alle Noten fehlen ...
+
+                    var kll = (from k in alleWebuntisLeistungen where k.Klasse == iKlasse where k.Gesamtnote == null select new { k.Fach,  k.Lehrkraft }).Distinct();
+                    var kkkk = iKlasse + "(";
+                    foreach (var item in kll)
+                    {
+                        kkkk += item.Fach + "|" + item.Lehrkraft + ",";
+                    }
+                    kkkk = kkkk.TrimEnd(',');
+                    kkkk = kkkk + ")";
+                    if (kll.Count() > 0)
+                    {
+                        kl.Add(kkkk);
+                    }                    
+                }
+            }
+
+            AusgabeSchreiben("In folgenden Klassen sind in mehreren Fächern Zeugnisnoten gesetzt. Es fehlen noch: ", kl);
+
+            //var klassenMitZeugnisnotenInMehrAls3Fächern = (from k in alleWebuntisLeistungen where k.Gesamtnote != null group k by k.Klasse)
+
+            //var klassenMitFehlendenNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote == null where k.Klasse != null select k.Klasse).Distinct().ToList();
+            //AusgabeSchreiben("In folgenden Klassen sind bereits mehrere Zeugnisnoten gesetzt. Es fehlen noch:", klassenMitFehlendenNoten);
 
             return interessierendeKlassen;
         }

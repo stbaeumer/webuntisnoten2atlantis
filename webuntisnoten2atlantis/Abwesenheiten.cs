@@ -33,7 +33,7 @@ namespace webuntisnoten2atlantis
                             abwesenheit.Name = x[3] + " " + x[4];
                             abwesenheit.Klasse = x[5];
                             abwesenheit.StundenAbwesend = Convert.ToInt32(x[7])/45;
-                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8])/45;
+                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8])/45; // unenentschuldigt oder offen
 
                             this.Add(abwesenheit);
                         }
@@ -138,7 +138,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesend + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + w.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesend + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 7)) + w.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -153,7 +153,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesendUnentschuldigt.ToString() + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + w.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesendUnentschuldigt.ToString() + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 7)) + w.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -265,7 +265,7 @@ DBA.schueler.name_2 ASC ", connection);
             try
             {
                 string o = updateQuery + "/* " + message;
-                Global.Output.Add((o.Substring(0, Math.Min(82, o.Length))).PadRight(82) + "*/");
+                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
             }
             catch (Exception ex)
             {

@@ -47,7 +47,7 @@ namespace webuntisnoten2atlantis
                 Process notepadPlus = new Process();
                 notepadPlus.StartInfo.FileName = "notepad++.exe";                
                 notepadPlus.Start();
-                Thread.Sleep(2000);
+                Thread.Sleep(1500);
                 string targetAbsenceTimesTotal = CheckFile(targetPath, User, "AbsenceTimesTotal");
                 string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");                
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
@@ -206,7 +206,7 @@ namespace webuntisnoten2atlantis
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
                 Console.WriteLine("");
-                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Doenload-Ordner ist nicht von heute") + ".");
+                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute") + ".");
                 Console.WriteLine("  Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("MarksPerLesson"))
@@ -246,7 +246,7 @@ namespace webuntisnoten2atlantis
             //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
             notepadPlus.StartInfo.Arguments = targetFile;
             notepadPlus.Start();
-            Thread.Sleep(2000);
+            Thread.Sleep(1500);
             return Path.Combine(targetFile);
         }
 
