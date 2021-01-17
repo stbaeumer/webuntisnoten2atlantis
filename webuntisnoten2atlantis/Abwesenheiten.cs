@@ -49,7 +49,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage("Webuntisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(Global.Output.Count(), "Webuntisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.')+ ":");
             }
         }
 
@@ -61,7 +61,7 @@ namespace webuntisnoten2atlantis
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.PrintMessage("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: " + typ);
+                Global.PrintMessage(Global.Output.Count(), "Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: " + typ);
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -112,7 +112,7 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage("Atlantisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(Global.Output.Count,"Atlantisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
         public Abwesenheiten()
@@ -121,11 +121,9 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            Console.Write(("Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));
-            
+            int outputIndex = Global.Output.Count();
+            Console.Write(("Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));            
             int i = 0;
-
-            Global.PrintMessage("Neu einzutragende Abwesenheiten in Atlantis:");
 
             try
             {
@@ -140,7 +138,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesend + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 7)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|0->" + w.StundenAbwesend.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -155,11 +153,12 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + ",0->" + w.StundenAbwesendUnentschuldigt.ToString() + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 7)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Neu anzulegende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {
@@ -169,11 +168,9 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
+            int outputIndex = Global.Output.Count();
             Console.Write(("Fehlzeiten in Atlantis updaten").PadRight(71, '.'));
-
             int i = 0;
-
-            Global.PrintMessage("Zu ändernde Abwesenheiten in Atlantis:");
 
             try
             {
@@ -189,7 +186,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend + "->" + w.StundenAbwesend + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString() + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->" + w.StundenAbwesend.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -204,11 +201,12 @@ DBA.schueler.name_2 ASC ", connection);
                              select webuntisAbwesenheit).FirstOrDefault();
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesendUnentschuldigt+"->"+ w.StundenAbwesendUnentschuldigt + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesendUnentschuldigt.ToString().PadLeft(3)+"->"+ w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Zu änderende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {
@@ -218,11 +216,9 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            Console.Write(("Fehlzeiten in Atlantis löschen").PadRight(71, '.'));
-            
+            int outputIndex = Global.Output.Count();
+            Console.Write(("Fehlzeiten in Atlantis löschen").PadRight(71, '.'));            
             int i = 0;
-
-            Global.PrintMessage("Zu löschende Abwesenheiten in Atlantis:");
 
             try
             {
@@ -235,7 +231,7 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesend == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend +"->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) +"->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                     if ((from w in webuntisAbwesenheiten
@@ -245,11 +241,12 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesendUnentschuldigt == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse + "|" + a.StundenAbwesend + "->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 3)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Zu löshende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {

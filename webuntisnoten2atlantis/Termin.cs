@@ -57,7 +57,7 @@ namespace webuntisnoten2atlantis
                 if (meeting.Key == ConsoleKey.J || meeting.Key == ConsoleKey.Enter)
                 {
                     appointment.Save(SendInvitationsMode.SendToNone);
-                    Global.PrintMessage("Zeugniskonferenz " + Uhrzeit.ToShortDateString() + "(" + Uhrzeit.ToShortTimeString() + "-" + Uhrzeit.AddMinutes(10).ToShortTimeString() + ") " + Raum + " " + Klasse + "(" + leh.TrimEnd(',') + ")" + " in Outlook angelegt.");
+                    Global.PrintMessage(Global.Output.Count, "Zeugniskonferenz " + Uhrzeit.ToShortDateString() + "(" + Uhrzeit.ToShortTimeString() + "-" + Uhrzeit.AddMinutes(10).ToShortTimeString() + ") " + Raum + " " + Klasse + "(" + leh.TrimEnd(',') + ")" + " in Outlook angelegt.");
                 }
             }
             catch (System.Exception ex)

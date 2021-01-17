@@ -107,9 +107,9 @@ namespace webuntisnoten2atlantis
                 if (User.ToUpper() == "BM")
                 {
                     Console.WriteLine("");
-                    Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unterrichten,");
-                    Console.WriteLine("werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interessierenden Konferenzen");
-                    Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
+                    Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unter-");
+                    Console.WriteLine("richten, werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interes-");
+                    Console.WriteLine("sierenden Konferenzenim eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
                     Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
 
                     var meeting = Console.ReadKey();

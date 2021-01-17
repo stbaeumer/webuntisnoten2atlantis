@@ -98,7 +98,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage("Webuntisleistungen: ".PadRight(30,'.') + (" " + leistungen.Count.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(Global.Output.Count(), "Webuntisleistungen: ".PadRight(30, '.') + (" " + leistungen.Count.ToString()).PadLeft(30, '.'));
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
@@ -524,7 +524,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage("Atlantisleistungen: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(Global.Output.Count(), "Atlantisleistungen: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
         }
 
         internal void SprachenZuordnen(Leistungen atlantisLeistungen)
@@ -755,12 +755,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
         internal void Add(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
-            Console.Write(("Leistungen in Atlantis anlegen").PadRight(71, '.'));
-
+            Console.Write(("Neu anzulegende Leistungen in Atlantis ").PadRight(71, '.'));
             int i = 0;
-
-            Global.PrintMessage("Neu anzulegende Leistungen in Atlantis:");
-
+            int outputIndex = Global.Output.Count();
+            
             try
             {
                 foreach (var klasse in interessierendeKlassen)
@@ -810,6 +808,9 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }                       
                     }
                 }
+
+                Global.PrintMessage(outputIndex, ("Neu anzulegende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
@@ -899,10 +900,8 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
         internal void Update(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
+            int outputIndex = Global.Output.Count();
             Console.Write(("Leistungen in Atlantis updaten").PadRight(71, '.'));
-
-            Global.PrintMessage("Zu ändernde Noten in Atlantis:");
-            
             int i = 0;
 
             try
@@ -950,6 +949,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     }                    
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Zu änderende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {
@@ -959,10 +959,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
         internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
         {
-            Console.Write(("Löschen von Atlantis-Leistungen").PadRight(71, '.'));
-
-            Global.PrintMessage("Zu löschende Noten in Atlantis:");
-            
+            int outputIndex = Global.Output.Count();                        
             int i = 0;
 
             try
@@ -1004,7 +1001,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                     }
                 }
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Zu löschende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {

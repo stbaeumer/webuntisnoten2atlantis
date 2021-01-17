@@ -93,7 +93,7 @@ namespace webuntisnoten2atlantis
                     {
                         foreach (var konf in x)
                         {
-                            Global.PrintMessage("Terminkollision: "  + le.Kuerzel + ": " + konferenz.Klasse + "#" + konf.Klasse);
+                            Global.PrintMessage(Global.Output.Count, "Terminkollision: "  + le.Kuerzel + ": " + konferenz.Klasse + "#" + konf.Klasse);
                         }
                     }
                 }

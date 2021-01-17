@@ -10,17 +10,19 @@ namespace webuntisnoten2atlantis
     {
         public static List<string> Output { get; internal set; }
 
-        internal static void PrintMessage(string message)
+        internal static void PrintMessage(int index, string message)
         {
             if (message.ToLower().Contains("zu"))
             {
-                Output.Add("");
+                Output.Insert(index, "");
             }
-            Output.Add("/* " + message.PadRight(97) + " */");
+
+            Output.Insert(index, "/* " + message.PadRight(97) + " */");
+            
             if (message.ToLower().Contains("zu"))
             {
-                Output.Add("");
-            }
+                Output.Insert(index, "");
+            }            
         }
 
         public static bool WaitForFile(string fullPath)
