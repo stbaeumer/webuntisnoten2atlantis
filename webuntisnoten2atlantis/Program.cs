@@ -28,7 +28,7 @@ namespace webuntisnoten2atlantis
         static void Main(string[] args)
         {
             Global.Output = new List<string>();
-                        
+
             try
             {
                 Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210112");
@@ -45,149 +45,141 @@ namespace webuntisnoten2atlantis
 
                 string targetPath = SetTargetPath();
                 Process notepadPlus = new Process();
-                notepadPlus.StartInfo.FileName = "notepad++.exe";                
+                notepadPlus.StartInfo.FileName = "notepad++.exe";
                 notepadPlus.Start();
                 Thread.Sleep(1500);
                 string targetAbsenceTimesTotal = CheckFile(targetPath, User, "AbsenceTimesTotal");
-                string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");                
+                string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
 
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
-                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);                
+                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);
                 Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(targetAbsenceTimesTotal);
 
-                do
-                {                    
-                    Leistungen webuntisLeistungen = new Leistungen();
-                    Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
-                    Leistungen atlantisLeistungen = new Leistungen();
-                    Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
+                Leistungen webuntisLeistungen = new Leistungen();
+                Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
+                Leistungen atlantisLeistungen = new Leistungen();
+                Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
-                    var interessierendeKlassen = new List<string>();
+                var interessierendeKlassen = new List<string>();
+                interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
 
-                    do
+                webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
+                webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
+                atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
+                atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
+
+                if (webuntisLeistungen.Count == 0)
+                {
+                    throw new Exception("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
+                }
+
+                // Alte Noten holen
+
+                webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, AktSj));
+
+                // Korrekturen durchführen
+                                
+                webuntisLeistungen.ReligionZuordnen();
+                webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
+                webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
+                webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                                 
+                atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
+                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
+
+                // Sortieren
+
+                webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
+                atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
+
+                // Add-Delete-Update
+
+                atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
+                atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
+                atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
+
+                atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+
+                if (User.ToUpper() == "BM")
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unterrichten,");
+                    Console.WriteLine("werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interessierenden Konferenzen");
+                    Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
+                    Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
+
+                    var meeting = Console.ReadKey();
+
+                    if (meeting.Key == ConsoleKey.N)
                     {
-                        interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
-                        
-                        webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
-                        webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
-                        atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a));
-                        atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
-
-                        if (webuntisLeistungen.Count == 0)
-                        {
-                            Console.WriteLine("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
-                        }
-
-                    } while (webuntisLeistungen.Count <= 0);
-
-                    // Alte Noten holen
-                                        
-                    webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, AktSj));
-
-                    // Korrekturen durchführen
-                                        
-                    webuntisLeistungen.ReligionZuordnen();
-                    webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                    webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                    webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
-                    webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                 
-                    webuntisLeistungen.FehlendeZeugnisbemerkungBeiStrich(atlantisLeistungen);
-                    
-                    // Sortieren
-
-                    webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
-                    atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Name);
-
-                    // Add-Delete-Update
-
-                    atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
-                    atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
-                    atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
-
-                    atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
-                    atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
-                    atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
-
-                    if (User.ToUpper() == "BM")
+                        Properties.Settings.Default.Meeting = "n";
+                        Properties.Settings.Default.Save();
+                    }
+                    if (meeting.Key == ConsoleKey.J)
                     {
+                        Properties.Settings.Default.Meeting = "j";
+                        Properties.Settings.Default.Save();
+                    }
+                    if (Properties.Settings.Default.Meeting == "j")
+                    {
+                        Properties.Settings.Default.Meeting = "j";
+                        Properties.Settings.Default.Save();
+                        // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
                         Console.WriteLine("");
-                        Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unterrichten,");
-                        Console.WriteLine("werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interessierenden Konferenzen");
-                        Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
-                        Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
+                        Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                        var meeting = Console.ReadKey();
+                        var konferenzen = ReadExcel(ExcelPath);
 
-                        if (meeting.Key == ConsoleKey.N)
-                        {
-                            Properties.Settings.Default.Meeting = "n";
-                            Properties.Settings.Default.Save();
-                        }
-                        if (meeting.Key == ConsoleKey.J)
-                        {
-                            Properties.Settings.Default.Meeting = "j";
-                            Properties.Settings.Default.Save();
-                        }
-                        if (Properties.Settings.Default.Meeting == "j")
-                        {
-                            Properties.Settings.Default.Meeting = "j";
-                            Properties.Settings.Default.Save();
-                            // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
-                            Console.WriteLine("");
-                            Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
+                        ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
 
-                            var konferenzen = ReadExcel(ExcelPath);
+                        CheckPassword("Bitte das O365-Kennwort für " + User + " eingeben: ");
 
-                            ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
+                        Console.WriteLine("");
+                        string mail = (from l in lehrers where User == l.Kuerzel select l.Mail).FirstOrDefault();
+                        service.Credentials = new WebCredentials(mail, Passwort);
+                        service.UseDefaultCredentials = false;
+                        service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
 
-                            CheckPassword("Bitte das O365-Kennwort für " + User + " eingeben: ");
+                        konferenzen.Lehrers(lehrers, alleWebuntisLeistungen);
+                        konferenzen.TerminkollisionenFinden();
+                        konferenzen.ToOutlook(service, mail);
 
-                            Console.WriteLine("");
-                            string mail = (from l in lehrers where User == l.Kuerzel select l.Mail).FirstOrDefault();
-                            service.Credentials = new WebCredentials(mail, Passwort);
-                            service.UseDefaultCredentials = false;
-                            service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
+                        // Fehlende Klassen in der Exceldatei werden ausgegeben
 
-                            konferenzen.Lehrers(lehrers, alleWebuntisLeistungen);
-                            konferenzen.TerminkollisionenFinden();
-                            konferenzen.ToOutlook(service, mail);
-
-
-                            // Fehlende Klassen in der Exceldatei werden ausgegeben
+                        // Überzählige Klassen in der Excelliste werden ausgegeben
 
 
 
-                            // Überzählige Klassen in der Excelliste werden ausgegeben
+                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
 
 
 
-                            // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
+                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
 
 
 
-                            // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
+                        // ... und alle verschiedenen Lehrer werden ermittelt.
 
 
-
-                            // ... und alle verschiedenen Lehrer werden ermittelt.
-
-
-                            // ... und jeweils ein Appointment eingetragen
-
-                        }
-
+                        // ... und jeweils ein Appointment eingetragen
 
                     }
 
-                    alleAtlantisLeistungen.ErzeugeSqlDatei( new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
-                    Console.WriteLine("");
-                    Console.WriteLine("  -----------------------------------------------------------------");
-                    Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
-                    Environment.Exit(0);
-                } while (Console.ReadKey().Key == ConsoleKey.Escape);
+                }
+
+                alleAtlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
+
+                Console.WriteLine("");
+                Console.WriteLine("  -----------------------------------------------------------------");
+                Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
+                Console.ReadKey();
+                Environment.Exit(0);
+
             }
             catch (Exception ex)
             {
