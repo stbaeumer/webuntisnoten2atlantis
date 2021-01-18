@@ -12,12 +12,10 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 ## Vorgehen
 
-1. Prüfungen aus Webuntis exportieren und auf den Desktop legen.
-2. Fehlzeiten aus Webuntis exportieren und auf den Desktop legen.
+1. Prüfungen aus Webuntis exportieren und im Download-Ordner ablegen.
+2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner legen.
 3. *WebuntisNoten2Atlantis* starten.
-4. Optinal auf Vollzeit-, Teilzeitklassen oder andere gewünschte Klassen filtern.
-5. Optional für Teilzeitklassen im letzen Jahrgang Noten aus vorherigen Jahrgängen holen.
-6. Erzeugte SQL-Datei in Atlantis importieren.
+4. Erzeugte SQL-Datei in Atlantis importieren.
 
 ### Prüfungen aus Webuntis exportieren
 
