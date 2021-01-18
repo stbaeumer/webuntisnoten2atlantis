@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace webuntisnoten2atlantis
 {
@@ -101,6 +102,170 @@ namespace webuntisnoten2atlantis
                 Global.PrintMessage(Global.Output.Count(), "Webuntisleistungen: ".PadRight(30, '.') + (" " + leistungen.Count.ToString()).PadLeft(30, '.'));
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
+        }
+
+        internal void FächerZuordnen(Leistungen atlantisLeistungen)
+        {
+            Console.Write(("Fächer zuordnen ").PadRight(71, '.'));
+            int i = 0;
+
+            List<string> nichtZugeordneteFächer = new List<string>();
+
+            foreach (var we in this)
+            {
+                var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen 
+                                                     where a.Klasse == we.Klasse 
+                                                     where a.SchlüsselExtern == we.SchlüsselExtern 
+                                                     select a).ToList();
+
+                bool zugeordnet = false;
+
+                foreach (var a in atlantisFächerDiesesSchuelers)
+                {
+                    // Bei einer 1-zu-1-Zuordnung ist alles tutti.
+
+                    if (a.Fach == we.Fach)
+                    {
+                        zugeordnet = true;
+                        break;
+                    }
+
+                    // Förderunterricht bekommt keine Note
+
+                    if (we.Fach.EndsWith(" FU"))
+                    {
+                        zugeordnet = true;
+                        break;
+                    }
+
+                    // Religion
+
+                    if (we.Fach == "KR" || we.Fach == "ER" || we.Fach.StartsWith("KR ") || we.Fach.StartsWith("ER "))
+                    {
+                        if (a.Fach == "REL")
+                        {
+                            we.Beschreibung += we.Fach + "->REL,";
+                            we.Fach = "REL";
+                            zugeordnet = true;
+                            i++;
+                            break;
+                        }                                                
+                    }
+
+                    // Kurse mit Leerzeichen
+
+                    if (a.Fach.Contains(" ") && we.Fach.Contains(" ") && a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+
+                    // Sonderfall Niedeländisch-Kurs
+
+                    if (a.Fach.Contains(" ") && we.Fach.Contains(" ") && "NF" == we.Fach.Split(' ')[0] && a.Fach.Split(' ')[0] == "N")
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+
+                    // Evtl. hängt die Niveaustufe in Untis am Namen 
+
+                    if (a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", ""))
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+
+                    // Es wird versucht auf die ersten beiden Buchstaben zu matchen, aber nicht, wenn das Webuntis-Fach eine Leerstelle enthält.
+                    // 
+
+                    if (a.Fach.Substring(0,Math.Min(2,a.Fach.Length)) == we.Fach.Substring(0, Math.Min(2, we.Fach.Length)))
+                    {
+                        // Zuordnung nur, wenn nicht ein anderes Fach besser passt. Das kann sein, wenn dieses Fach die FP zu einem anderen Fach ist.
+
+                        if (!(from af in atlantisFächerDiesesSchuelers where af.Fach == we.Fach select af).Any())
+                        {
+                            we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                            zugeordnet = true;
+                            i++;
+                            break;
+                        }                        
+                    }
+
+                    // EK -> E
+
+                    if (we.Fach.StartsWith("EK") && a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+
+                    // N -> NKA1
+                                        
+                    if (we.Fach.StartsWith("N") && a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "NK")
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+
+                    // IF -> WI
+
+                    if (we.Fach == "IF" && a.Fach == "WI")
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        zugeordnet = true;
+                        i++;
+                        break;
+                    }
+                }
+
+                if (!zugeordnet && atlantisFächerDiesesSchuelers.Count > 0 && we.Gesamtnote != null)
+                {
+                    if (!nichtZugeordneteFächer.Contains(we.Klasse + "|" + we.Fach))
+                    {
+                        nichtZugeordneteFächer.Add(we.Klasse + "|" + we.Fach);
+                    }
+                }                
+            }
+            // Wenn keine Zuordnung vorgenommen werden konnte
+
+            if (nichtZugeordneteFächer.Count > 0)
+            {
+                AusgabeSchreiben("Achtung: Es können Fächer in Webuntis keinem Atlantisfach im Notenblatt der jeweiligen Klasse zugeordnet werden:", nichtZugeordneteFächer);
+            }
+            Console.WriteLine((" " + nichtZugeordneteFächer.Count.ToString()).PadLeft(30, '.'));
+        }
+
+        internal void FehlendeSchülerInAtlantis(Leistungen atlantisLeistungen)
+        {
+            List<string> keinSchülerInAtlantis = new List<string>();
+
+            foreach (var we in this)
+            {
+                var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen
+                                                     where a.Klasse == we.Klasse
+                                                     where a.SchlüsselExtern == we.SchlüsselExtern
+                                                     select a).ToList();
+
+                if (atlantisFächerDiesesSchuelers.Count == 0 && !keinSchülerInAtlantis.Contains(we.Name + "|" + we.Klasse))
+                {
+                    keinSchülerInAtlantis.Add(we.Name + "|" + we.Klasse);
+                }
+            }
+            if (keinSchülerInAtlantis.Count > 0)
+            {
+                AusgabeSchreiben("Achtung: Es gibt Leistungsdatensätze in Webuntis, die keinem Schüler in Atlantis zugeordnet werden können:", keinSchülerInAtlantis);
+            }
         }
 
         private string Gesamtpunkte2Tendenz(string gesamtpunkte)
@@ -534,58 +699,127 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
             // Bei Sprachen-Fächern ...
 
-            foreach (var we in (from t in this where (t.Fach.Split(' ')[0] == "EK" || t.Fach.Split(' ')[0] == "E" || t.Fach.Split(' ')[0] == "NL" || t.Fach.Split(' ')[0] == "LA" || t.Fach.Split(' ')[0] == "S" ) select t).ToList())
+            foreach (var we in (from t in this
+                                where (
+                                    t.Fach.Split(' ')[0] == "EK" ||
+                                    t.Fach.Split(' ')[0] == "E" ||
+                                    t.Fach.Split(' ')[0] == "N" ||
+                                    t.Fach.Split(' ')[0] == "NL" ||
+                                    t.Fach.Split(' ')[0] == "LA" ||
+                                    t.Fach.Split(' ')[0] == "S" ||
+                                    t.Fach.EndsWith("B1") ||
+                                    t.Fach.EndsWith("B2") ||
+                                    t.Fach.EndsWith("A1") ||
+                                    t.Fach.EndsWith("A2")
+                                )
+                                select t).ToList())
             {
+                var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen where a.Klasse == we.Klasse where a.SchlüsselExtern == we.SchlüsselExtern select a).ToList();
+                int j = i;
+
+                foreach (var a in atlantisFächerDiesesSchuelers)
+                {
+                    // Bei einer 1-zu-1-Zuordnung ist alles tutti.
+
+                    if (a.Fach == we.Fach)
+                    {
+                        i++;
+                        break;
+                    }
+
+                    // Bei Kursen (erkennbar am Leerzeichen) muss der Teil vor dem Leerzeichen übereinstimmen.
+
+                    if (a.Fach.Contains(" ") && we.Fach.Contains(" ") && a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
+                    {
+                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                        i++;
+                        break;
+                    }
+
+                    // Evtl. hängt die Niveaustufe in Untis am Namen 
+
+                    if (we.Fach.EndsWith("A1") || we.Fach.EndsWith("A2") || we.Fach.EndsWith("B1") || we.Fach.EndsWith("B2"))
+                    {
+
+                    }
+                }
+
+                // Wenn keine Zuordnung vorgenommen werden konnte
+
+                if (i == j)
+                {
+                    AusgabeSchreiben("Achtung: In der " + we.Klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { we.Fach });
+                }
+
                 // ... wenn keine 1:1-Zuordnung möglich ist ...
 
-                if (!(from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a).Any())
-                {
-                    // wird versucht die Niveaustufe abzuschneiden
+                //if (!(from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a).Any())
+                //{
+                //    // wird versucht die Niveaustufe abzuschneiden
 
-                    if (!(from a in atlantisLeistungen where a.Fach.Replace("A1","").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a).Any())
-                    {
-                        // wird versucht den Kurs abzuschneiden
+                //    if (!(from a in atlantisLeistungen where a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a).Any())
+                //    {
+                //        // wird versucht den Kurs abzuschneiden
 
-                        if ((we.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
-                        {                        
-                            foreach (var a in atlantisLeistungen)
-                            {
-                                if (a.Klasse == we.Klasse)
-                                {
-                                    if (a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
-                                    {
-                                        if ((a.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
-                                        {
-                                            if (a.Fach.Replace("  ", " ").Split(' ')[1].Substring(0, 1) == we.Fach.Replace("  ", " ").Split(' ')[1].Substring(0, 1))
-                                            {
-                                                we.Beschreibung += we.Fach + "->" + a.Fach + ",";
-                                                we.Fach = a.Fach;
-                                                i++;
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine("Das Fach " + we.Fach + " in der Klasse " + we.Klasse + " kann keinem Atlantis-Fach zugeordnet werden. ENTER");
-                                                Console.ReadKey();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        we.Fach = (from a in atlantisLeistungen where a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
-                    }
-                }
-                else
-                {
-                    we.Fach = (from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
-                }
+                //        if ((we.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
+                //        {
+                //            foreach (var a in atlantisLeistungen)
+                //            {
+                //                if (a.Klasse == we.Klasse)
+                //                {
+                //                    if (a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
+                //                    {
+                //                        if ((a.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
+                //                        {
+                //                            // Ziffer am Ende entfernen z.B. bei Kursen G1, G2 usw.
+
+                //                            string wFachOhneZifferAmEnde = Regex.Replace(we.Fach, @"\d+$", "");
+                //                            string aFachOhneZifferAmEnde = Regex.Replace(we.Fach, @"\d+$", "");
+
+                //                            // alle Leerzeichen entfernen
+
+                //                            string wFachOhneLeerzeichen = Regex.Replace(wFachOhneZifferAmEnde, @"\s+", "");
+                //                            string aFachOhneLeerzeichen = Regex.Replace(aFachOhneZifferAmEnde, @"\s+", "");
+
+                //                            if (wFachOhneLeerzeichen == aFachOhneLeerzeichen && we.Fach.Contains(" "))
+                //                            {
+                //                                we.Beschreibung += we.Fach + "->" + a.Fach + ",";
+                //                                we.Fach = a.Fach;
+                //                                i++;
+                //                            }
+                //                            else
+                //                            {
+                //                                AusgabeSchreiben("Achtung: In der " + we.Klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { we.Fach });
+                //                            }
+                //                        }
+                //                    }
+                //                }
+                //            }
+                //        }
+                //    }
+                //    else
+                //    {
+                //        var f = (from a in atlantisLeistungen where a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
+                //        if (we.Fach != f)
+                //        {
+                //            we.Beschreibung += "|" + we.Fach + "->" + f;
+                //            we.Fach = f;
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    var f = (from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
+                //    if (we.Fach != f)
+                //    {
+                //        we.Beschreibung += "|" + we.Fach + "->" + f;
+                //        we.Fach = f;
+                //    }
+                //}
             }
             Console.WriteLine((" " + i).PadLeft(30, '.'));
         }
-        
+
         internal void BindestrichfächerZuordnen(Leistungen atlantisLeistungen)
         {
             Console.Write(("Bindestrichfächer zuordnen").PadRight(71, '.'));
@@ -765,10 +999,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 {
                     foreach (var a in (from t in this where t.Klasse == klasse where t.SchuelerAktivInDieserKlasse select t).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name).ToList())
                     {
-                        if (a.LeistungId == 4085274)
-                        {
-                            string aaa = "";
-                        }
                         var w = (from webuntisLeistung in webuntisLeistungen
                                  where webuntisLeistung.Fach == a.Fach
                                  where webuntisLeistung.Klasse == a.Klasse
@@ -786,7 +1016,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                                                              where (we.Gesamtnote != null && we.Gesamtnote != "-")
                                                                              select we).Count() == 0))
                             {
-                                if (w.Gesamtnote == "-" && a.Bemerkung == null && a.Fach != "REL")
+                                if (w.Gesamtnote == "-" && a.Bemerkung == null && a.Fach != "REL" && a.Fach != "KR G1")
                                 {                                    
                                     w.Beschreibung += "Bemerkung fehlt";
                                 }

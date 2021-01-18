@@ -79,20 +79,23 @@ namespace webuntisnoten2atlantis
 
                 webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, AktSj));
 
-                // Korrekturen durchführen
-                                
-                webuntisLeistungen.ReligionZuordnen();
-                webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
-                webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                                 
-                atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
-                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
-
                 // Sortieren
 
                 webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
                 atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
+
+                // Korrekturen durchführen
+
+                //webuntisLeistungen.FehlendeSchülerInAtlantis(atlantisLeistungen);
+
+                webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
+                //webuntisLeistungen.ReligionZuordnen();
+                webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
+                webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                //webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
+                //webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                                 
+                atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
+                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
 
                 // Add-Delete-Update
 
@@ -109,7 +112,7 @@ namespace webuntisnoten2atlantis
                     Console.WriteLine("");
                     Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unter-");
                     Console.WriteLine("richten, werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interes-");
-                    Console.WriteLine("sierenden Konferenzenim eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
+                    Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
                     Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
 
                     var meeting = Console.ReadKey();
