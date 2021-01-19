@@ -31,7 +31,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210117");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210119");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -86,14 +86,9 @@ namespace webuntisnoten2atlantis
 
                 // Korrekturen durchführen
 
-                //webuntisLeistungen.FehlendeSchülerInAtlantis(atlantisLeistungen);
-
                 webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
-                //webuntisLeistungen.ReligionZuordnen();
                 webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                 webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                //webuntisLeistungen.SprachenZuordnen(atlantisLeistungen);
-                //webuntisLeistungen.WeitereFächerZuordnen(atlantisLeistungen); // außer REL, ER, KR, Bindestrich-Fächer                                 
                 atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
 

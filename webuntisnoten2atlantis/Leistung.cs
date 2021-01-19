@@ -48,7 +48,7 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public string Zeugnisart { get; internal set; }
 
-        internal bool IstAbschlussklasse()
+        public bool IstAbschlussklasse()
         {
             if (Anlage.StartsWith(Properties.Settings.Default.Klassenart))
             {
