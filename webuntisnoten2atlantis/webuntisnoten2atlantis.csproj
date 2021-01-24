@@ -75,6 +75,8 @@
     </Compile>
     <Compile Include="Termin.cs" />
     <Compile Include="Termine.cs" />
+    <Compile Include="Zuordnung.cs" />
+    <Compile Include="Zuordnungen.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -85,12 +85,14 @@ namespace webuntisnoten2atlantis
                 atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
 
                 // Korrekturen durchführen
-
-                webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
+                                
+                Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
                 webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                 webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                 atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
+
+                fehlendezuordnungen.ManuellZuordnen(webuntisLeistungen, atlantisLeistungen);
 
                 // Add-Delete-Update
 

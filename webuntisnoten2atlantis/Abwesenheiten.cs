@@ -246,7 +246,7 @@ DBA.schueler.name_2 ASC ", connection);
                     }
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(outputIndex, ("Zu löshende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(outputIndex, ("Zu löschende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {

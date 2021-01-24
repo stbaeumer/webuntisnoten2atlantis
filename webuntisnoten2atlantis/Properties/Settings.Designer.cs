@@ -178,5 +178,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Downloads"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Zuordnungen {
+            get {
+                return ((string)(this["Zuordnungen"]));
+            }
+            set {
+                this["Zuordnungen"] = value;
+            }
+        }
     }
 }
