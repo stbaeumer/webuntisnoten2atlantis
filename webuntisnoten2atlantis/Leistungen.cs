@@ -43,9 +43,9 @@ namespace webuntisnoten2atlantis
                             {
                                 leistung = new Leistung();
                                 leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
-                                leistung.Name = x[1];
+                                leistung.Name = x[1];                                
                                 leistung.Klasse = x[2];
-                                leistung.Fach = x[3];                         
+                                leistung.Fach = x[3];                                
                                 leistung.Gesamtpunkte = x[9].Split('.')[0] == "" ? null : x[9].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                 leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
@@ -104,6 +104,58 @@ namespace webuntisnoten2atlantis
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
 
+        internal void WidersprechendeGesamtnotenKorrigieren(List<string> interessierendeKlassen)
+        {
+            List<string> liste = new List<string>();
+
+            foreach (var ik in interessierendeKlassen)
+            {
+                var verschiedeneFächerDerKlasse = (from t in this where t.Klasse == ik select t.Fach).Distinct();
+
+                // Prüfe, ob es verschiende Noten für das selbe Fach gibt.
+
+                foreach (var fach in verschiedeneFächerDerKlasse)
+                {
+                    var verschiedeneSchülerMitDiesemFachInDieserKlasse = (from t in this where t.Klasse == ik where t.Fach == fach select t.Name).Distinct();
+
+                    foreach (var v in verschiedeneSchülerMitDiesemFachInDieserKlasse)
+                    {   
+                        var anzahl = (from t in this 
+                                      where t.Klasse == ik 
+                                      where t.Fach == fach 
+                                      where t.Name == v 
+                                      where t.Gesamtnote != null
+                                      select t.Gesamtnote).Distinct().Count();
+
+                        if (anzahl > 1)
+                        {
+                            var xxx = (from t in this
+                                       where t.Klasse == ik
+                                       where t.Fach == fach
+                                       where t.Name == v
+                                       where t.Gesamtnote != null                                       
+                                       select t).OrderByDescending(y=>y.Datum).ToList();
+
+                            for (int i = 0; i < xxx.Count; i++)
+                            {
+                                if (!(from l in liste where l == xxx[i].Klasse + "|" + xxx[i].Fach + "|" + xxx[i].Name select l).Any())
+                                {
+                                    liste.Add(xxx[i].Klasse + "|" + xxx[i].Fach + "|" + xxx[i].Name);                                    
+                                }
+                                xxx[i].Gesamtnote = xxx[0].Gesamtnote;
+                                xxx[i].Gesamtpunkte = xxx[0].Gesamtpunkte;
+                                xxx[i].Tendenz = xxx[0].Tendenz;
+                            }                            
+                        }
+                    }
+                }                
+            }
+            if (liste.Count() > 0)
+            {
+                AusgabeSchreiben("Achtung: Es gibt Fälle, in denen derselbe Schüler im selben Fach unterschiedliche Gesamtnoten bekommen hat. Evtl. ist in Untis das Fach 2x angelegt worden. Evtl. teilen sich mehrere Lehrkräfte ein Fach und haben unterschiedliche Noten eingetragen Es wird die zuletzt eingetragene Note gewählt:", liste);
+            }            
+        }
+
         internal Zuordnungen FächerZuordnen(Leistungen atlantisLeistungen)
         {
             Console.Write(("Fächer zuordnen ").PadRight(71, '.'));
@@ -113,6 +165,10 @@ namespace webuntisnoten2atlantis
                         
             foreach (var t in this)
             {
+                if (t.Name.Contains("Drych") && t.Fach == "S  G1")
+                {
+                    string aa = "";
+                }
                 var zugeordnet = false;
 
                 // Wenn es keine Zuordnung in Atlantis gibt, ...
@@ -203,6 +259,53 @@ namespace webuntisnoten2atlantis
                         }
                     }
 
+                    if (!zugeordnet && t.Fach.Contains(" G") && t.Fach.StartsWith("S "))
+                    {
+                        var aa = (from aaa in atlantisLeistungen where aaa.Klasse == t.Klasse where aaa.Fach.StartsWith("S ") where aaa.Fach.Contains(" G") select aaa).ToList();
+
+                        if (aa != null)
+                        {
+                            t.Beschreibung += t.Fach + "->" + aa[0].Fach + ",";
+                            t.Fach = aa[0].Fach;
+                            zugeordnet = true;
+                            i++;
+
+                            if (aa.Count > 1)
+                            {
+                                Leistung wel = new Leistung();
+
+                                wel.Abschlussklasse = t.Abschlussklasse;
+                                wel.Anlage = t.Anlage;
+                                wel.Bemerkung = t.Bemerkung;
+                                wel.Beschreibung = t.Fach + "->" + aa[1].Fach + ",";
+                                wel.Datum = t.Datum;
+                                wel.EinheitNP = t.EinheitNP;
+                                wel.Fach = aa[1].Fach;
+                                wel.GeholteNote = t.GeholteNote;
+                                wel.Gesamtnote = t.Gesamtnote;
+                                wel.Gesamtpunkte = t.Gesamtpunkte;
+                                wel.Gliederung = t.Gliederung;
+                                wel.HatBemerkung = t.HatBemerkung;
+                                wel.HzJz = t.HzJz;
+                                wel.Jahrgang = t.Jahrgang;
+                                wel.Klasse = t.Klasse;
+                                wel.Konferenzdatum = t.Konferenzdatum;
+                                wel.Lehrkraft = t.Lehrkraft;
+                                wel.LeistungId = t.LeistungId;
+                                wel.Name = t.Name;
+                                wel.ReligionAbgewählt = t.ReligionAbgewählt;
+                                wel.SchlüsselExtern = t.SchlüsselExtern;
+                                wel.SchuelerAktivInDieserKlasse = t.SchuelerAktivInDieserKlasse;
+                                wel.Schuljahr = t.Schuljahr;
+                                wel.Tendenz = t.Tendenz;
+                                wel.Zeugnisart = t.Zeugnisart;
+                                wel.Zeugnistext = t.Zeugnistext;
+                                this.Add(wel);
+                                i++;
+                            }
+                        }
+                    }
+
                     // Evtl. hängt die Niveaustufe in Untis am Namen 
 
                     //if (!zugeordnet && t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", ""))
@@ -213,7 +316,7 @@ namespace webuntisnoten2atlantis
                     //}
 
                     // Es wird versucht auf die ersten beiden Buchstaben zu matchen, aber nicht, wenn das Webuntis-Fach eine Leerstelle enthält.
-                    
+
                     //if (!zugeordnet && t.Fach.Substring(0, Math.Min(2, t.Fach.Length)) == t.Fach.Substring(0, Math.Min(2, t.Fach.Length)))
                     //{
                     //    // Zuordnung nur, wenn nicht ein anderes Fach besser passt. Das kann sein, wenn dieses Fach die FP zu einem anderen Fach ist.
@@ -936,6 +1039,11 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                                  where a.ReligionAbgewählt
                                                  select a).ToList())
                     {
+                        if (aLeistung.LeistungId == 4253264)
+                        {
+                            string aaaa = "";
+                        }
+
                         var wf = ((from w in this
                                   where w.Klasse == klasse
                                   where w.SchlüsselExtern == aLeistung.SchlüsselExtern
@@ -1194,7 +1302,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 foreach (var a in this)
                 {
-                    if (a.LeistungId == 4267141)
+                    if (a.LeistungId == 4234886)
                     {
                         string aaa = "";
                     }
@@ -1255,7 +1363,11 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             try
             {
                 foreach (var a in this)
-                {                    
+                {
+                    if (a.LeistungId == 4253264)
+                    {
+                        string aa = "";
+                    }
                     if (a.SchuelerAktivInDieserKlasse)
                     {
                         // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
@@ -1274,16 +1386,16 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                 // Geholte Noten aus Vorjahren werden nicht gelöscht.
 
                                 if (!a.GeholteNote)
-                                {   UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                {   UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
                                     if (a.Gesamtpunkte != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
                                     }
                                     
                                     if (a.Tendenz != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 3)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
                                     }                                    
                                     i++;
                                 }

@@ -15,6 +15,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 1. Prüfungen aus Webuntis exportieren und im Download-Ordner ablegen.
 2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner legen.
 3. *WebuntisNoten2Atlantis* starten.
+   Falls die Zuordnung eines Webuntis-Fachs nicht möglich ist, wird das angezeigt. Eine Zuordnung kann dann vorgenommen werden.
 4. Erzeugte SQL-Datei in Atlantis importieren.
 
 ### Prüfungen aus Webuntis exportieren
@@ -50,8 +51,7 @@ Die Atlantis-ID heißt hier ```studentId```. Diese Schülerin hat 360 Minuten ge
 
 1. Programm im Visual Studio selbst kompilieren und starten oder *webuntis2Atlantis.exe* herunterladen und starten.
 2. Mit dem Starten des Programms werden die Bedingungen der Open Source Lizenz GPLv3 anerkannt.
-3. Optional kann eine Filter auf die gewünschten Klassen gesetzt werden. Das macht sicherlich Sinn, wenn es gilt erste vorsichtige Erfahrungen zu sammeln.
-4. Eine Datei namens *20200930-webuntisnoten2atlantis.SQL* wird erzeugt und öffnet sich im Notepad. 
+3. Eine Datei namens *20200930-webuntisnoten2atlantis.SQL* wird erzeugt und öffnet sich im Notepad. 
 
 
 ### Die Datei 20200930-webuntisnoten2atlantis.SQL
@@ -74,7 +74,7 @@ Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisc
 #### Was ist, wenn die Namen der Fächer in Atlantis und Untis nicht übereinstimmen
 Grundsätzlich müssen die Fächerkürzel überinstimmen. *WebuntisNoten2Atlantis* hat aber Routinen eingebaut, die versuchen eine Matching herzustellen. 
 Bei Sprachen darf beispielsweise in Untis auf die Angabe der Niveaustufe verzichtet werden. Es wird dann automatisch versucht auf die Sprache in Atlantis zu matchen.
-Wenn ein Fach nicht zugeordnet weren kann, wird das gemeldet.
+Wenn ein Fach nicht zugeordnet weren kann, wird das gemeldet. Es besteht dann die Möglichkeit einer manuellen Zuordnung.
 
 #### Kann *WebuntisNoten2Atlantis* in Anlage A Noten aus Vorjahreszeugnissen ziehen?
 Ja.

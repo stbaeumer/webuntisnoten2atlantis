@@ -191,7 +191,7 @@ namespace webuntisnoten2atlantis
 
             if (this.Count > 0)
             {
-                ConsoleKeyInfo x;
+                string x;
 
                 Console.Clear();
 
@@ -213,13 +213,14 @@ namespace webuntisnoten2atlantis
                     Console.WriteLine("");
                     Console.Write("Wollen Sie eine Zuordnung manuell vornehmen? Wählen Sie [1" + (this.Count > 1 ? ", ..., " + this.Count : "") + "] oder ENTER, falls keine Änderung gewünscht ist: ");
 
-                    x = Console.ReadKey();
+                    x = Console.ReadLine();
 
                     Console.WriteLine("");
+                    int n;
 
-                    if (char.IsDigit(x.KeyChar))
+                    if (int.TryParse(x, out n))
                     {
-                        var eingabe = int.Parse(x.KeyChar.ToString());
+                        var eingabe = int.Parse(x);
 
                         if (eingabe > 0 && eingabe <= this.Count)
                         {                            
@@ -264,7 +265,7 @@ namespace webuntisnoten2atlantis
                         }
                     }
 
-                } while (x.Key != ConsoleKey.Enter);
+                } while (x != "");
 
                 // ZUordnung zu den Properties und den Webuntisfächern
 
@@ -277,18 +278,26 @@ namespace webuntisnoten2atlantis
                 int keineZuordnung = 0;
                 foreach (var item in this)
                 {
+                    if (item.Quellfach == "EUS F")
+                    {
+                        string aaaa = "";
+                    }
+
                     if (item.Zielfach != null)
                     {
                         if ((from a in atlantisleistungen where a.Klasse ==item.Quellklasse where a.Fach == item.Zielfach select a).Any())
                         {
                             Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
 
-                            var we = (from w in webuntisleistungen where w.Klasse == item.Quellklasse where w.Fach == item.Quellfach select w).FirstOrDefault();
+                            var we = (from w in webuntisleistungen where w.Klasse == item.Quellklasse where w.Fach == item.Quellfach select w).ToList();
 
-                            we.Beschreibung += we.Fach + " -> "+ item.Zielfach;
+                            foreach (var w in we)
+                            {
+                                w.Beschreibung += w.Fach + " -> " + item.Zielfach;
 
-                            we.Fach = item.Zielfach;
-                            
+                                w.Fach = item.Zielfach;
+
+                            }
                             vorgenommeneZuordnung++;
                         }                        
                     }
