@@ -47,6 +47,7 @@ namespace webuntisnoten2atlantis
         /// Wenn Schüler der Anlage A die Zeugnisart A01AS gesetzt haben, dann werden für sie alte Noten geholt.
         /// </summary>
         public string Zeugnisart { get; internal set; }
+        public string Prüfungsart { get; internal set; }
 
         public bool IstAbschlussklasse()
         {
