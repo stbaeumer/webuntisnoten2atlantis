@@ -49,7 +49,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(Global.Output.Count(), "Webuntisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.')+ ":");
+                Global.PrintMessage(Global.Output.Count(), "Webuntisabwesenheiten: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
             }
         }
 
@@ -61,7 +61,7 @@ namespace webuntisnoten2atlantis
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.PrintMessage(Global.Output.Count(), "Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: " + typ);
+                Global.PrintMessage(Global.Output.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ).PadLeft(45, '.'));
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -112,7 +112,7 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(Global.Output.Count,"Atlantisabwesenheiten: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(Global.Output.Count,"Atlantisabwesenheiten: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
         }
 
         public Abwesenheiten()

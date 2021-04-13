@@ -99,7 +99,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(Global.Output.Count(), "Webuntisleistungen: ".PadRight(30, '.') + (" " + leistungen.Count.ToString()).PadLeft(30, '.'));
+                Global.PrintMessage(Global.Output.Count(), "Webuntisleistungen: ".PadRight(45, '.') + (" " + leistungen.Count.ToString()).PadLeft(45, '.'));
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
@@ -847,7 +847,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(Global.Output.Count(), "Atlantisleistungen: ".PadRight(30,'.') + (" " + this.Count.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(Global.Output.Count(), "Atlantisleistungen: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
         }
 
         internal void SprachenZuordnen(Leistungen atlantisLeistungen)
@@ -1487,9 +1487,11 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     if (a != null && a.HzJz == "JZ")
                     {
                         // ... in der Vergangenheit liegen
+
                         if (a.Konferenzdatum > new DateTime((DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 : DateTime.Now.Year), 02, 01) && a.Konferenzdatum < DateTime.Now)
                         {
                             // ... wird die Leistung nicht berücksichtigt
+
                             if (!(from k in klassenMitZurückliegenderZeugniskonferenz where k.StartsWith(klasse) select k).Any())
                             {
                                 klassenMitZurückliegenderZeugniskonferenz.Add(klasse+"("+a.Konferenzdatum.ToShortDateString()+")");
@@ -1497,7 +1499,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                         else
                         {
-                            interessierendeKlassenGefiltert.Add(klasse);
+                            if (!(from i in interessierendeKlassenGefiltert where i == klasse select i).Any())
+                            {
+                                interessierendeKlassenGefiltert.Add(klasse);
+                            }                            
                         }
                     }
                 }

@@ -31,7 +31,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210125-3");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210413");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -203,21 +203,21 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine("  Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("MarksPerLesson"))
-                {   
-                    Console.WriteLine("   1. Administration > Export klicken");
-                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-                    Console.WriteLine("   3. !!! Zeitraum begrenzen (also die Woche der) Zeugniskonferenz herauslassen !!!");
-                    Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");                    
+                {
+                    Console.WriteLine("   1. Klassenbuch > Berichte klicken");
+                    Console.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
+                    Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+                    Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+                    Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");                    
                 }
 
                 if (kriterium.Contains("AbsenceTimesTotal"))
                 {
-                    Console.WriteLine("   1. Klassenbuch > Berichte klicken");
-                    Console.WriteLine("   2. Alle Klassen auswählen");
-                    Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-                    Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-                    Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                    Console.WriteLine("   1. Administration > Export klicken");
+                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                    Console.WriteLine("   3. !!! Zeitraum begrenzen (also die Woche der) Zeugniskonferenz herauslassen !!!");
+                    Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
                 }
 
                 Console.WriteLine("");
