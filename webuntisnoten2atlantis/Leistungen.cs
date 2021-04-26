@@ -601,6 +601,10 @@ namespace webuntisnoten2atlantis
 
                         foreach (var schueler in schuelers)
                         {
+                            if (schueler == 151703)
+                            {
+                                string f = "";
+                            }
                             var gliederungDesSchuelers = (from a in this where a.SchlüsselExtern == schueler where a.Schuljahr == aktSj[0] + "/" + aktSj[1] where a.Klasse == klasse select a.Gliederung).FirstOrDefault();
 
                             var vergangeneLeistungenDiesesSchuelers = (from a in this
@@ -619,6 +623,14 @@ namespace webuntisnoten2atlantis
                                                                        where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
                                                                        where a.Gliederung == gliederungDesSchuelers
                                                                        select a).OrderByDescending(x => x.Jahrgang).ToList();
+
+                            foreach (var item in this)
+                            {
+                                if (item.SchlüsselExtern == 151703)
+                                {
+                                    string a = "";
+                                }
+                            }
 
                             var alleVerschiedenenFächerDiesesSchuelers = (from a in this
                                                                           where a.Klasse != null
@@ -640,42 +652,45 @@ namespace webuntisnoten2atlantis
 
                                     Leistung vLeistung = (from v in vergangeneLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
 
-                                    if (!(from h in holeFächer where h.StartsWith(value: vLeistung.Fach + "(" + vLeistung.Klasse) select h).Any())
+                                    if (vLeistung != null)
                                     {
-                                        holeFächer.Add(vLeistung.Fach + "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr + ")");
-                                    }
+                                        if (!(from h in holeFächer where h.StartsWith(value: vLeistung.Fach + "(" + vLeistung.Klasse) select h).Any())
+                                        {
+                                            holeFächer.Add(vLeistung.Fach + "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr + ")");
+                                                   
+                                            Leistung aLeistung = (from v in diesjähigeLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
 
-                                    Leistung aLeistung = (from v in diesjähigeLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
-
-                                    if (!abschlussklassen.Contains(aLeistung.Klasse))
-                                    {
-                                        abschlussklassen += aLeistung.Klasse + ",";
-                                    }
+                                            if (!abschlussklassen.Contains(aLeistung.Klasse))
+                                            {
+                                                abschlussklassen += aLeistung.Klasse + ",";
+                                            }
                                     
-                                    // Eine neue Webuntis-Leistung wird aus den geholten Angaben generiert.
+                                            // Eine neue Webuntis-Leistung wird aus den geholten Angaben generiert.
 
-                                    Leistung leistung = new Leistung();
-                                    leistung.Abschlussklasse = true;
-                                    leistung.Anlage = "A01";
-                                    leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
-                                    leistung.Fach = fach;
-                                    leistung.GeholteNote = true;
-                                    leistung.Gesamtnote = vLeistung.Gesamtnote;
-                                    leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
-                                    leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
-                                    leistung.Gliederung = vLeistung.Gliederung;
-                                    leistung.HzJz = vLeistung.HzJz;
-                                    leistung.Jahrgang = aLeistung.Jahrgang;
-                                    leistung.Klasse = aLeistung.Klasse;
-                                    leistung.LeistungId = aLeistung.LeistungId;
-                                    leistung.Name = aLeistung.Name;
-                                    leistung.ReligionAbgewählt = aLeistung.ReligionAbgewählt;
-                                    leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
-                                    leistung.SchuelerAktivInDieserKlasse = aLeistung.SchuelerAktivInDieserKlasse;
-                                    leistung.Schuljahr = aLeistung.Schuljahr;
-                                    leistung.Zeugnistext = aLeistung.Zeugnistext;
+                                            Leistung leistung = new Leistung();
+                                            leistung.Abschlussklasse = true;
+                                            leistung.Anlage = "A01";
+                                            leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
+                                            leistung.Fach = fach;
+                                            leistung.GeholteNote = true;
+                                            leistung.Gesamtnote = vLeistung.Gesamtnote;
+                                            leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
+                                            leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
+                                            leistung.Gliederung = vLeistung.Gliederung;
+                                            leistung.HzJz = vLeistung.HzJz;
+                                            leistung.Jahrgang = aLeistung.Jahrgang;
+                                            leistung.Klasse = aLeistung.Klasse;
+                                            leistung.LeistungId = aLeistung.LeistungId;
+                                            leistung.Name = aLeistung.Name;
+                                            leistung.ReligionAbgewählt = aLeistung.ReligionAbgewählt;
+                                            leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
+                                            leistung.SchuelerAktivInDieserKlasse = aLeistung.SchuelerAktivInDieserKlasse;
+                                            leistung.Schuljahr = aLeistung.Schuljahr;
+                                            leistung.Zeugnistext = aLeistung.Zeugnistext;
                                         
-                                    leistungen.Add(leistung);
+                                            leistungen.Add(leistung);
+                                        }
+                                    }                                    
                                 }
                             }
                         }
@@ -809,12 +824,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                     leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                                     leistung.Klasse = theRow["Klasse"].ToString();
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-
-                                    if (leistung.Klasse == "WI18A" && leistung.Name.Contains("eselh") && leistung.Fach == "PK")
-                                    {
-                                        string aa = "";
-                                    }
-
                                     leistung.Gesamtnote = theRow["Note"].ToString() == "" ? null : theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();                                    
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString() == "" ? null : (theRow["Punkte"].ToString()).Split(',')[0];
                                     leistung.Tendenz = theRow["Tendenz"].ToString() == "" ? null : theRow["Tendenz"].ToString();
