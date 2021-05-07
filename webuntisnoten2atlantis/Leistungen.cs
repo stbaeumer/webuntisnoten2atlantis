@@ -30,12 +30,12 @@ namespace webuntisnoten2atlantis
 
                 while (true)
                 {
-                    string line = reader.ReadLine();                    
+                    string line = reader.ReadLine();
                     try
                     {
                         if (line != null)
                         {
-          
+
                             var x = line.Split('\t');
                             i++;
 
@@ -43,15 +43,15 @@ namespace webuntisnoten2atlantis
                             {
                                 leistung = new Leistung();
                                 leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
-                                leistung.Name = x[1];                                
+                                leistung.Name = x[1];
                                 leistung.Klasse = x[2];
-                                leistung.Fach = x[3];                                
+                                leistung.Fach = x[3];
                                 leistung.Gesamtpunkte = x[9].Split('.')[0] == "" ? null : x[9].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                 leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
                                 leistung.Bemerkung = x[6];
                                 leistung.Lehrkraft = x[7];
-                                leistung.SchlüsselExtern = Convert.ToInt32(x[8]);                                
+                                leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
                                 leistungen.Add(leistung);
                             }
 
@@ -119,11 +119,11 @@ namespace webuntisnoten2atlantis
                     var verschiedeneSchülerMitDiesemFachInDieserKlasse = (from t in this where t.Klasse == ik where t.Fach == fach select t.Name).Distinct();
 
                     foreach (var v in verschiedeneSchülerMitDiesemFachInDieserKlasse)
-                    {   
-                        var anzahl = (from t in this 
-                                      where t.Klasse == ik 
-                                      where t.Fach == fach 
-                                      where t.Name == v 
+                    {
+                        var anzahl = (from t in this
+                                      where t.Klasse == ik
+                                      where t.Fach == fach
+                                      where t.Name == v
                                       where t.Gesamtnote != null
                                       select t.Gesamtnote).Distinct().Count();
 
@@ -133,27 +133,27 @@ namespace webuntisnoten2atlantis
                                        where t.Klasse == ik
                                        where t.Fach == fach
                                        where t.Name == v
-                                       where t.Gesamtnote != null                                       
-                                       select t).OrderByDescending(y=>y.Datum).ToList();
+                                       where t.Gesamtnote != null
+                                       select t).OrderByDescending(y => y.Datum).ToList();
 
                             for (int i = 0; i < xxx.Count; i++)
                             {
                                 if (!(from l in liste where l == xxx[i].Klasse + "|" + xxx[i].Fach + "|" + xxx[i].Name select l).Any())
                                 {
-                                    liste.Add(xxx[i].Klasse + "|" + xxx[i].Fach + "|" + xxx[i].Name);                                    
+                                    liste.Add(xxx[i].Klasse + "|" + xxx[i].Fach + "|" + xxx[i].Name);
                                 }
                                 xxx[i].Gesamtnote = xxx[0].Gesamtnote;
                                 xxx[i].Gesamtpunkte = xxx[0].Gesamtpunkte;
                                 xxx[i].Tendenz = xxx[0].Tendenz;
-                            }                            
+                            }
                         }
                     }
-                }                
+                }
             }
             if (liste.Count() > 0)
             {
                 AusgabeSchreiben("Achtung: Es gibt Fälle, in denen derselbe Schüler im selben Fach unterschiedliche Gesamtnoten bekommen hat. Evtl. ist in Untis das Fach 2x angelegt worden. Evtl. teilen sich mehrere Lehrkräfte ein Fach und haben unterschiedliche Noten eingetragen Es wird die zuletzt eingetragene Note gewählt:", liste);
-            }            
+            }
         }
 
         internal Zuordnungen FächerZuordnen(Leistungen atlantisLeistungen)
@@ -162,7 +162,7 @@ namespace webuntisnoten2atlantis
             int i = 0;
 
             Zuordnungen zuordnungen = new Zuordnungen();
-                        
+
             foreach (var t in this)
             {
                 if (t.Name.Contains("Drych") && t.Fach == "S  G1")
@@ -193,8 +193,8 @@ namespace webuntisnoten2atlantis
 
                     // Kurse mit Leerzeichen
 
-                    if (!zugeordnet && (from a in atlantisLeistungen 
-                                        where a.Klasse == t.Klasse 
+                    if (!zugeordnet && (from a in atlantisLeistungen
+                                        where a.Klasse == t.Klasse
                                         where t.Fach.Contains(" ") && a.Fach.Contains(" ") // Leerzeichen
                                         where t.Fach.Split(' ')[0] == a.Fach.Split(' ')[0] // Erster Teil identisch
                                         select a).Any())
@@ -357,7 +357,7 @@ namespace webuntisnoten2atlantis
                             if (t.Fach != "")
                             {
                                 zuordnungen.Add(new Zuordnung(t.Klasse, t.Fach));
-                            }                            
+                            }
                         }
                     }
                 }
@@ -385,14 +385,14 @@ namespace webuntisnoten2atlantis
 
             }
 
-                //if (!zugeordnet && atlantisFächerDiesesSchuelers.Count > 0 && this[j].Gesamtnote != null)
-                //{
-                //    if (!(from z in zuordnungen where z.Quellklasse == this[j].Klasse where z.Quellfach == this[j].Fach select z).Any())
-                //    {
-                //        zuordnungen.Add(new Zuordnung(this[j].Klasse, this[j].Fach));
-                //    }
-                //}
-            
+            //if (!zugeordnet && atlantisFächerDiesesSchuelers.Count > 0 && this[j].Gesamtnote != null)
+            //{
+            //    if (!(from z in zuordnungen where z.Quellklasse == this[j].Klasse where z.Quellfach == this[j].Fach select z).Any())
+            //    {
+            //        zuordnungen.Add(new Zuordnung(this[j].Klasse, this[j].Fach));
+            //    }
+            //}
+
 
             Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
 
@@ -460,7 +460,7 @@ namespace webuntisnoten2atlantis
             if (gesamtpunkte == "13")
             {
                 tendenz = "-";
-            }            
+            }
             if (gesamtpunkte == "15")
             {
                 tendenz = "+";
@@ -494,7 +494,10 @@ namespace webuntisnoten2atlantis
                     var kkkk = iKlasse + "(";
                     foreach (var item in kll)
                     {
-                        kkkk += item.Fach + "(" + item.Lehrkraft + "),";
+                        kkkk += item.Fach + ";" + item.Lehrkraft + ";" + (from k in alleWebuntisLeistungen 
+                                                                          where k.Klasse == iKlasse 
+                                                                          where k.Gesamtnote == null                                                                           
+                                                                          select new { k.Fach, k.Lehrkraft }).Count() + "x,";
                     }
                     kkkk = kkkk.TrimEnd(',');
                     kkkk = kkkk + ")";
@@ -512,22 +515,22 @@ namespace webuntisnoten2atlantis
         internal void FehlendeZeugnisbemerkungBeiStrich(Leistungen webuntisLeistungen, List<string> interessierendeKlassen)
         {
             Console.Write(("Fehlende Zeugnisbemerkung bei Strich").PadRight(71, '.'));
-            
+
             List<string> fehlendeBemerkungen = new List<string>();
 
             try
             {
                 foreach (var klasse in interessierendeKlassen)
                 {
-                    foreach (var a in (from t in this 
-                                       where t.Klasse == klasse 
+                    foreach (var a in (from t in this
+                                       where t.Klasse == klasse
                                        where !t.Anlage.StartsWith("A")
-                                       where t.SchuelerAktivInDieserKlasse 
+                                       where t.SchuelerAktivInDieserKlasse
                                        where t.Fach != "REL"
                                        select t).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name).ToList())
-                    {                        
+                    {
                         var w = (from webuntisLeistung in webuntisLeistungen
-                                 where webuntisLeistung.Fach == a.Fach                                 
+                                 where webuntisLeistung.Fach == a.Fach
                                  where webuntisLeistung.Klasse == a.Klasse
                                  where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
                                  where a.Gesamtnote == null
@@ -544,7 +547,7 @@ namespace webuntisnoten2atlantis
                                                                              select we).Count() == 0))
                             {
                                 if (w.Gesamtnote == "-" && (a.Bemerkung == null || w.Bemerkung == null))
-                                {                                    
+                                {
                                     fehlendeBemerkungen.Add(w.Name + "(" + w.Klasse + "," + w.Fach + "," + w.Lehrkraft + ")");
                                 }
                             }
@@ -563,137 +566,97 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal Leistungen HoleAlteNoten(Leistungen webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
+        internal Leistungen HoleAlteNoten(Leistungen webuntisLeistungen, List<string> abschlussklassenGefiltert, List<string> aktSj)
         {
             Console.Write(("Leistungsdaten aus alten Jahren holen").PadRight(71, '.'));
+            
             try
             {
                 List<string> holeFächer = new List<string>();
 
                 Leistungen leistungen = new Leistungen();
 
-                string abschlussklassen = "";
+                foreach (var klasse in abschlussklassenGefiltert)
+                {
+                    var schuelersDieserAbschlussKlasse = (from w in webuntisLeistungen
+                                                          where w.Klasse == klasse
+                                                          where (from a in this
+                                                                 where klasse == a.Klasse
+                                                                 where a.SchlüsselExtern == w.SchlüsselExtern
+                                                                 where (a.Abschlussklasse || a.Zeugnisart == "A01AS")
+                                                                 where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                                                 select a).Any()
+                                                          select w.SchlüsselExtern).Distinct().ToList();
 
-                foreach (var klasse in interessierendeKlassen)
-                {                    
-                    // Für Klassen der Anlage A, die in diesem Schuljahr in Jahrgang 3 oder 4 sind oder deren Schüler ein Abschlusszeugnis bekommen ... 
+                    var diesjährigeBenoteteLeistungenAllerSchuelerDieserKlasse = (from a in webuntisLeistungen
+                                                                                  where a.Klasse == klasse
+                                                                                  select a).ToList();
 
-                    if ((from a in this where klasse == a.Klasse 
-                         where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart) 
-                         where (a.Abschlussklasse || a.Zeugnisart == "A01AS") 
-                         where a.Schuljahr == aktSj[0] + "/" + aktSj[1] 
-                         select a).Any())
+                    // Für jeden Schüler werden seine Noten der vergangenen Jahre gesucht ...
+
+                    foreach (var schueler in schuelersDieserAbschlussKlasse)
                     {
-                        // ... werden die verschiedenen Schüler gesucht, die in diesem Schuljahr die Klasse besuchen.
+                        var gliederungDesSchuelers = (from a in this where a.SchlüsselExtern == schueler where a.Schuljahr == aktSj[0] + "/" + aktSj[1] where a.Klasse == klasse select a.Gliederung).FirstOrDefault();
 
-                        var schuelers = (from w in webuntisLeistungen 
-                                         where w.Klasse == klasse 
-                                         where (from a in this
-                                                where a.SchlüsselExtern == w.SchlüsselExtern
-                                                where klasse == a.Klasse
-                                                where a.Anlage.StartsWith(Properties.Settings.Default.Klassenart)
-                                                where (a.Abschlussklasse || a.Zeugnisart == "A01AS")
-                                                where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
-                                                select a).Any()
-                                         select w.SchlüsselExtern).Distinct().ToList();
+                        var diesjähigeLeistungenDiesesSchuelers = (from a in this
+                                                                   where a.SchlüsselExtern == schueler
+                                                                   where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                                                   where a.Klasse != null
+                                                                   where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
+                                                                   where a.Gliederung == gliederungDesSchuelers
+                                                                   where a.Gesamtnote != null
+                                                                   select a).OrderByDescending(x => x.Jahrgang).ToList();
 
-                        // Für jeden Schüler werden seine Noten der vergangenen Jahre gesucht ...
+                        var vergangeneLeistungenDiesesSchuelers = (from a in this
+                                                                   where a.SchlüsselExtern == schueler
+                                                                   where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
+                                                                   where a.Gliederung == gliederungDesSchuelers
+                                                                   where a.Gesamtnote != null
+                                                                   where !(from d in diesjähigeLeistungenDiesesSchuelers where d.Fach.Replace("B1", "").Replace("B2", "") == a.Fach.Replace("B1", "").Replace("B2", "") where d.Gesamtnote != null select d).Any()
+                                                                   select a).OrderByDescending(x => x.Jahrgang).ToList();
 
-                        foreach (var schueler in schuelers)
+                        // ... für jede Leistung der vergangenen Jahre wird geprüft, ob im aktuellen Jahr eine Note in dem Fach existiert ...
+
+                        foreach (var vLeistung in vergangeneLeistungenDiesesSchuelers)
                         {
-                            if (schueler == 151703)
+                            Leistung leistung = new Leistung();
+                            leistung.Abschlussklasse = vLeistung.Abschlussklasse;
+                            leistung.Anlage = vLeistung.Anlage;
+                            leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
+                            leistung.Fach = vLeistung.Fach;
+                            leistung.GeholteNote = true;
+                            leistung.Gesamtnote = vLeistung.Gesamtnote;
+                            leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
+                            leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
+                            leistung.Gliederung = vLeistung.Gliederung;
+                            leistung.HzJz = vLeistung.HzJz;
+                            leistung.Jahrgang = vLeistung.Jahrgang;
+                            leistung.Klasse = klasse;
+                            leistung.LeistungId = vLeistung.LeistungId;
+                            leistung.Name = vLeistung.Name;
+                            leistung.ReligionAbgewählt = vLeistung.ReligionAbgewählt;
+                            leistung.SchlüsselExtern = vLeistung.SchlüsselExtern;
+                            leistung.SchuelerAktivInDieserKlasse = vLeistung.SchuelerAktivInDieserKlasse;
+                            leistung.Schuljahr = vLeistung.Schuljahr;
+                            leistung.Zeugnistext = vLeistung.Zeugnistext;
+
+                            // Eine Vorjahresleistung (inkl. Note) wird nur dann aus dem Vorjahr geholt, wenn kein Mitschüler eine 
+                            // Note im aktuellen Schuljahr erteit bekomen hat. Wenn das der Fall ist, ist davon auszugehen, dass das Fach im 
+                            // aktuellen SJ unterrichtet und benotet wurde und dass lediglich ein einzelner Schüler keine Note erteilt bekommen hat.
+
+                            if (!(from d in diesjährigeBenoteteLeistungenAllerSchuelerDieserKlasse where d.Fach == leistung.Fach select d).Any())
                             {
-                                string f = "";
-                            }
-                            var gliederungDesSchuelers = (from a in this where a.SchlüsselExtern == schueler where a.Schuljahr == aktSj[0] + "/" + aktSj[1] where a.Klasse == klasse select a.Gliederung).FirstOrDefault();
-
-                            var vergangeneLeistungenDiesesSchuelers = (from a in this
-                                                                       where a.SchlüsselExtern == schueler
-                                                                       where a.Schuljahr != aktSj[0] + "/" + aktSj[1]
-                                                                       where a.Klasse != null
-                                                                       where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
-                                                                       where a.Gliederung == gliederungDesSchuelers
-                                                                       where a.Gesamtnote != null
-                                                                       select a).OrderByDescending(x => x.Jahrgang).ToList();
-
-                            var diesjähigeLeistungenDiesesSchuelers = (from a in this
-                                                                       where a.SchlüsselExtern == schueler
-                                                                       where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
-                                                                       where a.Klasse != null
-                                                                       where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
-                                                                       where a.Gliederung == gliederungDesSchuelers
-                                                                       select a).OrderByDescending(x => x.Jahrgang).ToList();
-
-                            foreach (var item in this)
-                            {
-                                if (item.SchlüsselExtern == 151703)
-                                {
-                                    string a = "";
-                                }
-                            }
-
-                            var alleVerschiedenenFächerDiesesSchuelers = (from a in this
-                                                                          where a.Klasse != null
-                                                                          where a.Klasse.Substring(0, 1) == klasse.Substring(0, 1)
-                                                                          where a.Gliederung == gliederungDesSchuelers
-                                                                          where a.Gesamtnote != null
-                                                                          where a.SchlüsselExtern == schueler
-                                                                          select a.Fach).Distinct().ToList();
-
-                            // ... für jede Leistung der vergangenen Jahre wird geprüft, ob im aktuellen Jahr eine Note in dem Fach existiert ...
-
-                            foreach (var fach in alleVerschiedenenFächerDiesesSchuelers)
-                            {
-                                // ... wenn bisher keine Webuntisleistung in diesem Fach existiert, ...
-
-                                if (!(from w in webuntisLeistungen where w.SchlüsselExtern == schueler where w.Fach == fach select w.Fach).Any() && vergangeneLeistungenDiesesSchuelers.Count > 0)
-                                {
-                                    // ... wird die jüngste Atlantisleistung mit Note in diesem Fach geholt ...
-
-                                    Leistung vLeistung = (from v in vergangeneLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
-
-                                    if (vLeistung != null)
-                                    {
-                                        if (!(from h in holeFächer where h.StartsWith(value: vLeistung.Fach + "(" + vLeistung.Klasse) select h).Any())
-                                        {
-                                            holeFächer.Add(vLeistung.Fach + "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr + ")");
-                                                   
-                                            Leistung aLeistung = (from v in diesjähigeLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
-
-                                            if (!abschlussklassen.Contains(aLeistung.Klasse))
-                                            {
-                                                abschlussklassen += aLeistung.Klasse + ",";
-                                            }
-                                    
-                                            // Eine neue Webuntis-Leistung wird aus den geholten Angaben generiert.
-
-                                            Leistung leistung = new Leistung();
-                                            leistung.Abschlussklasse = true;
-                                            leistung.Anlage = "A01";
-                                            leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
-                                            leistung.Fach = fach;
-                                            leistung.GeholteNote = true;
-                                            leistung.Gesamtnote = vLeistung.Gesamtnote;
-                                            leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
-                                            leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
-                                            leistung.Gliederung = vLeistung.Gliederung;
-                                            leistung.HzJz = vLeistung.HzJz;
-                                            leistung.Jahrgang = aLeistung.Jahrgang;
-                                            leistung.Klasse = aLeistung.Klasse;
-                                            leistung.LeistungId = aLeistung.LeistungId;
-                                            leistung.Name = aLeistung.Name;
-                                            leistung.ReligionAbgewählt = aLeistung.ReligionAbgewählt;
-                                            leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
-                                            leistung.SchuelerAktivInDieserKlasse = aLeistung.SchuelerAktivInDieserKlasse;
-                                            leistung.Schuljahr = aLeistung.Schuljahr;
-                                            leistung.Zeugnistext = aLeistung.Zeugnistext;
-                                        
-                                            leistungen.Add(leistung);
-                                        }
-                                    }                                    
-                                }
-                            }
+                                leistungen.Add(leistung);
+                            }                           
                         }
+                    }
+                }
+
+                foreach (var leistung in leistungen)
+                {
+                    if (!holeFächer.Contains(leistung.Klasse + "(" + leistung.Fach + ";" + (from l in leistungen where l.Klasse == leistung.Klasse where l.Fach == leistung.Fach select l).Count() + "x)"))
+                    {
+                        holeFächer.Add(leistung.Klasse + "(" + leistung.Fach + ";" + (from l in leistungen where l.Klasse == leistung.Klasse where l.Fach == leistung.Fach select l).Count() + "x)");
                     }
                 }
 
@@ -707,7 +670,6 @@ namespace webuntisnoten2atlantis
             {
                 throw ex;
             }
-            
         }
 
         internal Lehrers LehrerDieserKlasse(Termin konferenz, Lehrers lehrers)
@@ -728,7 +690,7 @@ namespace webuntisnoten2atlantis
                             }
                         }
                     }
-                }                           
+                }
             }
 
             return lehrersInDerKlasse;
@@ -772,7 +734,8 @@ DBA.schue_sj.vorgang_schuljahr AS Schuljahr,
 (substr(schue_sj.s_berufs_nr,4,5)) AS Fachklasse,
 DBA.klasse.s_klasse_art AS Anlage,
 DBA.klasse.jahrgang AS Jahrgang,
-DBA.schue_sj.s_gliederungsplan_kl AS Gliederung,
+DBA.schue_sj.s_ausbild AS Gliederung,
+DBA.schue_sj.s_gliederungsplan_kl AS Gliederung1,
 DBA.noten_kopf.s_typ_nok AS HzJz,
 DBA.noten_kopf.nok_id AS NOK_ID,
 DBA.noten_kopf.s_art_nok AS Zeugnisart,
@@ -791,6 +754,10 @@ OR
   (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 2) + "/" + (Convert.ToInt32(aktSj[1]) - 2) + @"' AND (klasse.jahrgang = 'A011' OR klasse.jahrgang = 'A012') AND s_note IS NOT NULL)
 OR
   (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 3) + "/" + (Convert.ToInt32(aktSj[1]) - 3) + @"' AND (klasse.jahrgang = 'A011') AND s_note IS NOT NULL)
+OR
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 1) + "/" + (Convert.ToInt32(aktSj[1]) - 1) + @"' AND (klasse.jahrgang = 'C031') AND s_note IS NOT NULL)
+OR
+  (vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 1) + "/" + (Convert.ToInt32(aktSj[1]) - 1) + @"' AND (klasse.jahrgang = 'B081') AND s_note IS NOT NULL)
 )
 ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
@@ -806,7 +773,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         if (typ == theRow["HzJz"].ToString() || (theRow["Schuljahr"].ToString() != (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.ToInt32(aktSj[1]) - 0) && theRow["HzJz"].ToString() == "JZ"))
                         {
                             DateTime austrittsdatum = theRow["ausgetreten"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["ausgetreten"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-                            
+
                             Leistung leistung = new Leistung();
 
                             try
@@ -814,30 +781,30 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                 // Wenn der Schüler nicht in diesem Schuljahr ausgetreten ist ...
 
                                 if (!(austrittsdatum > new DateTime(DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1, 8, 1) && austrittsdatum < DateTime.Now))
-                                {                                    
-                                    leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);                         
+                                {
+                                    leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
                                     leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N";
                                     leistung.Schuljahr = theRow["Schuljahr"].ToString();
-                                    leistung.Gliederung = theRow["Gliederung"].ToString();
+                                    leistung.Gliederung = theRow["Gliederung"].ToString() == "" ? theRow["Gliederung1"].ToString() : theRow["Gliederung"].ToString();                                    
                                     leistung.HatBemerkung = (theRow["Bemerkung1"].ToString() + theRow["Bemerkung2"].ToString() + theRow["Bemerkung3"].ToString()).Contains("Fehlzeiten") ? true : false;
-                                    leistung.Jahrgang = Convert.ToInt32(theRow["Jahrgang"].ToString().Substring(3,1));
+                                    leistung.Jahrgang = Convert.ToInt32(theRow["Jahrgang"].ToString().Substring(3, 1));
                                     leistung.Name = theRow["Nachname"] + " " + theRow["Vorname"];
                                     leistung.Klasse = theRow["Klasse"].ToString();
                                     leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
-                                    leistung.Gesamtnote = theRow["Note"].ToString() == "" ? null : theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();                                    
+                                    leistung.Gesamtnote = theRow["Note"].ToString() == "" ? null : theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString() == "" ? null : (theRow["Punkte"].ToString()).Split(',')[0];
                                     leistung.Tendenz = theRow["Tendenz"].ToString() == "" ? null : theRow["Tendenz"].ToString();
-                                    leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();                                    
-                                    leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());                                    
+                                    leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
+                                    leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
                                     leistung.HzJz = theRow["HzJz"].ToString();
                                     leistung.Anlage = theRow["Anlage"].ToString();
                                     leistung.Zeugnisart = theRow["Zeugnisart"].ToString();
                                     leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
                                     leistung.Konferenzdatum = theRow["Konferenzdatum"].ToString().Length < 3 ? new DateTime() : (DateTime.ParseExact(theRow["Konferenzdatum"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).AddHours(15);
-                                    leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";
+                                    leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";                                    
                                     leistung.Abschlussklasse = leistung.IstAbschlussklasse();
                                     leistung.Beschreibung = "";
-                                    leistung.GeholteNote = false;
+                                    leistung.GeholteNote = false;                                    
                                 }
                             }
                             catch (Exception ex)
@@ -845,7 +812,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                 Console.WriteLine("Fehler beim Einlesen der Atlantis-Leistungsdatensätze: ENTER" + ex);
                                 Console.ReadKey();
                             }
-                                this.Add(leistung);                                                  
+                            this.Add(leistung);
                         }
                     }
                     connection.Close();
@@ -856,7 +823,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(Global.Output.Count(), "Atlantisleistungen: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+            Global.PrintMessage(Global.Output.Count(), "Atlantisleistungen: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
         }
 
         internal void SprachenZuordnen(Leistungen atlantisLeistungen)
@@ -1043,10 +1010,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     // ... wird bei allen Atlantis-Reli-Abwählern ...
 
                     foreach (var aLeistung in (from a in atlantisLeistungen
-                                                 where a.Klasse == klasse
-                                                 where (a.Fach == "KR" || a.Fach == "ER" || a.Fach == "REL" || a.Fach.StartsWith("KR ") || a.Fach.StartsWith("ER "))
-                                                 where a.ReligionAbgewählt
-                                                 select a).ToList())
+                                               where a.Klasse == klasse
+                                               where (a.Fach == "KR" || a.Fach == "ER" || a.Fach == "REL" || a.Fach.StartsWith("KR ") || a.Fach.StartsWith("ER "))
+                                               where a.ReligionAbgewählt
+                                               select a).ToList())
                     {
                         if (aLeistung.LeistungId == 4253264)
                         {
@@ -1054,10 +1021,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
 
                         var wf = ((from w in this
-                                  where w.Klasse == klasse
-                                  where w.SchlüsselExtern == aLeistung.SchlüsselExtern
-                                  where (w.Fach == "KR" || w.Fach == "ER" || w.Fach == "REL" || w.Fach.StartsWith("KR ") || w.Fach.StartsWith("ER "))
-                                  select w).FirstOrDefault());
+                                   where w.Klasse == klasse
+                                   where w.SchlüsselExtern == aLeistung.SchlüsselExtern
+                                   where (w.Fach == "KR" || w.Fach == "ER" || w.Fach == "REL" || w.Fach.StartsWith("KR ") || w.Fach.StartsWith("ER "))
+                                   select w).FirstOrDefault());
                         if (wf == null)
                         {
                             // ... ein neuer Webuntis-Datensatz hinzugefügt und ein '-' gesetzt.
@@ -1079,13 +1046,13 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         else
                         {
                             wf.Gesamtnote = "-";
-                        }                        
+                        }
                     }
                 }
             }
             Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
         }
-        
+
         internal void ReligionZuordnen()
         {
             Console.Write(("Religion zuordnen").PadRight(71, '.'));
@@ -1113,7 +1080,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 // ... und deren verschiedene Fächer aus Webuntis, in denen auch Noten gegeben wurden (also kein FU) ... 
 
-                foreach (var webuntisFach in (from t in this 
+                foreach (var webuntisFach in (from t in this
                                               where t.Klasse == klasse
                                               where t.Gesamtnote != null
                                               where t.Fach != "KR" && t.Fach != "ER" && !t.Fach.StartsWith("KR ") && !t.Fach.StartsWith("ER ") && !t.Fach.Contains("-")
@@ -1133,8 +1100,8 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                         if (afa.Count == 1 && !(from w in this where w.Fach == af.Fach select w).Any())
                         {
-                            AusgabeSchreiben("Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet. Wenn das nicht gewünscht ist, dann hier mit Suchen & Ersetzen der gewünschte Name gesetzt werden.",new List<string>());
-                            
+                            AusgabeSchreiben("Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet. Wenn das nicht gewünscht ist, dann hier mit Suchen & Ersetzen der gewünschte Name gesetzt werden.", new List<string>());
+
                             foreach (var leistung in this)
                             {
                                 if (leistung.Fach == webuntisFach && leistung.Klasse == klasse)
@@ -1147,14 +1114,14 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         }
                         else
                         {
-                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { webuntisFach });                            
+                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { webuntisFach });
                         }
                     }
                 }
             }
             Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
         }
-        
+
         public Leistungen()
         {
         }
@@ -1164,7 +1131,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             Console.Write(("Neu anzulegende Leistungen in Atlantis ").PadRight(71, '.'));
             int i = 0;
             int outputIndex = Global.Output.Count();
-            
+
             try
             {
                 foreach (var klasse in interessierendeKlassen)
@@ -1183,14 +1150,14 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                         {
                             // Ein '-' in Religion wird nur dann gesetzt, wenn bereits andere Schüler eine Gesamtnote bekommen haben
 
-                            if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen 
-                                                                             where we.Klasse == w.Klasse                                                                              
-                                                                             where we.Fach == "REL" 
+                            if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen
+                                                                             where we.Klasse == w.Klasse
+                                                                             where we.Fach == "REL"
                                                                              where (we.Gesamtnote != null && we.Gesamtnote != "-")
                                                                              select we).Count() == 0))
                             {
                                 if (w.Gesamtnote == "-" && a.Bemerkung == null && a.Fach != "REL" && a.Fach != "KR G1")
-                                {                                    
+                                {
                                     w.Beschreibung += "Bemerkung fehlt";
                                 }
                                 UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET    s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
@@ -1203,12 +1170,12 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                     {
                                         UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "| " + w.Tendenz + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET s_tendenz=" + (w.Tendenz == null ? "NU" : "'" + w.Tendenz + "'") + " WHERE noe_id=" + a.LeistungId + ";"); ;
                                     }
-                                        
+
                                     UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtpunkte.PadLeft(2) + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET    punkte=" + w.Gesamtpunkte.PadLeft(2) + "  WHERE noe_id=" + a.LeistungId + ";");
                                 }
                                 i++;
                             }
-                        }                       
+                        }
                     }
                 }
 
@@ -1339,20 +1306,20 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                 {
                                     UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.Gesamtnote + (a.Tendenz ?? " ") + ">" + w.Gesamtnote + (w.Tendenz ?? " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET    s_note='" + w.Gesamtnote + "'  WHERE noe_id=" + a.LeistungId + ";");
                                 }
-                                
+
                                 if (a.EinheitNP == "P")
                                 {
                                     UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET    punkte=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
-                                    
+
                                     if (a.Tendenz != w.Tendenz)
                                     {
                                         UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + " WHERE noe_id=" + a.LeistungId + ";");
-                                    }                                    
+                                    }
                                 }
                                 i++;
-                            }   
+                            }
                         }
-                    }                    
+                    }
                 }
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
                 Global.PrintMessage(outputIndex, ("Zu ändernde Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
@@ -1360,13 +1327,13 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             catch (Exception ex)
             {
                 throw ex;
-            }            
+            }
         }
 
         internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
         {
             Console.Write(("Zu löschende Leistungen in Atlantis ").PadRight(71, '.'));
-            int outputIndex = Global.Output.Count();                        
+            int outputIndex = Global.Output.Count();
             int i = 0;
 
             try
@@ -1380,7 +1347,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     if (a.SchuelerAktivInDieserKlasse)
                     {
                         // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
-                        
+
                         var webuntisLeistung = (from w in webuntisLeistungen
                                                 where w.Fach == a.Fach
                                                 where w.Klasse == a.Klasse
@@ -1395,20 +1362,21 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                                 // Geholte Noten aus Vorjahren werden nicht gelöscht.
 
                                 if (!a.GeholteNote)
-                                {   UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                {
+                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote + (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
 
                                     if (a.Gesamtpunkte != null)
                                     {
                                         UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET    punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
                                     }
-                                    
+
                                     if (a.Tendenz != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                    }                                    
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    }
                                     i++;
                                 }
-                            }                            
+                            }
                         }
                     }
                 }
@@ -1423,25 +1391,99 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
         internal List<string> GetIntessierendeKlassen(Leistungen alleWebuntisLeistungen, List<string> aktSj)
         {
-            Console.Write(("Interessierende Klassen").PadRight(71, '.'));
+            var infragekommendeKlassen = (from k in alleWebuntisLeistungen where k.Gesamtnote != null where k.Klasse != null select k.Klasse).Distinct().ToList();
 
-            var interessierendeKlassen = (from k in alleWebuntisLeistungen where k.Gesamtnote != null where k.Klasse != null select k.Klasse).Distinct().ToList();
+            List<string> ausgewählteKlassen = new List<string>();
 
-            Console.WriteLine((" " + interessierendeKlassen.Count.ToString()).PadLeft(30, '.'));
+            if (Properties.Settings.Default.Klassenwahl == "alle" || Properties.Settings.Default.Klassenwahl == "")
+            {
+                ausgewählteKlassen = infragekommendeKlassen;
+            }
+            else
+            {
+                foreach (var klasse in Properties.Settings.Default.Klassenwahl.Split(','))
+                {
+                    if (!ausgewählteKlassen.Contains(klasse.Trim()))
+                    {
+                        if (infragekommendeKlassen.Contains(klasse.Trim()))
+                        {
+                            ausgewählteKlassen.Add(klasse.Trim());
+                        }                        
+                    }
+                }
+            }
 
-            interessierendeKlassen = AddKonferenzdatum(interessierendeKlassen);
+            Properties.Settings.Default.Klassenwahl = "";
 
-            AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", AddAbsckusszeugnis(interessierendeKlassen));
+            string ausgewählteKlassenString = "";
 
-            //var klassenMitZeugnisnotenInMehrAls3Fächern = (from k in alleWebuntisLeistungen where k.Gesamtnote != null group k by k.Klasse)
+            foreach (var item in ausgewählteKlassen)
+            {
+                ausgewählteKlassenString += item + ",";
+            }
 
-            //var klassenMitFehlendenNoten = (from k in alleWebuntisLeistungen where k.Gesamtnote == null where k.Klasse != null select k.Klasse).Distinct().ToList();
-            //AusgabeSchreiben("In folgenden Klassen sind bereits mehrere Zeugnisnoten gesetzt. Es fehlen noch:", klassenMitFehlendenNoten);
+            if (ausgewählteKlassenString == "")
+            {
+                ausgewählteKlassenString = "alle";
+            }
 
-            return interessierendeKlassen;
+            Console.WriteLine("");
+            Console.WriteLine("Möchten Sie die Auswahl der Klassen einschränken? Das können Sie tun:");
+            Console.WriteLine("");
+            Console.WriteLine(" * kommasepariert Klassennamen eingeben");
+            Console.WriteLine(" * kommasepariert Anfangsbuchstaben oder Anfänge von Klassenamen eingeben");
+            Console.WriteLine(" * das Wort 'alle' eintippen");
+            Console.WriteLine(" * Die Vorauswahl mit ENTER bestätigen");
+            Console.WriteLine("");
+            Console.Write("Vorauswahl: [ " + ausgewählteKlassenString.TrimEnd(',') + "]: ");
+
+            var x = Console.ReadLine();
+
+            Console.Write(("Ausgewählte Klassen ").PadRight(71, '.'));
+
+            if (x=="" && ausgewählteKlassenString == "alle")
+            {
+                ausgewählteKlassen = infragekommendeKlassen;
+            }
+
+            if (x != "")
+            {
+                ausgewählteKlassen = new List<string>();
+
+                foreach (var klasse in x.Split(','))
+                {
+                    foreach (var ikl in infragekommendeKlassen)
+                    {
+                        if (ikl.StartsWith(klasse))
+                        {
+                            if (!ausgewählteKlassen.Contains(ikl))
+                            {
+                                ausgewählteKlassen.Add(ikl);
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var item in ausgewählteKlassen)
+            {
+                Properties.Settings.Default.Klassenwahl += item + ",";
+            }
+
+            Properties.Settings.Default.Klassenwahl = Properties.Settings.Default.Klassenwahl.TrimEnd(',');
+            Properties.Settings.Default.Save();
+
+            Console.WriteLine((" " + ausgewählteKlassen.Count.ToString()).PadLeft(30, '.'));
+
+            ausgewählteKlassen = AddKonferenzdatum(ausgewählteKlassen);
+
+
+            AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", AddAbschlusszeugnis(ausgewählteKlassen));
+
+            return ausgewählteKlassen;
         }
 
-        private List<string> AddAbsckusszeugnis(List<string> interessierendeKlassen)
+        private List<string> AddAbschlusszeugnis(List<string> interessierendeKlassen)
         {
             List<string> ik = new List<string>();
 
@@ -1489,7 +1531,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                             if (!(from k in interessierendeKlassenGefiltert where k == klasse select k).Any())
                             {
                                 interessierendeKlassenGefiltert.Add(klasse);
-                            }                            
+                            }
                         }
                     }
 
@@ -1503,7 +1545,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                             if (!(from k in klassenMitZurückliegenderZeugniskonferenz where k.StartsWith(klasse) select k).Any())
                             {
-                                klassenMitZurückliegenderZeugniskonferenz.Add(klasse+"("+a.Konferenzdatum.ToShortDateString()+")");
+                                klassenMitZurückliegenderZeugniskonferenz.Add(klasse + "(" + a.Konferenzdatum.ToShortDateString() + ")");
                             }
                         }
                         else
@@ -1511,12 +1553,12 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                             if (!(from i in interessierendeKlassenGefiltert where i == klasse select i).Any())
                             {
                                 interessierendeKlassenGefiltert.Add(klasse);
-                            }                            
+                            }
                         }
                     }
                 }
             }
-                        
+
             if (klassenMitZurückliegenderZeugniskonferenz.Count > 0)
             {
                 AusgabeSchreiben("Für folgende Klassen sind zwar Noten in Webuntis eingetragen, wegen der zurückliegenden Notenkonferenzen werden sie aber nicht angefasst:", klassenMitZurückliegenderZeugniskonferenz);
@@ -1532,7 +1574,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             string eingaben = "";
 
             do
-            {             
+            {
                 Console.WriteLine("  Geben Sie einen oder mehrere Klassennamen oder auch nur Teile des Namens ein.");
                 Console.WriteLine("");
                 Console.Write("  Wählen Sie" + (Properties.Settings.Default.Klassenwahl == "" ? " : " : " [ " + Properties.Settings.Default.Klassenwahl + " ] : "));
@@ -1540,7 +1582,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                 eingaben = Console.ReadLine().ToUpper();
 
                 Console.SetCursorPosition(0, Console.CursorTop - 1);
-                                
+
                 if (eingaben == "")
                 {
                     eingaben = Properties.Settings.Default.Klassenwahl;
@@ -1553,23 +1595,23 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
                     foreach (var klasse in alleVerschiedenenUntisKlassenMitNoten)
                     {
                         if (klasse.StartsWith(eingabe) || (eingabe.Length > 1 && klasse.Contains(eingabe)))
-                        {                            
+                        {
                             klassenliste.Add(klasse);
                             klassenlisteString += klasse + ",";
-                            if (!eingabestring.Contains("," +eingabe) && !eingabestring.StartsWith(eingabe))
+                            if (!eingabestring.Contains("," + eingabe) && !eingabestring.StartsWith(eingabe))
                             {
                                 eingabestring += eingabe + ",";
-                            }                            
+                            }
                         }
-                    }                    
+                    }
                 }
-                
+
                 if (klassenliste.Count == 0)
                 {
                     Console.WriteLine("");
                     Console.WriteLine("      [!] Ihr Suchkriterium '" + eingaben + "' passt auf keine einzige Klasse.");
                     Console.WriteLine("          Beachten Sie, dass nur Klassen gewählt werden können, für die Gesamtnoten existieren.");
-                    Console.WriteLine("          Gültige Eingaben können sein: '" + alleVerschiedenenUntisKlassenMitNoten[0] + "' " + (alleVerschiedenenUntisKlassenMitNoten.Count > 1 ? "oder '" + alleVerschiedenenUntisKlassenMitNoten[0] + "," + alleVerschiedenenUntisKlassenMitNoten[1] : "") +"' oder '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0,1) + ",G'");
+                    Console.WriteLine("          Gültige Eingaben können sein: '" + alleVerschiedenenUntisKlassenMitNoten[0] + "' " + (alleVerschiedenenUntisKlassenMitNoten.Count > 1 ? "oder '" + alleVerschiedenenUntisKlassenMitNoten[0] + "," + alleVerschiedenenUntisKlassenMitNoten[1] : "") + "' oder '" + alleVerschiedenenUntisKlassenMitNoten[0].Substring(0, 1) + ",G'");
                     Console.WriteLine("          Wählbare Klassen sind:");
                     WählbareKlassen(alleVerschiedenenUntisKlassenMitNoten);
                 }
@@ -1616,7 +1658,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             do
             {
                 var zeile = "";
-                
+
                 try
                 {
                     while ((zeile + text.Split(' ')[z] + ", ").Length <= 96)
@@ -1641,10 +1683,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
 
             z = 0;
-            
+
             do
             {
-                var zeile = " ";                
+                var zeile = " ";
 
                 try
                 {
@@ -1717,7 +1759,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    if (i==0)
+                    if (i == 0)
                     {
                         notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
                     }
@@ -1732,6 +1774,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC; ", connection);
             {
                 System.Diagnostics.Process.Start("Notepad.exe", files[0]);
             }
-        }        
+        }
     }
 }

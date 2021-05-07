@@ -8,7 +8,7 @@ namespace webuntisnoten2atlantis
         public string Quellfach { get; internal set; }
         public string Zielklasse { get; internal set; }
         public string Zielfach { get; internal set; }
-        
+
         public Zuordnung(string quellklasse, string quellfach)
         {
             Quellklasse = quellklasse;

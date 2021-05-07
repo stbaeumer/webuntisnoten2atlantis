@@ -8,6 +8,7 @@ using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace webuntisnoten2atlantis
@@ -31,14 +32,14 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210413");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20210507");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
                 Console.WriteLine(" samtnote von Webuntis übergeben!");
                 Console.WriteLine("=====================================================================================================");
 
-                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == "")
+                if (Properties.Settings.Default.DBUser == "")
                 {
                     Settings();
                 }
@@ -54,6 +55,7 @@ namespace webuntisnoten2atlantis
 
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
                 Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);
+
                 Abwesenheiten alleAtlantisAbwesenheiten = new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
                 Abwesenheiten alleWebuntisAbwesenheiten = new Abwesenheiten(targetAbsenceTimesTotal);
 
@@ -62,14 +64,19 @@ namespace webuntisnoten2atlantis
                 Leistungen atlantisLeistungen = new Leistungen();
                 Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
+                FocusMe();
+
                 var interessierendeKlassen = new List<string>();
                 interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
 
                 webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
-                webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
                 atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
-                atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
+                
+                List<string> abschlussklassen = (from t in alleAtlantisLeistungen where t.Abschlussklasse where interessierendeKlassen.Contains(t.Klasse) select t.Klasse).Distinct().ToList();
 
+                atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) where !abschlussklassen.Contains(a.Klasse) select a));
+                webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) where !abschlussklassen.Contains(a.Klasse) select a));
+                
                 if (webuntisLeistungen.Count == 0)
                 {
                     throw new Exception("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
@@ -105,74 +112,6 @@ namespace webuntisnoten2atlantis
                 atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
                 atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
 
-                if (User.ToUpper() == "BM")
-                {
-                    Console.WriteLine("");
-                    Console.WriteLine("Die Zeugniskonferenzen können in Outlook angelegt werden. Alle Lehrkräfte, die in der Klasse unter-");
-                    Console.WriteLine("richten, werden dann als 'erforderliche Teilnehmer' eingetragen. Damit alle Lehrkräfte die interes-");
-                    Console.WriteLine("im eigenen Kalender sehen, müssen Sie in Ihrem Outlook jeweils auf 'senden' klicken.");
-                    Console.Write("Sollen Zeugniskonferenzen in Ihrem Outlook angelegt werden? (j/n) " + (Properties.Settings.Default.Meeting.ToLower() == "j" ? "[j] " : "[n] "));
-
-                    var meeting = Console.ReadKey();
-
-                    if (meeting.Key == ConsoleKey.N)
-                    {
-                        Properties.Settings.Default.Meeting = "n";
-                        Properties.Settings.Default.Save();
-                    }
-                    if (meeting.Key == ConsoleKey.J)
-                    {
-                        Properties.Settings.Default.Meeting = "j";
-                        Properties.Settings.Default.Save();
-                    }
-                    if (Properties.Settings.Default.Meeting == "j")
-                    {
-                        Properties.Settings.Default.Meeting = "j";
-                        Properties.Settings.Default.Save();
-                        // Die Exceldatei des anstehenden Abschnitts (HZ/JZ) wird durchlaufen ...
-                        Console.WriteLine("");
-                        Lehrers lehrers = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
-
-                        var konferenzen = ReadExcel(ExcelPath);
-
-                        ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
-
-                        CheckPassword("Bitte das O365-Kennwort für " + User + " eingeben: ");
-
-                        Console.WriteLine("");
-                        string mail = (from l in lehrers where User == l.Kuerzel select l.Mail).FirstOrDefault();
-                        service.Credentials = new WebCredentials(mail, Passwort);
-                        service.UseDefaultCredentials = false;
-                        service.AutodiscoverUrl(mail, RedirectionUrlValidationCallback);
-
-                        konferenzen.Lehrers(lehrers, alleWebuntisLeistungen);
-                        konferenzen.TerminkollisionenFinden();
-                        konferenzen.ToOutlook(service, mail);
-
-                        // Fehlende Klassen in der Exceldatei werden ausgegeben
-
-                        // Überzählige Klassen in der Excelliste werden ausgegeben
-
-
-
-                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden ermittelt:
-
-
-
-                        // Alle Klassen mit anstehenden Zeugniskonferenzen werden durchlaufen ...
-
-
-
-                        // ... und alle verschiedenen Lehrer werden ermittelt.
-
-
-                        // ... und jeweils ein Appointment eingetragen
-
-                    }
-
-
-                }
-
                 alleAtlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
                 Console.WriteLine("");
@@ -195,7 +134,7 @@ namespace webuntisnoten2atlantis
         private static string CheckFile(string targetPath, string user, string kriterium)
         {
             var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads", "*.csv", SearchOption.AllDirectories) where f.Contains(kriterium) orderby File.GetCreationTime(f) select f).LastOrDefault();
-            
+
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
                 Console.WriteLine("");
@@ -209,7 +148,7 @@ namespace webuntisnoten2atlantis
                     Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
                     Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
                     Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");                    
+                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
                 }
 
                 if (kriterium.Contains("AbsenceTimesTotal"))
@@ -229,8 +168,8 @@ namespace webuntisnoten2atlantis
             var targetFile = Path.Combine(targetPath, Zeitstempel + "_" + kriterium + "_" + user + ".CSV");
 
             if (File.Exists(targetFile))
-            { 
-                File.Delete(targetFile); 
+            {
+                File.Delete(targetFile);
             }
             File.Copy(sourceFile, targetFile);
 
@@ -289,104 +228,30 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static bool RedirectionUrlValidationCallback(string redirectionUrl)
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindowAsync(HandleRef hWnd, int nCmdShow);
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true)]
+        static extern IntPtr FindWindowByCaption(IntPtr zeroOnly, string lpWindowName);
+        public const int SW_RESTORE = 9;
+        static void FocusMe()
         {
-            // The default for the validation callback is to reject the URL.
-            bool result = false;
-            Uri redirectionUri = new Uri(redirectionUrl);
-            // Validate the contents of the redirection URL. In this simple validation
-            // callback, the redirection URL is considered valid if it is using HTTPS
-            // to encrypt the authentication credentials. 
-            if (redirectionUri.Scheme == "https")
-            {
-                result = true;
-            }
-            return result;
-        }
+            string originalTitle = Console.Title;
+            string uniqueTitle = Guid.NewGuid().ToString();
+            Console.Title = uniqueTitle;
+            Thread.Sleep(50);
+            IntPtr handle = FindWindowByCaption(IntPtr.Zero, uniqueTitle);
 
-        public static Termine ReadExcel(string pfad)
-        {
-            Termine termine = new Termine();
+            Console.Title = originalTitle;
 
-            if (File.Exists(pfad))
-            {
-                Global.WaitForFile(pfad);
-            }
-            else
-            {
-                Console.WriteLine("Die Datei " + pfad + ".xlsx soll jetzt eingelesen werden, kann aber nicht gefunden werden.");
-            }
-
-            Application excel = new Application();
-            Workbook workbook = excel.Workbooks.Open(pfad);
-            Worksheet worksheet = (Worksheet)workbook.Worksheets.get_Item(1);
-            Range xlRange = worksheet.UsedRange;
-
-            try
-            {                
-                Console.Write("Lese Exceldatei " + pfad + " ... ");
-
-                // InSpalte D und K stehen die verschiednenen Klassen
-
-                int rowCount = xlRange.Rows.Count;
-
-                for (int spalte = 1; spalte < 8; spalte += 6)
-                {
-                    DateTime zeit = new DateTime();
-                    string raum = "";
-                    string bildungsgang = "";
-
-                    var datum = Convert.ToString(xlRange.Cells[2, spalte].Value2);
-
-                    for (int zeile = 3; zeile < rowCount + 1; zeile++)
-                    {
-                        var termin = new Termin();
-                        
-                        bildungsgang = Convert.ToString(xlRange.Cells[zeile, spalte + 1].Value2) ?? bildungsgang;
-                        termin.Bildungsgang = bildungsgang;
-                        termin.Klasse = Convert.ToString(xlRange.Cells[zeile, spalte + 2].Value2);
-                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 3].Value2));                        
-                        termin.Uhrzeit = zeit;
-                        raum = Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2) ?? raum;
-                        termin.Raum = raum;
-
-                        if (termin.Klasse != null)
-                        {
-                            termine.Add(termin);
-                        }
-                    }
-                }
-                
-                workbook.Close(0);
-                excel.Quit();
-                Console.WriteLine(" ... ok.");
-                return termine;
-
-            }
-            catch (Exception ex)
-            {                
-                Console.WriteLine(ex.ToString());
-                workbook.Close(0);
-                excel.Quit();
-                Console.ReadKey();                
-                return termine;
-            }
-        }
-
-        private static DateTime GetZeit(DateTime uhrzeit, dynamic datum, dynamic dynamic)
-        {
-            try
-            {
-                return DateTime.FromOADate(double.Parse(datum) + double.Parse(dynamic));
-            }
-            catch (Exception)
-            {
-                return dynamic ?? uhrzeit.AddMinutes(10);
-            }
+            ShowWindowAsync(new HandleRef(null, handle), SW_RESTORE);
+            SetForegroundWindow(handle);
         }
 
         private static void Settings()
-        {   
+        {
             do
             {
                 Console.Write(" 1. Wie heißt der Datenbankbenutzer? " + (Properties.Settings.Default.DBUser == "" ? "" : "[ " + Properties.Settings.Default.DBUser + " ]  "));
@@ -419,32 +284,32 @@ namespace webuntisnoten2atlantis
 
             } while (Properties.Settings.Default.DBUser == "");
             Console.WriteLine("");
-            do
-            {
-                Console.WriteLine(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");
-                Console.WriteLine("    Typischerweise beginnt die Organisationsform der Teilzeitklassen in Atlantis mit 'A'.");
-                Console.Write("    Wie lautet der Anfangsbuchstabe der Organisationsform Ihrer Teilzeitklassen? " + (Properties.Settings.Default.Klassenart == "" ? "" : "[ " + Properties.Settings.Default.Klassenart + " ]  "));
-                var dbuser = Console.ReadLine();
+            //do
+            //{
+            //    Console.WriteLine(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");
+            //    Console.WriteLine("    Typischerweise beginnt die Organisationsform der Teilzeitklassen in Atlantis mit 'A'.");
+            //    Console.Write("    Wie lautet der Anfangsbuchstabe der Organisationsform Ihrer Teilzeitklassen? " + (Properties.Settings.Default.AnfangsbuchstabeTkKlassen == "" ? "" : "[ " + Properties.Settings.Default.AnfangsbuchstabeTkKlassen + " ]  "));
+            //    var dbuser = Console.ReadLine();
 
-                if (dbuser == "")
-                {
-                    dbuser = Properties.Settings.Default.Klassenart;
-                }
-                else
-                {
-                    Properties.Settings.Default.Klassenart = dbuser.Substring(0, 1).ToUpper();
-                }
+            //    if (dbuser == "")
+            //    {
+            //        dbuser = Properties.Settings.Default.AnfangsbuchstabeTkKlassen;
+            //    }
+            //    else
+            //    {
+            //        Properties.Settings.Default.AnfangsbuchstabeTkKlassen = dbuser.Substring(0, 1).ToUpper();
+            //    }
 
-                Properties.Settings.Default.Save();
+            //    Properties.Settings.Default.Save();
 
-            } while (Properties.Settings.Default.Klassenart == "");
+            //} while (Properties.Settings.Default.AnfangsbuchstabeTkKlassen == "");
 
             Console.WriteLine("");
 
             do
             {
                 Console.WriteLine(" 3. Bei 3,5-jährigen Teilzeit-Bildungsgängen müssen zum Halbjahr im 4.Jahrgang die alten Noten geholt werden.");
-                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");                
+                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");
                 Console.Write("    Wie lauten die Anfangsbuchstaben oder Klassennamen der 3,5-Jährigen? " + (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "" ? "" : "[ " + Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben + " ]  "));
 
                 var aks = Console.ReadLine();
@@ -509,6 +374,6 @@ namespace webuntisnoten2atlantis
             }
 
             return pfad;
-        }  
+        }
     }
 }

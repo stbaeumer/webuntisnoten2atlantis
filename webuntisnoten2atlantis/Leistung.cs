@@ -48,24 +48,36 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public string Zeugnisart { get; internal set; }
         public string Prüfungsart { get; internal set; }
+        public DateTime Von { get; internal set; }
+        public DateTime Bis { get; internal set; }
+        public string FachUntis { get; internal set; }
 
         public bool IstAbschlussklasse()
-        {
-            if (Anlage.StartsWith(Properties.Settings.Default.Klassenart))
+        {            
+            // Klassen im Jahrgang 4 sind immer Abschlussklasse
+
+            if (Jahrgang == 4)
             {
-                // Klassen im Jahrgang 4 sind immer Abschlussklasse
+                return true;
+            }
 
-                if (Jahrgang == 4)
-                {
-                    return true;
-                }
-
-                if (Jahrgang == 3 && !Klasse.StartsWith("M") && !Klasse.StartsWith("E") && HzJz == "Jz")
-                {
-                    return true;
-                }
+            if (Jahrgang == 3 && !Klasse.StartsWith("M") && !Klasse.StartsWith("E") && HzJz == "Jz")
+            {
+                return true;
             }
             
+
+            if ((Gliederung.StartsWith("C03") || Gliederung.StartsWith("C13")) && Jahrgang == 2 && DateTime.Now.Month > 3)
+            {
+                return true;
+            }
+
+            if ((Gliederung.StartsWith("B08") || Gliederung.StartsWith("C06") || this.Gliederung.StartsWith("C08")) && DateTime.Now.Month > 3)
+            {
+                return true;
+            }
+
+
             return false;
         }
 
