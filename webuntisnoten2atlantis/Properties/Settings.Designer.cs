@@ -122,7 +122,7 @@ namespace webuntisnoten2atlantis.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Klassenart {
+        public string AnfangsbuchstabeTkKlassen {
             get {
                 return ((string)(this["Klassenart"]));
             }

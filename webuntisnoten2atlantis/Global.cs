@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace webuntisnoten2atlantis
 {
@@ -71,6 +72,73 @@ namespace webuntisnoten2atlantis
                 }
             }
             return true;
+        }
+
+        public static void AusgabeSchreiben(string text, List<string> klassen)
+        {
+            Global.Output.Add("");
+            int z = 0;
+
+            do
+            {
+                var zeile = "";
+
+                try
+                {
+                    while ((zeile + text.Split(' ')[z] + ", ").Length <= 96)
+                    {
+                        zeile += text.Split(' ')[z] + " ";
+                        z++;
+                    }
+                }
+                catch (Exception)
+                {
+                    z++;
+                    zeile.TrimEnd(',');
+                }
+
+                zeile = zeile.TrimEnd(' ');
+
+                string o = "/* " + zeile.TrimEnd(' ');
+                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+
+            } while (z < text.Split(' ').Count());
+
+
+
+            z = 0;
+
+            do
+            {
+                var zeile = " ";
+
+                try
+                {
+                    if (klassen[z].Length >= 95)
+                    {
+                        klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 95));
+                        zeile += klassen[z];
+                        throw new Exception();
+                    }
+
+                    while ((zeile + klassen[z] + ", ").Length <= 97)
+                    {
+                        zeile += klassen[z] + ", ";
+                        z++;
+                    }
+                }
+                catch (Exception)
+                {
+                    z++;
+                    zeile.TrimEnd(',');
+                }
+
+                zeile = zeile.TrimEnd(' ');
+                int s = zeile.Length;
+                string o = "/* " + zeile.TrimEnd(',');
+                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+
+            } while (z < klassen.Count);
         }
     }
 }
