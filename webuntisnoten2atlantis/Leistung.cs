@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
 
 using System;
 
@@ -48,6 +48,15 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public string Zeugnisart { get; internal set; }
         public string Prüfungsart { get; internal set; }
+        public string Nachname { get; internal set; }
+        public string Vorname { get; internal set; }
+        public DateTime Geburtsdatum { get; internal set; }
+        public bool Volljährig { get; internal set; }
+        public string Bereich { get; internal set; }
+        public string Gesamtpunkte_12_1 { get; internal set; }
+        public string Gesamtpunkte_12_2 { get; internal set; }
+        public string Gesamtpunkte_13_1 { get; internal set; }
+        public string Gesamtpunkte_13_2 { get; internal set; }
 
         public bool IstAbschlussklasse()
         {

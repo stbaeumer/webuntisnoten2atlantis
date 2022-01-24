@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
 
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,10 @@ namespace webuntisnoten2atlantis
 {
     internal static class Global
     {
+        public static Leistungen Defizitleistungen { get; internal set; }
+
         public static List<string> Output { get; internal set; }
+        public static string HzJz { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {

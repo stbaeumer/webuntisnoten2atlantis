@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2020.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
 
 using System;
 using System.Collections.Generic;
@@ -34,7 +34,6 @@ namespace webuntisnoten2atlantis
                             abwesenheit.Klasse = x[5];
                             abwesenheit.StundenAbwesend = Convert.ToInt32(x[7])/45;
                             abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8])/45; // unenentschuldigt oder offen
-
                             this.Add(abwesenheit);
                         }
                     }
@@ -90,7 +89,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     foreach (DataRow theRow in dataSet.Tables["DBA.leistungsdaten"].Rows)
                     {
-                        if (typ == theRow["HzJz"].ToString())
+                        if (typ == theRow["HzJz"].ToString() || theRow["HzJz"].ToString() == "GO")
                         {
                             Abwesenheit abwesenheit = new Abwesenheit();
                             abwesenheit.StudentId = Convert.ToInt32(theRow["StudentId"]);
@@ -101,6 +100,10 @@ DBA.schueler.name_2 ASC ", connection);
                             abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
                             abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
                             abwesenheit.HzJz = theRow["HzJz"].ToString();
+                            if (abwesenheit.Name.StartsWith("Bätzing"))
+                            {
+                                string a = "";
+                            }
                             this.Add(abwesenheit);
                         }
                     }
@@ -138,7 +141,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|0->" + w.StundenAbwesend.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesend.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -153,7 +156,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -175,7 +178,7 @@ DBA.schueler.name_2 ASC ", connection);
             try
             {
                 foreach (var a in this)
-                {
+                {                    
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where webuntisAbwesenheit.StudentId == a.StudentId
@@ -183,10 +186,9 @@ DBA.schueler.name_2 ASC ", connection);
                              where webuntisAbwesenheit.StundenAbwesend != 0
                              where a.StundenAbwesend != webuntisAbwesenheit.StundenAbwesend
                              select webuntisAbwesenheit).FirstOrDefault();
-
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->" + w.StundenAbwesend.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->" + w.StundenAbwesend.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -198,10 +200,10 @@ DBA.schueler.name_2 ASC ", connection);
                              where a.StundenAbwesendUnentschuldigt != 0
                              where webuntisAbwesenheit.StundenAbwesendUnentschuldigt != 0
                              where a.StundenAbwesendUnentschuldigt != webuntisAbwesenheit.StundenAbwesendUnentschuldigt
-                             select webuntisAbwesenheit).FirstOrDefault();
+                             select webuntisAbwesenheit).FirstOrDefault();                   
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesendUnentschuldigt.ToString().PadLeft(3)+"->"+ w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesendUnentschuldigt.ToString().PadLeft(3)+"->"+ w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -231,7 +233,7 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesend == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) +"->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) +"->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                     if ((from w in webuntisAbwesenheiten
@@ -241,7 +243,7 @@ DBA.schueler.name_2 ASC ", connection);
                           where w.StundenAbwesendUnentschuldigt == 0
                           select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
