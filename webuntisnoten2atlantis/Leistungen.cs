@@ -705,35 +705,43 @@ namespace webuntisnoten2atlantis
                                                    
                                             Leistung aLeistung = (from v in diesjähigeLeistungenDiesesSchuelers where v.Fach == fach select v).FirstOrDefault();
 
-                                            if (!abschlussklassen.Contains(aLeistung.Klasse))
+                                            if (aLeistung != null)
                                             {
-                                                abschlussklassen += aLeistung.Klasse + ",";
-                                            }
-                                    
-                                            // Eine neue Webuntis-Leistung wird aus den geholten Angaben generiert.
+                                                if (!abschlussklassen.Contains(aLeistung.Klasse))
+                                                {
+                                                    abschlussklassen += aLeistung.Klasse + ",";
+                                                }
 
-                                            Leistung leistung = new Leistung();
-                                            leistung.Abschlussklasse = true;
-                                            leistung.Anlage = "A01";
-                                            leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
-                                            leistung.Fach = fach;
-                                            leistung.GeholteNote = true;
-                                            leistung.Gesamtnote = vLeistung.Gesamtnote;
-                                            leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
-                                            leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
-                                            leistung.Gliederung = vLeistung.Gliederung;
-                                            leistung.HzJz = vLeistung.HzJz;
-                                            leistung.Jahrgang = aLeistung.Jahrgang;
-                                            leistung.Klasse = aLeistung.Klasse;
-                                            leistung.LeistungId = aLeistung.LeistungId;
-                                            leistung.Name = aLeistung.Name;
-                                            leistung.ReligionAbgewählt = aLeistung.ReligionAbgewählt;
-                                            leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
-                                            leistung.SchuelerAktivInDieserKlasse = aLeistung.SchuelerAktivInDieserKlasse;
-                                            leistung.Schuljahr = aLeistung.Schuljahr;
-                                            leistung.Zeugnistext = aLeistung.Zeugnistext;
-                                        
-                                            leistungen.Add(leistung);
+                                                // Eine neue Webuntis-Leistung wird aus den geholten Angaben generiert.
+
+                                                Leistung leistung = new Leistung();
+                                                leistung.Abschlussklasse = true;
+                                                leistung.Anlage = "A01";
+                                                leistung.Beschreibung = "(" + vLeistung.Klasse + "|" + vLeistung.Schuljahr.Substring(2, 5) + ")";
+                                                leistung.Fach = fach;
+                                                leistung.GeholteNote = true;
+                                                leistung.Gesamtnote = vLeistung.Gesamtnote;
+                                                leistung.Gesamtpunkte = leistung.Gesamtnote2Gesamtpunkte(leistung.Gesamtnote);
+                                                leistung.Tendenz = leistung.Gesamtnote2Tendenz(leistung.Tendenz);
+                                                leistung.Gliederung = vLeistung.Gliederung;
+                                                leistung.HzJz = vLeistung.HzJz;
+                                                leistung.Jahrgang = aLeistung.Jahrgang;
+                                                leistung.Klasse = aLeistung.Klasse;
+                                                leistung.LeistungId = aLeistung.LeistungId;
+                                                leistung.Name = aLeistung.Name;
+                                                leistung.ReligionAbgewählt = aLeistung.ReligionAbgewählt;
+                                                leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
+                                                leistung.SchuelerAktivInDieserKlasse = aLeistung.SchuelerAktivInDieserKlasse;
+                                                leistung.Schuljahr = aLeistung.Schuljahr;
+                                                leistung.Zeugnistext = aLeistung.Zeugnistext;
+
+                                                leistungen.Add(leistung);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("Problem beim Schüler (ID " + schueler +"; Gliederung: " + gliederungDesSchuelers + "; Fach " + fach + " )" );
+                                                Console.ReadKey();
+                                            }
                                         }
                                     }                                    
                                 }
@@ -1715,7 +1723,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
             Console.WriteLine(" * kommasepariert Klassennamen eingeben");
             Console.WriteLine(" * kommasepariert Anfangsbuchstaben oder Anfänge von Klassenamen eingeben");
             Console.WriteLine(" * das Wort 'alle' eintippen");
-            Console.WriteLine(" * Die Vorauswahl mit ENTER bestätigen");
+            Console.WriteLine(" * die Vorauswahl mit ENTER bestätigen");
             Console.WriteLine("");
             Console.Write("Vorauswahl: [ " + ausgewählteKlassenString.TrimEnd(',') + "]: ");
 

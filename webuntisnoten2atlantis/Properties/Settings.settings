@@ -27,7 +27,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Klassenart" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">""</Value>
     </Setting>
     <Setting Name="AbschlussklassenAnfangsbuchstaben" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

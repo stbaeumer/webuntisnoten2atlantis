@@ -37,7 +37,7 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine(" samtnote von Webuntis nach Atlantis übergeben!");
                 Console.WriteLine("=====================================================================================================");
 
-                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == "")
+                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")
                 {
                     Settings();
                 }
