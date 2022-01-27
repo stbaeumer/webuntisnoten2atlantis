@@ -30,7 +30,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20220124");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20220125");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -53,28 +53,30 @@ namespace webuntisnoten2atlantis
                 string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
 
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);                                
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
                 Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);
-                
+
                 Abwesenheiten alleAtlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
                 Abwesenheiten alleWebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(targetAbsenceTimesTotal);
-                
+
                 Leistungen webuntisLeistungen = new Leistungen();
                 Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
                 Leistungen atlantisLeistungen = new Leistungen();
                 Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
+                //do
+                //{
                 var interessierendeKlassen = new List<string>();
                 interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
 
                 webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
-                
-                if (targetAbsenceTimesTotal != null) 
-                { 
+
+                if (targetAbsenceTimesTotal != null)
+                {
                     webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
                     atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
                 }
-                
+
                 atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
 
                 atlantisLeistungen.ErzeugeSerienbriefquelleFehlendeTeilleistungen(webuntisLeistungen);
@@ -96,6 +98,7 @@ namespace webuntisnoten2atlantis
                 // Korrekturen durchführen
 
                 webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(interessierendeKlassen);
+
                 Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
                 webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                 webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
@@ -120,24 +123,22 @@ namespace webuntisnoten2atlantis
                 else
                 {
                     int outputIndex = Global.Output.Count();
-                    Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));                    
+                    Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
                 }
-                                
+
                 alleAtlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
                 //Global.Defizitleistungen.ErzeugeSerienbriefquelleNichtversetzer();
 
                 Console.WriteLine("");
                 Console.WriteLine("  -----------------------------------------------------------------");
-                Console.WriteLine("  Es wird nun einen Serienbriefdatei für nicht eingetragene Teilleistungen erstellt.");
-
-                
-
-                Console.WriteLine("");
-                Console.WriteLine("  -----------------------------------------------------------------");
                 Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
-                Console.ReadKey();
-                Environment.Exit(0);
+
+                //    if ((char)13 == (Console.ReadKey()).KeyChar)
+                //    {
+                //        Environment.Exit(0);
+                //    }
+                //} while (true);
             }
             catch (Exception ex)
             {
@@ -158,7 +159,7 @@ namespace webuntisnoten2atlantis
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
                 Console.WriteLine("");
-                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. Es werden keine Daten aus der Datei importiert.") + ".");                
+                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. Es werden keine Daten aus der Datei importiert.") + ".");
                 Console.WriteLine("  Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("MarksPerLesson"))
@@ -200,7 +201,7 @@ namespace webuntisnoten2atlantis
                 notepadPlus.Start();
                 Thread.Sleep(1500);
             }
-                        
+
             return targetFile;
         }
 
@@ -284,7 +285,7 @@ namespace webuntisnoten2atlantis
             Range xlRange = worksheet.UsedRange;
 
             try
-            {                
+            {
                 Console.Write("Lese Exceldatei " + pfad + " ... ");
 
                 // InSpalte D und K stehen die verschiednenen Klassen
@@ -302,11 +303,11 @@ namespace webuntisnoten2atlantis
                     for (int zeile = 3; zeile < rowCount + 1; zeile++)
                     {
                         var termin = new Termin();
-                        
+
                         bildungsgang = Convert.ToString(xlRange.Cells[zeile, spalte + 1].Value2) ?? bildungsgang;
                         termin.Bildungsgang = bildungsgang;
                         termin.Klasse = Convert.ToString(xlRange.Cells[zeile, spalte + 2].Value2);
-                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 3].Value2));                        
+                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 3].Value2));
                         termin.Uhrzeit = zeit;
                         raum = Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2) ?? raum;
                         termin.Raum = raum;
@@ -317,7 +318,7 @@ namespace webuntisnoten2atlantis
                         }
                     }
                 }
-                
+
                 workbook.Close(0);
                 excel.Quit();
                 Console.WriteLine(" ... ok.");
@@ -325,11 +326,11 @@ namespace webuntisnoten2atlantis
 
             }
             catch (Exception ex)
-            {                
+            {
                 Console.WriteLine(ex.ToString());
                 workbook.Close(0);
                 excel.Quit();
-                Console.ReadKey();                
+                Console.ReadKey();
                 return termine;
             }
         }
@@ -347,7 +348,7 @@ namespace webuntisnoten2atlantis
         }
 
         private static void Settings()
-        {   
+        {
             do
             {
                 Console.Write(" 1. Wie heißt der Datenbankbenutzer? " + (Properties.Settings.Default.DBUser == "" ? "" : "[ " + Properties.Settings.Default.DBUser + " ]  "));
@@ -405,7 +406,7 @@ namespace webuntisnoten2atlantis
             do
             {
                 Console.WriteLine(" 3. Bei 3,5-jährigen Teilzeit-Bildungsgängen müssen zum Halbjahr im 4.Jahrgang die alten Noten geholt werden.");
-                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");                
+                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");
                 Console.Write("    Wie lauten die Anfangsbuchstaben oder Klassennamen der 3,5-Jährigen? " + (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "" ? "" : "[ " + Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben + " ]  "));
 
                 var aks = Console.ReadLine();
@@ -470,6 +471,6 @@ namespace webuntisnoten2atlantis
             }
 
             return pfad;
-        }  
+        }
     }
 }

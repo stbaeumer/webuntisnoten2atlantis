@@ -45,7 +45,7 @@ namespace webuntisnoten2atlantis
                                 leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                                 leistung.Name = x[1];                                
                                 leistung.Klasse = x[2];
-                                leistung.Fach = x[3];                                
+                                leistung.Fach = x[3];
                                 leistung.Gesamtpunkte = x[9].Split('.')[0] == "" ? null : x[9].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                 leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
@@ -207,201 +207,116 @@ namespace webuntisnoten2atlantis
             int i = 0;
 
             Zuordnungen zuordnungen = new Zuordnungen();
-                        
-            foreach (var t in this)
-            {
-                if (t.Name.Contains("Drych") && t.Fach == "S  G1")
-                {
-                    string aa = "";
-                }
+
+            for (int y = 0; y < this.Count; y++)            
+            {   
+                // Fächer, die sich nicht zuordnen lassen, werden später zur manuellen Zuordnung vorgeschlagen
+                
                 var zugeordnet = false;
 
                 // Wenn es keine Zuordnung in Atlantis gibt, ...
 
-                if (!(from a in atlantisLeistungen where a.Klasse == t.Klasse where a.Fach == t.Fach select a).Any())
+                if (!(from a in atlantisLeistungen where a.Klasse == this[y].Klasse where a.Fach == this[y].Fach select a).Any())
                 {
                     // Förderunterricht bekommt keine Note
 
-                    if (t.Fach.EndsWith(" FU"))
+                    if (this[y].Fach.EndsWith(" FU"))
                     {
                         zugeordnet = true;
                     }
 
-                    if (!zugeordnet && (t.Fach == "KR" || t.Fach == "ER" || t.Fach.StartsWith("KR ") || t.Fach.StartsWith("ER ")))
+                    if (!zugeordnet && (this[y].Fach == "KR" || this[y].Fach == "ER" || this[y].Fach.StartsWith("KR ") || this[y].Fach.StartsWith("ER ")))
                     {
-                        t.Beschreibung += t.Fach + "->REL,";
-                        t.Fach = "REL";
+                        this[y].Beschreibung += this[y].Fach + "->REL,";
+                        this[y].Fach = "REL";
                         zugeordnet = true;
                         i++;
                     }
-
 
                     // Kurse mit Leerzeichen
-
-                    if (!zugeordnet && (from a in atlantisLeistungen 
-                                        where a.Klasse == t.Klasse 
-                                        where t.Fach.Contains(" ") && a.Fach.Contains(" ") // Leerzeichen
-                                        where t.Fach.Split(' ')[0] == a.Fach.Split(' ')[0] // Erster Teil identisch
+                                        
+                    if (!zugeordnet && (from a in atlantisLeistungen
+                                        where a.Klasse == this[y].Klasse
+                                        where this[y].Fach.Contains(" ") && a.Fach.Contains(" ") // Leerzeichen
+                                        where this[y].Fach.Split(' ')[0] == a.Fach.Split(' ')[0] // Erster Teil identisch                                        
+                                        where this[y].Fach.Substring(this[y].Fach.LastIndexOf(' ') + 1).Substring(0, 1) == a.Fach.Substring(a.Fach.LastIndexOf(' ') + 1).Substring(0, 1) // Zweiter Teil identisch
                                         select a).Any())
                     {
-                        var zielfach = (from a in atlantisLeistungen
-                                        where a.Klasse == t.Klasse
-                                        where t.Fach.Contains(" ") && a.Fach.Contains(" ") && t.Fach.Split(' ')[0] == a.Fach.Split(' ')[0]
-                                        select a.Fach).FirstOrDefault();
-                        t.Beschreibung += t.Fach + "->" + zielfach + ",";
-                        t.Fach = zielfach;
+
+                        // Wenn in Atlantis die Anzahl der Zielfächer größer als 1 ist, dann wird die 
+
+                        var zielfaecher = (from a in atlantisLeistungen
+                                        where a.Klasse == this[y].Klasse
+                                        where this[y].Fach.Contains(" ") && a.Fach.Contains(" ") && this[y].Fach.Split(' ')[0] == a.Fach.Split(' ')[0]
+                                        where this[y].Fach.Substring(this[y].Fach.LastIndexOf(' ') + 1).Substring(0, 1) == a.Fach.Substring(a.Fach.LastIndexOf(' ') + 1).Substring(0, 1) // Zweiter Teil identisch
+                                        select a.Fach).Distinct().ToList();
+
+                        this[y].Beschreibung += this[y].Fach + "->" + zielfaecher[0] + ",";
+                        this[y].Fach = zielfaecher[0];
                         zugeordnet = true;
                         i++;
-                    }
 
-                    // Sonderfall Niederländisch-Kurs
-                    // Wenn es mehrere Niederländisch-Kurse gibt, wird die Webuntis-Note allen Atlantis-Noten zugeordnet
-
-                    if (!zugeordnet && t.Fach.Contains(" G") && t.Fach.Split(' ')[0] == "NF")
-                    {
-                        var aa = (from aaa in atlantisLeistungen where aaa.Klasse == t.Klasse where aaa.Fach.StartsWith("N") where aaa.Fach.Contains(" G") select aaa).ToList();
-
-                        if (aa != null)
+                        if (zielfaecher.Count > 1)
                         {
-                            t.Beschreibung += t.Fach + "->" + aa[0].Fach + ",";
-                            t.Fach = aa[0].Fach;
-                            zugeordnet = true;
-                            i++;
+                            Leistung wel = new Leistung();
 
-                            if (aa.Count > 1)
-                            {
-                                Leistung wel = new Leistung();
-
-                                wel.Abschlussklasse = t.Abschlussklasse;
-                                wel.Anlage = t.Anlage;
-                                wel.Bemerkung = t.Bemerkung;
-                                wel.Beschreibung = t.Fach + "->" + aa[1].Fach + ",";
-                                wel.Datum = t.Datum;
-                                wel.EinheitNP = t.EinheitNP;
-                                wel.Fach = aa[1].Fach;
-                                wel.GeholteNote = t.GeholteNote;
-                                wel.Gesamtnote = t.Gesamtnote;
-                                wel.Gesamtpunkte = t.Gesamtpunkte;
-                                wel.Gliederung = t.Gliederung;
-                                wel.HatBemerkung = t.HatBemerkung;
-                                wel.HzJz = t.HzJz;
-                                wel.Jahrgang = t.Jahrgang;
-                                wel.Klasse = t.Klasse;
-                                wel.Konferenzdatum = t.Konferenzdatum;
-                                wel.Lehrkraft = t.Lehrkraft;
-                                wel.LeistungId = t.LeistungId;
-                                wel.Name = t.Name;
-                                wel.ReligionAbgewählt = t.ReligionAbgewählt;
-                                wel.SchlüsselExtern = t.SchlüsselExtern;
-                                wel.SchuelerAktivInDieserKlasse = t.SchuelerAktivInDieserKlasse;
-                                wel.Schuljahr = t.Schuljahr;
-                                wel.Tendenz = t.Tendenz;
-                                wel.Zeugnisart = t.Zeugnisart;
-                                wel.Zeugnistext = t.Zeugnistext;
-                                this.Add(wel);
-                                i++;
-                            }
+                            wel.Abschlussklasse = this[y].Abschlussklasse;
+                            wel.Anlage = this[y].Anlage;
+                            wel.Bemerkung = this[y].Bemerkung;
+                            wel.Beschreibung = this[y].Fach + "->" + zielfaecher[1] + ",";
+                            wel.Datum = this[y].Datum;
+                            wel.EinheitNP = this[y].EinheitNP;
+                            wel.Fach = zielfaecher[1];
+                            wel.GeholteNote = this[y].GeholteNote;
+                            wel.Gesamtnote = this[y].Gesamtnote;
+                            wel.Gesamtpunkte = this[y].Gesamtpunkte;
+                            wel.Gliederung = this[y].Gliederung;
+                            wel.HatBemerkung = this[y].HatBemerkung;
+                            wel.HzJz = this[y].HzJz;
+                            wel.Jahrgang = this[y].Jahrgang;
+                            wel.Klasse = this[y].Klasse;
+                            wel.Konferenzdatum = this[y].Konferenzdatum;
+                            wel.Lehrkraft = this[y].Lehrkraft;
+                            wel.LeistungId = this[y].LeistungId;
+                            wel.Name = this[y].Name;
+                            wel.ReligionAbgewählt = this[y].ReligionAbgewählt;
+                            wel.SchlüsselExtern = this[y].SchlüsselExtern;
+                            wel.SchuelerAktivInDieserKlasse = this[y].SchuelerAktivInDieserKlasse;
+                            wel.Schuljahr = this[y].Schuljahr;
+                            wel.Tendenz = this[y].Tendenz;
+                            wel.Zeugnisart = this[y].Zeugnisart;
+                            wel.Zeugnistext = this[y].Zeugnistext;
+                            this.Add(wel);
                         }
                     }
-
-                    if (!zugeordnet && t.Fach.Contains(" G") && t.Fach.StartsWith("S "))
-                    {
-                        var aa = (from aaa in atlantisLeistungen where aaa.Klasse == t.Klasse where aaa.Fach.StartsWith("S ") where aaa.Fach.Contains(" G") select aaa).ToList();
-
-                        if (aa != null)
-                        {
-                            t.Beschreibung += t.Fach + "->" + aa[0].Fach + ",";
-                            t.Fach = aa[0].Fach;
-                            zugeordnet = true;
-                            i++;
-
-                            if (aa.Count > 1)
-                            {
-                                Leistung wel = new Leistung();
-
-                                wel.Abschlussklasse = t.Abschlussklasse;
-                                wel.Anlage = t.Anlage;
-                                wel.Bemerkung = t.Bemerkung;
-                                wel.Beschreibung = t.Fach + "->" + aa[1].Fach + ",";
-                                wel.Datum = t.Datum;
-                                wel.EinheitNP = t.EinheitNP;
-                                wel.Fach = aa[1].Fach;
-                                wel.GeholteNote = t.GeholteNote;
-                                wel.Gesamtnote = t.Gesamtnote;
-                                wel.Gesamtpunkte = t.Gesamtpunkte;
-                                wel.Gliederung = t.Gliederung;
-                                wel.HatBemerkung = t.HatBemerkung;
-                                wel.HzJz = t.HzJz;
-                                wel.Jahrgang = t.Jahrgang;
-                                wel.Klasse = t.Klasse;
-                                wel.Konferenzdatum = t.Konferenzdatum;
-                                wel.Lehrkraft = t.Lehrkraft;
-                                wel.LeistungId = t.LeistungId;
-                                wel.Name = t.Name;
-                                wel.ReligionAbgewählt = t.ReligionAbgewählt;
-                                wel.SchlüsselExtern = t.SchlüsselExtern;
-                                wel.SchuelerAktivInDieserKlasse = t.SchuelerAktivInDieserKlasse;
-                                wel.Schuljahr = t.Schuljahr;
-                                wel.Tendenz = t.Tendenz;
-                                wel.Zeugnisart = t.Zeugnisart;
-                                wel.Zeugnistext = t.Zeugnistext;
-                                this.Add(wel);
-                                i++;
-                            }
-                        }
-                    }
-
-                    // Evtl. hängt die Niveaustufe in Untis am Namen 
-
-                    //if (!zugeordnet && t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", ""))
-                    //{
-                    //    t.Beschreibung += t.Fach + "->" + t.Fach + ",";
-                    //    zugeordnet = true;
-                    //    i++;
-                    //}
-
-                    // Es wird versucht auf die ersten beiden Buchstaben zu matchen, aber nicht, wenn das Webuntis-Fach eine Leerstelle enthält.
-
-                    //if (!zugeordnet && t.Fach.Substring(0, Math.Min(2, t.Fach.Length)) == t.Fach.Substring(0, Math.Min(2, t.Fach.Length)))
-                    //{
-                    //    // Zuordnung nur, wenn nicht ein anderes Fach besser passt. Das kann sein, wenn dieses Fach die FP zu einem anderen Fach ist.
-
-                    //    if (!(from af in atlantisFächerDiesesSchuelers where af.Fach == t.Fach select af).Any())
-                    //    {
-                    //        t.Beschreibung += t.Fach + "->" + t.Fach + ",";
-                    //        zugeordnet = true;
-                    //        i++;
-                    //        break;
-                    //    }
-                    //}
 
                     // EK -> E
 
-                    if (!zugeordnet && t.Fach.StartsWith("EK") && t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
+                    if (!zugeordnet && this[y].Fach.StartsWith("EK") && this[y].Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
                     {
-                        t.Beschreibung += t.Fach + "->" + t.Fach + ",";
+                        this[y].Beschreibung += this[y].Fach + "->" + this[y].Fach + ",";
                         zugeordnet = true;
                         i++;
                     }
 
                     // N -> NKA1
 
-                    if (!zugeordnet && t.Fach.StartsWith("N") && t.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "NK")
+                    if (!zugeordnet && this[y].Fach.StartsWith("N") && this[y].Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "NK")
                     {
-                        t.Beschreibung += t.Fach + "->" + t.Fach + ",";
+                        this[y].Beschreibung += this[y].Fach + "->" + this[y].Fach + ",";
                         zugeordnet = true;
                         i++;
                     }
 
-                    if (!zugeordnet && !(from al in atlantisLeistungen where al.Klasse == t.Klasse where al.Fach == t.Fach select al).Any())
+                    if (!zugeordnet && !(from al in atlantisLeistungen where al.Klasse == this[y].Klasse where al.Fach == this[y].Fach select al).Any())
                     {
                         // Dann wird die Zuordnung hinzugefügt, falls noch nicht geschehen
 
-                        if (!(from z in zuordnungen where z.Quellklasse == t.Klasse where z.Quellfach == t.Fach select z).Any())
+                        if (!(from z in zuordnungen where z.Quellklasse == this[y].Klasse where z.Quellfach == this[y].Fach select z).Any())
                         {
-                            if (t.Fach != "")
+                            if (this[y].Fach != "")
                             {
-                                zuordnungen.Add(new Zuordnung(t.Klasse, t.Fach));
+                                zuordnungen.Add(new Zuordnung(this[y].Klasse, this[y].Fach));
                             }                            
                         }
                     }
@@ -1278,6 +1193,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
 
         internal void Add(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
         {
+
             Console.Write(("Neu anzulegende Leistungen in Atlantis ").PadRight(71, '.'));
             int i = 0;
             int outputIndex = Global.Output.Count();
@@ -1286,7 +1202,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
             {
                 foreach (var klasse in interessierendeKlassen)
                 {
-                    foreach (var a in (from t in this where t.Klasse == klasse where t.SchuelerAktivInDieserKlasse select t).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name).ToList())
+                    foreach (var a in (from t in this where t.Klasse == klasse where t.HzJz != "GO" where t.SchuelerAktivInDieserKlasse select t).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name).ToList())
                     {
                         if (IstRelevant(a, webuntisLeistungen))
                         {
@@ -1480,10 +1396,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
             {
                 foreach (var a in this)
                 {
-                    if (a.LeistungId == 4234886)
-                    {
-                        string aaa = "";
-                    }
                     if (a.SchuelerAktivInDieserKlasse)
                     {
                         var w = (from webuntisLeistung in webuntisLeistungen
@@ -1517,40 +1429,6 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
                                     {
                                         UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + "WHERE noe_id=" + a.LeistungId + ";");
                                     }
-
-                                    //// Bei Klassen der gym Oberstufe mit Gym-Notenblatt ...
-
-                                    //if (a.HzJz == "GO")
-                                    //{
-                                    //    if (a.Jahrgang == 2)
-                                    //    {
-                                    //        if (a.Konferenzdatum.Month == 1)
-                                    //        {                                                
-                                    //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET punkte_12_1=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
-                                    //        }
-                                    //    }
-                                    //    if (a.Jahrgang == 2)
-                                    //    {
-                                    //        if (a.Konferenzdatum.Month > 2)
-                                    //        {
-                                    //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET punkte_12_2=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
-                                    //        }
-                                    //    }
-                                    //    if (a.Jahrgang == 3)
-                                    //    {
-                                    //        if (a.Konferenzdatum.Month == 1)
-                                    //        {
-                                    //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET punkte_13_1=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
-                                    //        }
-                                    //    }
-                                    //    if (a.Jahrgang == 3)
-                                    //    {
-                                    //        if (a.Konferenzdatum.Month > 2)
-                                    //        {
-                                    //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET punkte_13_2=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
-                                    //        }
-                                    //    }
-                                    //}
                                 }
                                 i++;
                             }   
@@ -1603,41 +1481,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
                                     
                                     if (a.Gesamtpunkte != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      punkte=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                        
-                                        //// Bei Klassen der gym Oberstufe mit Gym-Notenblatt ...
-
-                                        //if (a.HzJz == "GO")
-                                        //{
-                                        //    if (a.Jahrgang == 2)
-                                        //    {
-                                        //        if (a.Konferenzdatum.Month == 1)
-                                        //        {
-                                        //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET punkte_12_1=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                        //        }
-                                        //    }
-                                        //    if (a.Jahrgang == 2)
-                                        //    {
-                                        //        if (a.Konferenzdatum.Month > 2)
-                                        //        {
-                                        //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET punkte_12_2=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                        //        }
-                                        //    }
-                                        //    if (a.Jahrgang == 3)
-                                        //    {
-                                        //        if (a.Konferenzdatum.Month == 1)
-                                        //        {
-                                        //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET punkte_13_1=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                        //        }
-                                        //    }
-                                        //    if (a.Jahrgang == 3)
-                                        //    {
-                                        //        if (a.Konferenzdatum.Month > 2)
-                                        //        {
-                                        //            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET punkte_13_2=NULL WHERE noe_id=" + a.LeistungId + ";");
-                                        //        }
-                                        //    }
-                                        //}
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      punkte=NULL WHERE noe_id=" + a.LeistungId + ";");                                       
                                     }
                                     
                                     if (a.Tendenz != null)
