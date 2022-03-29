@@ -1228,7 +1228,7 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
                                     {
                                         w.Beschreibung += "Bemerkung fehlt";
                                     }
-                                    UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "' WHERE noe_id=" + a.LeistungId + ";", w.Datum);
 
                                     if (w.Gesamtnote == "5" || w.Gesamtnote == "6")
                                     {
@@ -1241,10 +1241,10 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
 
                                         if (w.Tendenz != a.Tendenz)
                                         {
-                                            UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "| " + w.Tendenz + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NU" : "'" + w.Tendenz + "'") + " WHERE noe_id=" + a.LeistungId + ";"); ;
+                                            UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "| " + w.Tendenz + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NU" : "'" + w.Tendenz + "'") + " WHERE noe_id=" + a.LeistungId + ";", w.Datum); ;
                                         }
 
-                                        UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtpunkte.PadLeft(2) + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      punkte=" + w.Gesamtpunkte.PadLeft(2) + "  WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse.PadRight(6) + "|" + (a.Name.Substring(0, Math.Min(a.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtpunkte.PadLeft(2) + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      punkte=" + w.Gesamtpunkte.PadLeft(2) + "  WHERE noe_id=" + a.LeistungId + ";", w.Datum);
 
                                         //// Bei Klassen der gym Oberstufe mit Gym-Notenblatt ...
 
@@ -1418,16 +1418,16 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
                             {
                                 if (a.Gesamtnote != w.Gesamtnote)
                                 {
-                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.Gesamtnote + (a.Tendenz ?? " ") + ">" + w.Gesamtnote + (w.Tendenz ?? " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "'  WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.Gesamtnote + (a.Tendenz ?? " ") + ">" + w.Gesamtnote + (w.Tendenz ?? " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "'  WHERE noe_id=" + a.LeistungId + ";", w.Datum);
                                 }
                                 
                                 if (a.EinheitNP == "P")
                                 {
-                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET      punkte=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET      punkte=" + (w.Gesamtpunkte).PadLeft(2) + "   WHERE noe_id=" + a.LeistungId + ";", w.Datum);
                                     
                                     if (a.Tendenz != w.Tendenz)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + "WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + "WHERE noe_id=" + a.LeistungId + ";", w.Datum);
                                     }
                                 }
                                 i++;
@@ -1475,18 +1475,238 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
                             {
                                 // Geholte Noten aus Vorjahren werden nicht gelöscht.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                 if (!a.GeholteNote)
                                 {   
-                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      s_note=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote+ (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      s_note=NULL WHERE noe_id=" + a.LeistungId + ";", webuntisLeistung.Datum);
                                     
                                     if (a.Gesamtpunkte != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      punkte=NULL WHERE noe_id=" + a.LeistungId + ";");                                       
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      punkte=NULL WHERE noe_id=" + a.LeistungId + ";", webuntisLeistung.Datum);                                       
                                     }
                                     
                                     if (a.Tendenz != null)
                                     {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";");
+                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0,Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";", webuntisLeistung.Datum);
                                     }                                    
                                     i++;
                                 }
@@ -1852,12 +2072,12 @@ ORDER BY DBA.klasse.s_klasse_art ASC , DBA.klasse.klasse ASC, DBA.noten_kopf.nok
             } while (z < klassen.Count);
         }
 
-        private void UpdateLeistung(string message, string updateQuery)
+        private void UpdateLeistung(string message, string updateQuery, DateTime datum)
         {
             try
             {
-                string o = updateQuery + "/* " + message;
-                Global.Output.Add((o.Substring(0, Math.Min(100, o.Length))).PadRight(100) + " */");
+                string o = updateQuery + "/* " + message + "|" + datum.ToString("dd.MM.");
+                Global.Output.Add((o.Substring(0, Math.Min(106, o.Length))).PadRight(106) + " */");
             }
             catch (Exception ex)
             {
