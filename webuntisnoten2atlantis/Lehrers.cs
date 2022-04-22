@@ -10,7 +10,7 @@ using System.Text;
 
 namespace webuntisnoten2atlantis
 {
-    internal class Lehrers : List<Lehrer>
+    public class Lehrers : List<Lehrer>
     {
         public Lehrers()
         {
@@ -28,9 +28,11 @@ namespace webuntisnoten2atlantis
                 {
                     DataSet dataSet = new DataSet();
                     OdbcDataAdapter schuelerAdapter = new OdbcDataAdapter(@"
-SELECT DBA.adresse.email AS Mail,
-DBA.lehrer.le_kuerzel AS Kuerzel
-FROM DBA.lehrer JOIN DBA.adresse ON DBA.lehrer.le_id = DBA.adresse.le_id;", connection);
+SELECT DBA.lehr_sc.ls_id As Id,
+DBA.lehrer.le_kuerzel As Kuerzel,
+DBA.adresse.email As Mail
+FROM(DBA.lehr_sc JOIN DBA.lehrer ON DBA.lehr_sc.le_id = DBA.lehrer.le_id) JOIN DBA.adresse ON DBA.lehrer.le_id = DBA.adresse.le_id
+WHERE vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.ToInt32(aktSj[1]) - 0) + @"'; ", connection);
                     connection.Open();
                     schuelerAdapter.Fill(dataSet, "DBA.leistungsdaten");
 
@@ -40,6 +42,7 @@ FROM DBA.lehrer JOIN DBA.adresse ON DBA.lehrer.le_id = DBA.adresse.le_id;", conn
                         try
                         {
                             lehrer.Kuerzel = theRow["Kuerzel"].ToString();
+                            lehrer.AtlantisId = Convert.ToInt32(theRow["Id"]);
                             lehrer.Mail = theRow["Mail"].ToString();
                         }
                         catch (Exception ex)

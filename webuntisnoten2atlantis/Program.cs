@@ -30,7 +30,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20220329");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20220419");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -53,8 +53,9 @@ namespace webuntisnoten2atlantis
                 string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
 
+                Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
                 Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
-                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson);
+                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson, alleAtlantisLehrer);
 
                 Abwesenheiten alleAtlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
                 Abwesenheiten alleWebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(targetAbsenceTimesTotal);

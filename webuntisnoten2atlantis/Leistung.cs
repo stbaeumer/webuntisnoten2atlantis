@@ -57,6 +57,7 @@ namespace webuntisnoten2atlantis
         public string Gesamtpunkte_12_2 { get; internal set; }
         public string Gesamtpunkte_13_1 { get; internal set; }
         public string Gesamtpunkte_13_2 { get; internal set; }
+        public int LehrkraftAtlantisId { get; internal set; }
 
         public bool IstAbschlussklasse()
         {

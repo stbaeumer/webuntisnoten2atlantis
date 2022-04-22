@@ -6,7 +6,7 @@ using Microsoft.Exchange.WebServices.Data;
 
 namespace webuntisnoten2atlantis
 {
-    internal class Lehrer
+    public class Lehrer
     {
         public Lehrer()
         {
@@ -14,7 +14,6 @@ namespace webuntisnoten2atlantis
 
         public string Kuerzel { get; internal set; }
         public string Mail { get; internal set; }
-
-        
+        public int AtlantisId { get; internal set; }
     }
 }
