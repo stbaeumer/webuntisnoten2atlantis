@@ -89,7 +89,7 @@ namespace webuntisnoten2atlantis
                         liste.Add((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(32));
                     }
                     Console.WriteLine("");
-                    Console.Write("Wollen Sie eine Zuordnung manuell vornehmen? Wählen Sie [1" + (this.Count > 1 ? ", ..., " + this.Count : "") + "] oder ENTER, falls keine Änderung gewünscht ist: ");
+                    Console.Write("Wollen Sie eine Zuordnung manuell vornehmen? Wählen Sie [1" + (this.Count > 1 ? ", ... " + this.Count : "") + "] oder ENTER, falls keine Änderung gewünscht ist: ");
 
                     x = Console.ReadLine();
 
@@ -102,6 +102,19 @@ namespace webuntisnoten2atlantis
 
                         if (eingabe > 0 && eingabe <= this.Count)
                         {
+                            // Alle Atlantisfächer werden aufgelistet
+
+                            var atlantisFächer = "";
+
+                            foreach (var atlantisfach in (from a in atlantisleistungen where a.Klasse == this[eingabe - 1].Quellklasse select a.Fach).Distinct().ToList())
+                            {
+                                atlantisFächer += atlantisfach + ",";
+                            }
+
+                            atlantisFächer = atlantisFächer.TrimEnd(',');
+
+                            Console.WriteLine("Alle Atlantisfächer: " + atlantisFächer);
+
                             Console.Write("Wie heißt das Atlantisfach in der Klasse " + this[eingabe - 1].Quellklasse + ", dem Sie das Untis-Fach *" + this[eingabe - 1].Quellfach + "* zuordnen wollen? ");
 
                             var xx = Console.ReadLine();

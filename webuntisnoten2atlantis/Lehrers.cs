@@ -22,7 +22,7 @@ namespace webuntisnoten2atlantis
             {
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Console.Write(("Lehrer aus Atlantis (" + typ + ")").PadRight(71, '.'));
+                Console.Write((" Lehrer*innen aus Atlantis (" + typ + ")").PadRight(71, '.'));
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {

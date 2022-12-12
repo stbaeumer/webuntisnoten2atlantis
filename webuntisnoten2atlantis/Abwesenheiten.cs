@@ -17,7 +17,7 @@ namespace webuntisnoten2atlantis
             {
                 string überschrift = reader.ReadLine();
 
-                Console.Write("Abwesenheiten aus Webuntis ".PadRight(71, '.'));
+                Console.Write(" Abwesenheiten aus Webuntis ".PadRight(71, '.'));
 
                 while (true)
                 {
@@ -56,7 +56,7 @@ namespace webuntisnoten2atlantis
         {
             try
             {
-                Console.Write("Abwesenheiten aus Atlantis ".PadRight(71, '.'));
+                Console.Write(" Abwesenheiten aus Atlantis ".PadRight(71, '.'));
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
@@ -117,6 +117,8 @@ DBA.schueler.name_2 ASC ", connection);
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
             Global.PrintMessage(Global.Output.Count,"Atlantisabwesenheiten: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
         }
+
+        
 
         public Abwesenheiten()
         {

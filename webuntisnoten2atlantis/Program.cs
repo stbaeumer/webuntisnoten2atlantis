@@ -30,10 +30,11 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20220607");
+
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20221125");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
-                Console.WriteLine(" ACHTUNG: Wenn der Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
+                Console.WriteLine(" ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
                 Console.WriteLine(" samtnote von Webuntis nach Atlantis übergeben!");
                 Console.WriteLine("=====================================================================================================");
 
@@ -45,20 +46,32 @@ namespace webuntisnoten2atlantis
                 Global.HzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 string targetPath = SetTargetPath();
-                Process notepadPlus = new Process();
-                notepadPlus.StartInfo.FileName = "notepad++.exe";
-                notepadPlus.Start();
-                Thread.Sleep(1500);
-                string targetAbsenceTimesTotal = CheckFile(targetPath, User, "AbsenceTimesTotal");
-                string targetMarksPerLesson = CheckFile(targetPath, User, "MarksPerLesson");
+                //Process notepadPlus = new Process();
+                //notepadPlus.StartInfo.FileName = "notepad++.exe";
+                //notepadPlus.Start();
+                //Thread.Sleep(1500);
+
+                string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
+                var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "AbsenceTimesTotal" + User + ".CSV");
+                string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
+                var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "MarksPerLesson" + User + ".CSV");
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
 
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User);
-                Leistungen alleWebuntisLeistungen = new Leistungen(targetMarksPerLesson, alleAtlantisLehrer);
+                
+                Leistungen alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
 
                 Abwesenheiten alleAtlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
-                Abwesenheiten alleWebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(targetAbsenceTimesTotal);
+                Abwesenheiten alleWebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal);
+
+                var interessierendeKlassen = new List<string>();
+                interessierendeKlassen = alleWebuntisLeistungen.GetIntessierendeKlassen(AktSj);
+
+                RelevanteDatensätzeAusCsvFiltern(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
+                RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
+
+
+                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, alleWebuntisLeistungen);
 
                 Leistungen webuntisLeistungen = new Leistungen();
                 Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
@@ -66,9 +79,7 @@ namespace webuntisnoten2atlantis
                 Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
 
                 //do
-                //{
-                var interessierendeKlassen = new List<string>();
-                interessierendeKlassen = alleAtlantisLeistungen.GetIntessierendeKlassen(alleWebuntisLeistungen, AktSj);
+                //{  
 
                 webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
 
@@ -80,7 +91,7 @@ namespace webuntisnoten2atlantis
 
                 atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
 
-                atlantisLeistungen.ErzeugeSerienbriefquelleFehlendeTeilleistungen(webuntisLeistungen);
+                //atlantisLeistungen.ErzeugeSerienbriefquelleFehlendeTeilleistungen(webuntisLeistungen);
 
                 if (webuntisLeistungen.Count == 0)
                 {
@@ -151,17 +162,58 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static string CheckFile(string targetPath, string user, string kriterium)
+        private static void RelevanteDatensätzeAusCsvFiltern(string sourceFile, string targetfile, List<string> interessierendeKlassen)
         {
-            var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads", "*.csv", SearchOption.AllDirectories) where f.Contains(kriterium) orderby File.GetCreationTime(f) select f).LastOrDefault();
+            Console.Write((" Datensätze in " + Path.GetFileName(targetfile)).PadRight(71, '.'));
 
-            var targetFile = Path.Combine(targetPath, Zeitstempel + "_" + kriterium + "_" + user + ".CSV");
+            int anzahlZeilen = 0;
+
+            using (var sr = new StreamReader(sourceFile))
+            using (var sw = new StreamWriter(targetfile))
+            {
+                string line;
+                int zeile = 0;                
+
+                while ((line = sr.ReadLine()) != null)
+                {
+                    bool relevanteZeile = false;
+
+                    foreach (var iK in interessierendeKlassen)
+                    {
+                        if (line.Contains(iK))
+                        {
+                            relevanteZeile = true;
+                            anzahlZeilen++;
+                        }
+                    }
+
+                    if (relevanteZeile || zeile == 0) 
+                    {
+                        sw.WriteLine(line);
+                    }
+                    zeile++;
+                }
+            }
+            Process notepadPlus = new Process();
+            notepadPlus.StartInfo.FileName = "notepad++.exe";
+            //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
+            notepadPlus.StartInfo.Arguments = targetfile;
+            notepadPlus.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
+            notepadPlus.Start();
+            Thread.Sleep(1500);
+
+            Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(30, '.'));
+        }
+
+        private static string CheckFile(string user, string kriterium)
+        {
+            var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads", "*.csv", SearchOption.AllDirectories) where f.Contains(kriterium) orderby File.GetLastWriteTime(f) select f).LastOrDefault();
 
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
                 Console.WriteLine("");
-                Console.WriteLine("  Die Datei " + kriterium + "<...>.CSV" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. Es werden keine Daten aus der Datei importiert.") + ".");
-                Console.WriteLine("  Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
+                Console.WriteLine(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
+                Console.WriteLine(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("MarksPerLesson"))
                 {
@@ -180,30 +232,20 @@ namespace webuntisnoten2atlantis
                 if (kriterium.Contains("AbsenceTimesTotal"))
                 {
                     Console.WriteLine("   1. Administration > Export klicken");
-                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-                    Console.WriteLine("   3. !!! Zeitraum begrenzen (also die Woche der) Zeugniskonferenz herauslassen !!!");
+                    Console.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
+                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");                    
                     Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
                 }
-
-                targetFile = null;
+                Console.WriteLine(" ");
+                sourceFile = null;
             }
-            else
+
+            if (sourceFile != null)
             {
-                if (File.Exists(targetFile))
-                {
-                    File.Delete(targetFile);
-                }
-                File.Copy(sourceFile, targetFile);
-
-                Process notepadPlus = new Process();
-                notepadPlus.StartInfo.FileName = "notepad++.exe";
-                //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
-                notepadPlus.StartInfo.Arguments = targetFile;
-                notepadPlus.Start();
-                Thread.Sleep(1500);
+                Console.WriteLine(" Gefundene Datei: " + Path.GetFileName(sourceFile) + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
-            return targetFile;
+            return sourceFile;
         }
 
         static void CheckPassword(string EnterText)
