@@ -18,6 +18,9 @@ namespace webuntisnoten2atlantis
         {
             var leistungen = new Leistungen();
 
+            var verschiedeneKlassen = new List<string>();
+            var verschiedeneKlassenString = "";
+
             using (StreamReader reader = new StreamReader(targetMarksPerLesson))
             {
                 string überschrift = reader.ReadLine();
@@ -87,6 +90,12 @@ namespace webuntisnoten2atlantis
                                 OpenFiles(new List<string>() { targetMarksPerLesson });
                                 throw new Exception("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                             }
+
+                            if (!verschiedeneKlassen.Contains(x[2]))
+                            {
+                                verschiedeneKlassen.Add(x[2]);
+                                verschiedeneKlassenString += x[2] + ",";
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -100,7 +109,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(Global.Output.Count(), "Webuntisleistungen: ".PadRight(45, '.') + (" " + leistungen.Count.ToString()).PadLeft(45, '.'));
+                Console.WriteLine(" Die verschiedenen Klassen aus der gezogenen MarksPerLesson-Datei: " + verschiedeneKlassenString.TrimEnd(','));
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
