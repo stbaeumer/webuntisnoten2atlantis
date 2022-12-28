@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 using System;
 using System.Collections.Generic;
@@ -177,15 +177,46 @@ namespace webuntisnoten2atlantis
 
             return null;
         }
-
-        internal void Zuordnen(List<Leistung> aL, string beschreibung)
+                
+        internal bool Zuordnen(List<Leistung> aL, string beschreibung)
         {
             if (aL.Count > 0)
             {
-                this.Zielfach = aL[0].Fach;
-                this.ZielLeistungId = aL[0].LeistungId;
-                this.Beschreibung += beschreibung;
+                // Falls Neu oder Update
+
+                if ((aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null) || (aL[0].Gesamtnote != Gesamtnote || aL[0].Tendenz != Tendenz))
+                {
+                    // Falls Neu
+
+                    if (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)
+                    {
+                        this.Beschreibung = "NEU;" + this.Beschreibung;
+                    }
+                    else // Falls Update
+                    {
+                        if (aL[0].Gesamtnote != Gesamtnote || aL[0].Tendenz != Tendenz)
+                        {
+                            this.Beschreibung = "UPD:" + this.Beschreibung;
+
+                            if (aL[0].Gesamtnote != Gesamtnote)
+                            {
+                                this.Beschreibung = (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote + ";" + this.Beschreibung;
+                            }
+                            if (aL[0].Tendenz != Tendenz)
+                            {
+                                this.Beschreibung = (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz + ";" + this.Beschreibung;
+                            }
+                        }
+                    }
+                    this.Zielfach = aL[0].Fach;
+                    this.ZielLeistungId = aL[0].LeistungId;
+                    this.Beschreibung += beschreibung;
+                    this.LehrkraftAtlantisId = 3844; // DBA
+                    return false; // nicht löschen
+                }
             }
+            // Falls weder Update noch neu, dann löschen
+            return true;
         }
     }
 }

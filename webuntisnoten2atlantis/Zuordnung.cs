@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 namespace webuntisnoten2atlantis
 {

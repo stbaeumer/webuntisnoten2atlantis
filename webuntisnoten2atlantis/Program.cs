@@ -120,11 +120,11 @@ namespace webuntisnoten2atlantis
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
                 Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
-                fehlendezuordnungen.ManuellZuordnen(webuntisLeistungen, atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
+                webuntisLeistungen.ManuellZuordnen(fehlendezuordnungen, atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
 
                 // Add-Delete-Update
 
-                atlantisLeistungen.Add(webuntisLeistungen, interessierendeKlassen);
+                webuntisLeistungen.Add(atlantisLeistungen, interessierendeKlassen);
                 atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
                 atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
 
@@ -201,7 +201,7 @@ namespace webuntisnoten2atlantis
             //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
             notepadPlus.StartInfo.Arguments = targetfile;
             notepadPlus.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
-            //notepadPlus.Start();
+            notepadPlus.Start();
             //Thread.Sleep(1500);
 
             Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(26, '.'));

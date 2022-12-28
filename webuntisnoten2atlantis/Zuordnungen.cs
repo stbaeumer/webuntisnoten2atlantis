@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 using System;
 using System.Collections.Generic;
@@ -28,7 +28,29 @@ namespace webuntisnoten2atlantis
             this.Add(new Zuordnung("", ""));
         }
 
-        public void ManuellZuordnen(Leistungen webuntisleistungen, Leistungen atlantisleistungen, string aktSj)
+
+
+        public void AlleZulässigenAtlantisZielFächerAuflisten(Leistungen atlantisleistungen, string aktSj)
+        {
+            var atlantisFächer = "";
+
+            foreach (var quellklasse in (from z in this select z.Quellklasse).Distinct().ToList())
+            {
+                foreach (var atlantisfach in (from a in atlantisleistungen
+                                              where a.Klasse == quellklasse
+                                              where a.Schuljahr == aktSj
+                                              select a.Fach).Distinct().ToList())
+                {
+                    atlantisFächer += atlantisfach + ",";
+                }
+
+                atlantisFächer = atlantisFächer.TrimEnd(',');
+
+                Console.WriteLine(" Für Auswahl zulässige Atlantisfächer (Klasse:" + quellklasse + "; Schuljahr: " + aktSj + "): " + atlantisFächer);
+            }
+        }
+
+        internal void GespeicherteZuordnungenInFehlendenZuordnungenAusPropertiesErgänzen()
         {
             var gespeicherteZuordnungen = new Zuordnungen();
 
@@ -47,157 +69,111 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            // Wenn keine Zuordnung vorgenommen werden konnte
+            // Die fehlenden Zuordnungen werden durch die Speocherungen ergänzt:
 
-            var liste = new List<string>();
+            foreach (var fehlendeZuordnung in this)
+            {
+                var gespeicherteZuordnung = (from g in gespeicherteZuordnungen
+                                             where g.Quellfach == fehlendeZuordnung.Quellfach
+                                             where g.Quellklasse == fehlendeZuordnung.Quellklasse
+                                             select g).FirstOrDefault();
 
+                // Falls es eine gespeicherte Zuordnung gibt ...
+
+                if (gespeicherteZuordnung != null)
+                {
+                    // ... wird die fehlende Zuordnung angepasst:
+
+                    fehlendeZuordnung.Zielfach = gespeicherteZuordnung.Zielfach;
+                    fehlendeZuordnung.Zielklasse = gespeicherteZuordnung.Zielklasse;
+                }
+            }
+        }
+
+        internal void SpeichernInDenProperties()
+        {
+            Properties.Settings.Default.Zuordnungen = "";
+            Properties.Settings.Default.Save();
+
+            foreach (var item in this)
+            {
+                if (item.Zielfach != null)
+                {
+                    Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
+                }
+            }
+
+            Properties.Settings.Default.Zuordnungen = Properties.Settings.Default.Zuordnungen.TrimEnd(',');
+            Properties.Settings.Default.Save();
+        }
+
+        internal void AlleNichtAutomatischZugewiesenenFächerAnzeigen()
+        {
             if (this.Count > 0)
             {
-                string x;
+                Console.WriteLine("");
+                Console.WriteLine(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
 
-                Console.WriteLine(" ");
-
-                do
+                for (int i = 0; i < this.Count; i++)
                 {
-                    Console.WriteLine("");
-                    Console.WriteLine(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
+                    Console.WriteLine((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
+                }
+            }
+        }
 
-                    liste = new List<string>();
+        internal string DialogZurÄnderungAufrufen(Leistungen atlantisleistungen, string x)
+        {
+            int n;
 
-                    for (int i = 0; i < this.Count; i++)
-                    {
-                        Console.Write((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
-                        if ((i + 1) % 3 == 0 || i == this.Count - 1)
-                        {
-                            Console.WriteLine("");
-                        }
-                        liste.Add((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(32));
-                    }
-                    
-                    this.AlleAtlantisFächerAuflisten(atlantisleistungen, aktSj);
+            if (int.TryParse(x, out n))
+            {
+                var eingabe = int.Parse(x);
 
-                    Console.Write(" Wollen Sie eine Zuordnung manuell vornehmen? Wählen Sie [1" + (this.Count > 1 ? ", ... " + this.Count : "") + "] oder ENTER, falls keine Änderung gewünscht ist: ");
+                if (eingabe > 0 && eingabe <= this.Count)
+                {
+                    Console.Write(" Wie heißt das Atlantisfach in der Klasse " + this[eingabe - 1].Quellklasse + ", dem Sie das Untis-Fach *" + this[eingabe - 1].Quellfach + "* zuordnen wollen? ");
 
-                    x = Console.ReadLine();
+                    var xx = Console.ReadLine();
+                    xx = xx.ToUpper();
 
                     Console.WriteLine("");
-                    int n;
 
-                    if (int.TryParse(x, out n))
+                    if ((from a in atlantisleistungen where a.Klasse == this[eingabe - 1].Quellklasse where a.Fach == xx select a).Any() || xx == "")
                     {
-                        var eingabe = int.Parse(x);
+                        this[eingabe - 1].Zielfach = xx;
 
-                        if (eingabe > 0 && eingabe <= this.Count)
+                        int i = 0;
+
+                        Console.WriteLine(" Die Zuordnung des Faches " + xx + " wurde " + i + "x erfolgreich vorgenommen.");
+
+                        if (xx == "")
                         {
-                            Console.Write(" Wie heißt das Atlantisfach in der Klasse " + this[eingabe - 1].Quellklasse + ", dem Sie das Untis-Fach *" + this[eingabe - 1].Quellfach + "* zuordnen wollen? ");
-
-                            var xx = Console.ReadLine();
-                            xx = xx.ToUpper();
-
-                            Console.WriteLine("");
-                            Console.Clear();
-
-                            if ((from a in atlantisleistungen where a.Klasse == this[eingabe - 1].Quellklasse where a.Fach == xx select a).Any() || xx == "")
-                            {
-                                this[eingabe - 1].Zielfach = xx;
-                                Console.WriteLine("Die Zuordnung des Faches " + xx + " wurde erfolgreich vorgenommen.");
-
-                                if (xx == "")
-                                {
-                                    this[eingabe - 1].Zielfach = null;
-                                    Console.WriteLine("Die Zuordnung wird entfernt.");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
-
-                                var verschiedeneFächer = (from a in atlantisleistungen
-                                                          where a.Klasse == this[eingabe - 1].Quellklasse
-                                                          select a.Fach).Distinct().ToList();
-
-                                for (int i = 0; i < verschiedeneFächer.Count; i++)
-                                {
-                                    Console.Write("  " + verschiedeneFächer[i].PadRight(7));
-
-                                    if ((i + 1) % 7 == 0)
-                                    {
-                                        Console.WriteLine("");
-                                    }
-                                }
-                                Console.WriteLine("");
-                            }
-                        }
-                    }
-
-                } while (x != "");
-
-                // ZUordnung zu den Properties und den Webuntisfächern
-
-                Properties.Settings.Default.Zuordnungen = "";
-                Properties.Settings.Default.Save();
-
-                int vorgenommeneZuordnung = 0;
-                int keineZuordnung = 0;
-                foreach (var item in this)
-                {
-                    if (item.Zielfach != null)
-                    {
-                        if ((from a in atlantisleistungen where a.Klasse == item.Quellklasse where a.Fach == item.Zielfach select a).Any())
-                        {
-                            Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
-
-                            var we = (from w in webuntisleistungen where w.Klasse == item.Quellklasse where w.Fach == item.Quellfach select w).ToList();
-
-                            foreach (var w in we)
-                            {
-                                w.Beschreibung += w.Fach + " -> " + item.Zielfach;
-
-                                w.Fach = item.Zielfach;
-
-                            }
-                            vorgenommeneZuordnung++;
+                            this[eingabe - 1].Zielfach = null;
+                            Console.WriteLine("Die Zuordnung wird entfernt.");
                         }
                     }
                     else
                     {
-                        keineZuordnung++;
+                        Console.WriteLine("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
+
+                        var verschiedeneFächer = (from a in atlantisleistungen
+                                                  where a.Klasse == this[eingabe - 1].Quellklasse
+                                                  select a.Fach).Distinct().ToList();
+
+                        for (int i = 0; i < verschiedeneFächer.Count; i++)
+                        {
+                            Console.Write("  " + verschiedeneFächer[i].PadRight(7));
+
+                            if ((i + 1) % 7 == 0)
+                            {
+                                Console.WriteLine("");
+                            }
+                        }
+                        Console.WriteLine("");
                     }
                 }
-
-                Properties.Settings.Default.Zuordnungen = Properties.Settings.Default.Zuordnungen.TrimEnd(',');
-                Properties.Settings.Default.Save();
-
-                string aus = "Es wurden " + vorgenommeneZuordnung + "x Fächer aus Webuntis einem Atlantisfach zugeordnet. " + keineZuordnung + "x wurde keine Zuordnung vorgenommen:";
-
-                if (keineZuordnung == 0)
-                {
-                    aus = "Es wurden alle Fächer aus Webuntis einem Atlantisfach wie folgt zugeordnet:";
-                }
-
-                    
-                new Leistungen().AusgabeSchreiben(aus, liste);
             }
-        }
-
-        private void AlleAtlantisFächerAuflisten(Leistungen atlantisleistungen, string aktSj)
-        {            
-            var atlantisFächer = "";
-
-            foreach (var quellklasse in (from z in this select z.Quellklasse).Distinct().ToList())
-            {
-                foreach (var atlantisfach in (from a in atlantisleistungen 
-                                              where a.Klasse == quellklasse 
-                                              where a.Schuljahr == aktSj
-                                              select a.Fach).Distinct().ToList())
-                {
-                    atlantisFächer += atlantisfach + ",";
-                }
-
-                atlantisFächer = atlantisFächer.TrimEnd(',');
-
-                Console.WriteLine(" Für Auswahl zulässige Atlantisfächer (Klasse:" + quellklasse + "; Schuljahr: " + aktSj +"): " + atlantisFächer);
-            }
+            return x;
         }
     }
 }

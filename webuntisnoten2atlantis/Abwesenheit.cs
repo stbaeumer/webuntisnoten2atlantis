@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 namespace webuntisnoten2atlantis
 {
@@ -13,6 +13,5 @@ namespace webuntisnoten2atlantis
         public string Zeugnisart { get; internal set; }
         public string HzJz { get; internal set; }
         public string Beschreibung { get; internal set; }
-
     }
 }
