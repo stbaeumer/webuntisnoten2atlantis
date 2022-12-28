@@ -26,48 +26,38 @@ namespace webuntisnoten2atlantis
 
             Console.WriteLine("Es werden Gruppen gebildet.");
 
-            if (true)
-            {
-                Termin gruppenkonferenz = new Termin();
+            Termin gruppenkonferenz = new Termin();
 
-                foreach (var kg in konferenzGruppen)
+            foreach (var kg in konferenzGruppen)
+            {
+                Termin konf = new Termin();
+                konf.Lehrers = new Lehrers();
+                konf.Uhrzeit = DateTime.Now.AddYears(1);
+                konf.Klasse = kg;
+
+                foreach (var kgm in kg.Split(','))
                 {
-                    Termin konf = new Termin();
-                    konf.Lehrers = new Lehrers();
-                    konf.Uhrzeit = DateTime.Now.AddYears(1);
-                    konf.Klasse = kg;
-                    
-                    foreach (var kgm in kg.Split(','))
+                    foreach (var k in this)
                     {
-                        foreach (var k in this)
+                        if (k.Klasse.StartsWith(kgm))
                         {
-                            if (k.Klasse.StartsWith(kgm))
+                            konf.Bildungsgang = konf.Bildungsgang == null ? k.Bildungsgang + "," : !konf.Bildungsgang.Contains(k.Bildungsgang) ? konf.Bildungsgang += k.Bildungsgang + "," : konf.Bildungsgang;
+                            konf.Uhrzeit = k.Uhrzeit < konf.Uhrzeit ? k.Uhrzeit : konf.Uhrzeit;
+
+                            foreach (var l in k.Lehrers)
                             {
-                                konf.Bildungsgang = konf.Bildungsgang == null ? k.Bildungsgang + "," : !konf.Bildungsgang.Contains(k.Bildungsgang) ? konf.Bildungsgang += k.Bildungsgang + "," : konf.Bildungsgang;
-                                konf.Uhrzeit = k.Uhrzeit < konf.Uhrzeit ? k.Uhrzeit : konf.Uhrzeit;
-                                
-                                foreach (var l in k.Lehrers)
+                                if (!(from le in konf.Lehrers where le.Kuerzel == l.Kuerzel select l).Any())
                                 {
-                                    if (!(from le in konf.Lehrers where le.Kuerzel == l.Kuerzel select l).Any())
-                                    {
-                                        konf.Lehrers.Add(l);
-                                    }
+                                    konf.Lehrers.Add(l);
                                 }
                             }
                         }
                     }
-                    konf.ToOutlook(service, mail);
                 }
+                konf.ToOutlook(service, mail);
             }
-            else
-            {
-                foreach (var konferenz in this)
-                {
-                    konferenz.ToOutlook(service, mail);
-                }
-            }            
-        }
-
+        } 
+    
         internal void Lehrers(Lehrers lehrers, Leistungen alleWebuntisLeistungen)
         {
             foreach (var konferenz in this)

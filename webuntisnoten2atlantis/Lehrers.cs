@@ -45,7 +45,7 @@ WHERE vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.
                             lehrer.AtlantisId = Convert.ToInt32(theRow["Id"]);
                             lehrer.Mail = theRow["Mail"].ToString();
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                         }
                         if (lehrer.Mail.Contains("@berufskolleg-borken.de"))

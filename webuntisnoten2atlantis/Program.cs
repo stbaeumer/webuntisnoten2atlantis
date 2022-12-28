@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2022.
 
 using Microsoft.Office.Interop.Excel;
 using System;
@@ -26,12 +26,15 @@ namespace webuntisnoten2atlantis
 
         static void Main(string[] args)
         {
+            var width = Console.WindowWidth;
+            var height = Console.WindowHeight;
+            Console.SetWindowSize(width, height*2);
             Global.Output = new List<string>();
 
             try
             {
 
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20221125");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20221224");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -56,7 +59,7 @@ namespace webuntisnoten2atlantis
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
                 var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "MarksPerLesson" + User + ".CSV");
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
-
+          
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
                 
                 Leistungen alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
@@ -98,9 +101,9 @@ namespace webuntisnoten2atlantis
                     throw new Exception("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
                 }
 
-                // Alte Noten holen
+                // Noten vergangener Abschnitte ziehen
 
-                webuntisLeistungen.AddRange(alleAtlantisLeistungen.HoleAlteNoten(webuntisLeistungen, interessierendeKlassen, AktSj));
+                webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, interessierendeKlassen, AktSj));
 
                 // Sortieren
 
@@ -110,15 +113,14 @@ namespace webuntisnoten2atlantis
                 // Korrekturen durchführen
 
                 webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(interessierendeKlassen);
-
-                Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen);
                 webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                 webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                 atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
-                fehlendezuordnungen.ManuellZuordnen(webuntisLeistungen, atlantisLeistungen);
+                Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
+                fehlendezuordnungen.ManuellZuordnen(webuntisLeistungen, atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
 
                 // Add-Delete-Update
 
@@ -164,7 +166,7 @@ namespace webuntisnoten2atlantis
 
         private static void RelevanteDatensätzeAusCsvFiltern(string sourceFile, string targetfile, List<string> interessierendeKlassen)
         {
-            Console.Write((" Datensätze in " + Path.GetFileName(targetfile)).PadRight(71, '.'));
+            Console.Write((" Datensätze ausgewählter Klassen in " + Path.GetFileName(targetfile)).PadRight(75, '.'));
 
             int anzahlZeilen = 0;
 
@@ -199,10 +201,10 @@ namespace webuntisnoten2atlantis
             //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
             notepadPlus.StartInfo.Arguments = targetfile;
             notepadPlus.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
-            notepadPlus.Start();
-            Thread.Sleep(1500);
+            //notepadPlus.Start();
+            //Thread.Sleep(1500);
 
-            Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(30, '.'));
+            Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(26, '.'));
         }
 
         private static string CheckFile(string user, string kriterium)
@@ -242,7 +244,7 @@ namespace webuntisnoten2atlantis
 
             if (sourceFile != null)
             {
-                Console.WriteLine(" Gefundene Datei: " + Path.GetFileName(sourceFile) + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
+                Console.WriteLine(" Gefundene Datei: " + Path.GetFileName(sourceFile).PadRight(36, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
             return sourceFile;

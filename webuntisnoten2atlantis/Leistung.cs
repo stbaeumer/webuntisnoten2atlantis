@@ -1,6 +1,7 @@
 ﻿// Published under the terms of GPLv3 Stefan Bäumer 2021.
 
 using System;
+using System.Collections.Generic;
 
 namespace webuntisnoten2atlantis
 {
@@ -58,6 +59,8 @@ namespace webuntisnoten2atlantis
         public string Gesamtpunkte_13_1 { get; internal set; }
         public string Gesamtpunkte_13_2 { get; internal set; }
         public int LehrkraftAtlantisId { get; internal set; }
+        public string Zielfach { get; internal set; }
+        public int ZielLeistungId { get; internal set; }
 
         public bool IstAbschlussklasse()
         {
@@ -175,5 +178,14 @@ namespace webuntisnoten2atlantis
             return null;
         }
 
+        internal void Zuordnen(List<Leistung> aL, string beschreibung)
+        {
+            if (aL.Count > 0)
+            {
+                this.Zielfach = aL[0].Fach;
+                this.ZielLeistungId = aL[0].LeistungId;
+                this.Beschreibung += beschreibung;
+            }
+        }
     }
 }

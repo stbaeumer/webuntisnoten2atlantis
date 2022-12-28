@@ -13,6 +13,7 @@ namespace webuntisnoten2atlantis
 
         public static List<string> Output { get; internal set; }
         public static string HzJz { get; internal set; }
+        public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
 
         internal static void PrintMessage(int index, string message)
         {
@@ -48,7 +49,7 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                catch (FileNotFoundException ex)
+                catch (FileNotFoundException)
                 {
                     Console.WriteLine("Die Datei {0} soll jetzt eingelsen werden, existiert aber nicht.", fullPath);
 
@@ -57,7 +58,7 @@ namespace webuntisnoten2atlantis
 
                     System.Threading.Thread.Sleep(4000);
                 }
-                catch (IOException ex)
+                catch (IOException)
                 {
                     Console.WriteLine("Die Datei {0} ist gesperrt", fullPath);
 

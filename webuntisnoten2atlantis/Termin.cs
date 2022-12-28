@@ -60,7 +60,7 @@ namespace webuntisnoten2atlantis
                     Global.PrintMessage(Global.Output.Count, "Zeugniskonferenz " + Uhrzeit.ToShortDateString() + "(" + Uhrzeit.ToShortTimeString() + "-" + Uhrzeit.AddMinutes(10).ToShortTimeString() + ") " + Raum + " " + Klasse + "(" + leh.TrimEnd(',') + ")" + " in Outlook angelegt.");
                 }
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
             }
 

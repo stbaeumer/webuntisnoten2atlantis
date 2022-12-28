@@ -13,7 +13,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 ## Vorgehen
 
 1. Prüfungen aus Webuntis exportieren und im Download-Ordner ablegen.
-2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner legen.
+2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner ablegen.
 3. *WebuntisNoten2Atlantis* starten.
    Falls die Zuordnung eines Webuntis-Fachs nicht möglich ist, wird das angezeigt. Eine Zuordnung kann dann vorgenommen werden.
 4. Erzeugte SQL-Datei in Atlantis importieren.
@@ -72,7 +72,7 @@ Evtl. macht es Sinn zunächst alle Zeilen bis auf eine Befehlszeile zu löschen 
 Die SQL-Anweisungen selbst enthalten niemals Umlaute. Insofern ist das unkritisch. Programmseitig ist das Encoding auf *Default* gestellt.
 
 #### Was ist, wenn die Namen der Fächer in Atlantis und Untis nicht übereinstimmen
-Grundsätzlich müssen die Fächerkürzel überinstimmen. *WebuntisNoten2Atlantis* hat aber Routinen eingebaut, die versuchen eine Matching herzustellen. 
+Grundsätzlich müssen die Fächerkürzel übereinstimmen. *WebuntisNoten2Atlantis* hat aber Routinen eingebaut, die versuchen eine Matching herzustellen. 
 Bei Sprachen darf beispielsweise in Untis auf die Angabe der Niveaustufe verzichtet werden. Es wird dann automatisch versucht auf die Sprache in Atlantis zu matchen.
 Wenn ein Fach nicht zugeordnet weren kann, wird das gemeldet. Es besteht dann die Möglichkeit einer manuellen Zuordnung.
 

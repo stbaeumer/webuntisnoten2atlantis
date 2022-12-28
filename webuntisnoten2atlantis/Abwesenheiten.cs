@@ -37,7 +37,7 @@ namespace webuntisnoten2atlantis
                             this.Add(abwesenheit);
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         throw new Exception("Die Datei " + inputAbwesenheitenCsv + " kann nicht gelesen werden.");
                     }
@@ -100,10 +100,7 @@ DBA.schueler.name_2 ASC ", connection);
                             abwesenheit.StundenAbwesendUnentschuldigt = theRow["FehlstundenUnentschuldigt"].ToString() == "" ? 0 : Convert.ToDouble(theRow["FehlstundenUnentschuldigt"]);
                             abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
                             abwesenheit.HzJz = theRow["HzJz"].ToString();
-                            if (abwesenheit.Name.StartsWith("Bätzing"))
-                            {
-                                string a = "";
-                            }
+
                             this.Add(abwesenheit);
                         }
                     }
