@@ -10,6 +10,20 @@ namespace webuntisnoten2atlantis
     {
         public Zuordnungen()
         {
+            foreach (var item in Properties.Settings.Default.Zuordnungen.Split(','))
+            {
+                if (item != "")
+                {
+                    var quelle = item.Split(';')[0];
+                    var ziel = item.Split(';')[1];
+
+                    Zuordnung zuordnung = new Zuordnung();
+                    zuordnung.Quellklasse = quelle.Split('|')[0];
+                    zuordnung.Quellfach = quelle.Split('|')[1];
+                    zuordnung.Zielfach = ziel.Split('|')[0];
+                    this.Add(zuordnung);
+                }
+            }
         }
 
         public Zuordnungen(Leistungen webuntisLeistungen, Abwesenheiten atlantisAbwesenheiten)
@@ -28,78 +42,49 @@ namespace webuntisnoten2atlantis
             this.Add(new Zuordnung("", ""));
         }
 
-
-
-        public void AlleZulässigenAtlantisZielFächerAuflisten(Leistungen atlantisleistungen, string aktSj)
+        public List<string> AlleZulässigenAtlantisZielFächerAuflisten(Leistung dieseLeistung, Leistungen atlantisleistungen, string aktSj)
         {
-            var atlantisFächer = "";
+            List<string> alle = new List<string>();
+
+            var i = 1;
 
             foreach (var quellklasse in (from z in this select z.Quellklasse).Distinct().ToList())
             {
+                Console.WriteLine(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
+
                 foreach (var atlantisfach in (from a in atlantisleistungen
                                               where a.Klasse == quellklasse
                                               where a.Schuljahr == aktSj
                                               select a.Fach).Distinct().ToList())
                 {
-                    atlantisFächer += atlantisfach + ",";
+
+                    var zielLeistung = (from t in this 
+                                    where t.Quellklasse == dieseLeistung.Klasse 
+                                    where t.Quellfach == dieseLeistung.Fach 
+                                    where t.Zielfach == atlantisfach 
+                                    select t).FirstOrDefault(); 
+                    
+                    Console.WriteLine( i.ToString().PadLeft(3) + ". " + (quellklasse + "|" + atlantisfach).PadRight(13) + (zielLeistung != null ? " <<<<= " + dieseLeistung.Fach : "")); i++;
+                    alle.Add(atlantisfach);
                 }
-
-                atlantisFächer = atlantisFächer.TrimEnd(',');
-
-                Console.WriteLine(" Für Auswahl zulässige Atlantisfächer (Klasse:" + quellklasse + "; Schuljahr: " + aktSj + "): " + atlantisFächer);
             }
+            return alle;
         }
 
-        internal void GespeicherteZuordnungenInFehlendenZuordnungenAusPropertiesErgänzen()
+        internal void SpeichernInDenProperties(string quellklasse, string quellfach,string zielfach)
         {
-            var gespeicherteZuordnungen = new Zuordnungen();
-
-            foreach (var item in Properties.Settings.Default.Zuordnungen.Split(','))
-            {
-                if (item != "")
-                {
-                    var quelle = item.Split(';')[0];
-                    var ziel = item.Split(';')[1];
-
-                    Zuordnung zuordnung = new Zuordnung();
-                    zuordnung.Quellklasse = quelle.Split('|')[0];
-                    zuordnung.Quellfach = quelle.Split('|')[1];
-                    zuordnung.Zielfach = ziel.Split('|')[0];
-                    gespeicherteZuordnungen.Add(zuordnung);
-                }
-            }
-
-            // Die fehlenden Zuordnungen werden durch die Speocherungen ergänzt:
-
-            foreach (var fehlendeZuordnung in this)
-            {
-                var gespeicherteZuordnung = (from g in gespeicherteZuordnungen
-                                             where g.Quellfach == fehlendeZuordnung.Quellfach
-                                             where g.Quellklasse == fehlendeZuordnung.Quellklasse
-                                             select g).FirstOrDefault();
-
-                // Falls es eine gespeicherte Zuordnung gibt ...
-
-                if (gespeicherteZuordnung != null)
-                {
-                    // ... wird die fehlende Zuordnung angepasst:
-
-                    fehlendeZuordnung.Zielfach = gespeicherteZuordnung.Zielfach;
-                    fehlendeZuordnung.Zielklasse = gespeicherteZuordnung.Zielklasse;
-                }
-            }
-        }
-
-        internal void SpeichernInDenProperties()
-        {
-            Properties.Settings.Default.Zuordnungen = "";
-            Properties.Settings.Default.Save();
-
             foreach (var item in this)
             {
                 if (item.Zielfach != null)
                 {
-                    Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
+                    if (item.Quellklasse == quellklasse && item.Quellfach == quellfach)
+                    {
+                        Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + zielfach + ",";
+                    }
+                    else
+                    {
+                        Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
+                    }                    
                 }
             }
 

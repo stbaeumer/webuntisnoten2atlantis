@@ -23,6 +23,7 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
         public static string ExcelPath = @"C:\Users\" + User + @"\Berufskolleg Borken\Kollegium - General\03 Schulleitung\3.04 Termine\2020-21\14 Zeugniskonferenzen HZ\\Zeugniskonferenzen HZ.xlsx";
+        private static object files;
 
         static void Main(string[] args)
         {
@@ -49,11 +50,7 @@ namespace webuntisnoten2atlantis
                 Global.HzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 string targetPath = SetTargetPath();
-                //Process notepadPlus = new Process();
-                //notepadPlus.StartInfo.FileName = "notepad++.exe";
-                //notepadPlus.Start();
-                //Thread.Sleep(1500);
-
+                
                 string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
                 var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "AbsenceTimesTotal" + User + ".CSV");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
@@ -119,14 +116,13 @@ namespace webuntisnoten2atlantis
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
-                Zuordnungen fehlendezuordnungen = webuntisLeistungen.FächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
-                webuntisLeistungen.ManuellZuordnen(fehlendezuordnungen, atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
+                webuntisLeistungen.ZielfächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);                
 
                 // Add-Delete-Update
 
-                webuntisLeistungen.Add(atlantisLeistungen, interessierendeKlassen);
+                webuntisLeistungen.Add(atlantisLeistungen);
                 atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
-                atlantisLeistungen.Update(webuntisLeistungen, interessierendeKlassen);
+                webuntisLeistungen.Update(atlantisLeistungen);
 
                 if (targetAbsenceTimesTotal != null)
                 {
@@ -142,17 +138,17 @@ namespace webuntisnoten2atlantis
 
                 alleAtlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
-                //Global.Defizitleistungen.ErzeugeSerienbriefquelleNichtversetzer();
-
-                Console.WriteLine("");
+                Console.WriteLine(@"  \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
                 Console.WriteLine("  -----------------------------------------------------------------");
-                Console.WriteLine("  Verarbeitung abgeschlossen. Programm beenden mit Enter.");
+                Console.WriteLine("Jetzt die Dateien öffnen (j/n)");
 
-                //    if ((char)13 == (Console.ReadKey()).KeyChar)
-                //    {
-                //        Environment.Exit(0);
-                //    }
-                //} while (true);
+                ConsoleKeyInfo key = Console.ReadKey(true);
+                
+                if (key.Key == ConsoleKey.J)
+                {
+                    OpenFiles(new List<string> { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
+                    Console.ReadKey();
+                }
             }
             catch (Exception ex)
             {
@@ -161,6 +157,26 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine(ex);
                 Console.ReadKey();
                 Environment.Exit(0);
+            }
+        }
+
+        private static void OpenFiles(List<string> files)
+        {
+            try
+            {
+                Process notepadPlus = new Process();
+                notepadPlus.StartInfo.FileName = "notepad++.exe";
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    notepadPlus.StartInfo.Arguments = files[i];
+                    notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
+                    notepadPlus.Start();
+                }
+            }
+            catch (Exception)
+            {
+                System.Diagnostics.Process.Start("Notepad.exe", files[0]);
             }
         }
 
@@ -196,14 +212,7 @@ namespace webuntisnoten2atlantis
                     zeile++;
                 }
             }
-            Process notepadPlus = new Process();
-            notepadPlus.StartInfo.FileName = "notepad++.exe";
-            //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + targetFile;
-            notepadPlus.StartInfo.Arguments = targetfile;
-            notepadPlus.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
-            notepadPlus.Start();
-            //Thread.Sleep(1500);
-
+            
             Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(26, '.'));
         }
 

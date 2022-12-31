@@ -178,7 +178,7 @@ namespace webuntisnoten2atlantis
             return null;
         }
                 
-        internal bool Zuordnen(List<Leistung> aL, string beschreibung)
+        internal void Zuordnen(List<Leistung> aL, string beschreibung)
         {
             if (aL.Count > 0)
             {
@@ -212,11 +212,12 @@ namespace webuntisnoten2atlantis
                     this.ZielLeistungId = aL[0].LeistungId;
                     this.Beschreibung += beschreibung;
                     this.LehrkraftAtlantisId = 3844; // DBA
-                    return false; // nicht löschen
                 }
-            }
-            // Falls weder Update noch neu, dann löschen
-            return true;
+                else
+                {
+                    this.Beschreibung += "keine Änderung";
+                }
+            }            
         }
     }
 }

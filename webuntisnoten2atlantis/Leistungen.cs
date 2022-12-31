@@ -95,7 +95,7 @@ namespace webuntisnoten2atlantis
                             {
                                 Console.WriteLine("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                                 Console.ReadKey();
-                                OpenFiles(new List<string>() { targetMarksPerLesson });
+                                //OpenFiles(new List<string>() { targetMarksPerLesson });
                                 throw new Exception("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                             }
 
@@ -153,37 +153,7 @@ namespace webuntisnoten2atlantis
             }
             return true;
         }
-
-        public void ManuellZuordnen(Zuordnungen fehlendeZuordnungen, Leistungen atlantisleistungen, string aktSj)
-        {
-            if (fehlendeZuordnungen.Count > 0)
-            {
-                fehlendeZuordnungen.GespeicherteZuordnungenInFehlendenZuordnungenAusPropertiesErgänzen();
-
-                string x;
-
-                Console.WriteLine(" ");
-
-                do
-                {
-                    fehlendeZuordnungen.AlleNichtAutomatischZugewiesenenFächerAnzeigen();
-
-                    fehlendeZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(atlantisleistungen, aktSj);
-
-                    Console.Write(" Wollen Sie eine Zuordnung manuell vornehmen? Wählen Sie [1" + (fehlendeZuordnungen.Count > 1 ? ", ... " + fehlendeZuordnungen.Count : "") + "] oder ENTER, falls keine Änderung gewünscht ist: ");
-
-                    x = Console.ReadLine(); Console.WriteLine("");
-
-                    x = fehlendeZuordnungen.DialogZurÄnderungAufrufen(atlantisleistungen, x);
-
-                } while (x != "");
-
-                WebuntisleistungenEntsprechendDerZuordnungenAnpassen(fehlendeZuordnungen, atlantisleistungen, aktSj);
-
-                fehlendeZuordnungen.SpeichernInDenProperties();
-            }            
-        }
-
+                
         private void WebuntisleistungenEntsprechendDerZuordnungenAnpassen(Zuordnungen fehlendeZuordnungen, Leistungen atlantisleistungen, string aktSj)
         {
             string gelöschteFächer = "";
@@ -201,11 +171,9 @@ namespace webuntisnoten2atlantis
                               where a.Fach == zielfach
                               where a.Schuljahr == aktSj
                               where a.SchlüsselExtern == t.SchlüsselExtern
-                              select a).FirstOrDefault();
+                              select a).ToList();
 
-                    t.Zielfach = zielfach;
-                    t.Beschreibung = t.Fach + "->" + zielfach;
-                    t.ZielLeistungId = al.LeistungId;
+                    t.Zuordnen(al, t.Fach + "->" + zielfach);
                 }
                 else // ansonsten wird der Leistungsdatensatz gelöscht
                 {
@@ -328,14 +296,21 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal Zuordnungen FächerZuordnen(Leistungen atlantisLeistungen, string aktuellesSchuljahr)
+        internal void ZielfächerZuordnen(Leistungen atlantisLeistungen, string aktuellesSchuljahr)
         {
-            // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
+            var kombinationAusKlasseUndFachWirdNurEinmalAufgerufen = new List<string>();
 
-            Console.Write((" Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ").PadRight(75, '.'));
+            Zuordnungen gespeicherteZuordnungen = new Zuordnungen();
+
+            // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
 
             for (int i = 0; i < this.Count; i++)
             {
+                if (this[i].Fach == "D")
+                {
+                    string a = "";
+                }
+
                 // Zielleistungen dieses Schülers im aktuellen Abschnitt werden ermittelt.
 
                 var atlantisZielLeistungen = (from a in atlantisLeistungen
@@ -353,20 +328,7 @@ namespace webuntisnoten2atlantis
                               where a.Fach == this[i].Fach // Prüfung auf Fachgleichheit
                               select a).ToList();
 
-                    if(this[i].Zuordnen(aL, ""))
-                    {
-                        this.Remove(this[i]);
-                    }
-                }
-
-                // Förderunterricht bekommt keine Note
-
-                if (this[i].Zielfach == null && this[i].ZielLeistungId == 0)
-                {
-                    if (this[i].Fach.EndsWith(" FU"))
-                    {
-                        this.Remove(this[i]);
-                    }
+                    this[i].Zuordnen(aL, "");
                 }
 
                 // Religion wird immer zu REL
@@ -464,27 +426,92 @@ namespace webuntisnoten2atlantis
                         this.Add(neueLeistung);
                     }
                 }
-            }
 
-            Console.WriteLine((" " + (from t in this where t.ZielLeistungId > 0 select t).Count().ToString()).PadLeft(26, '.'));
+                // Wenn keine autmatische Zuordnung vorgenommen wurde:
 
-            Console.Write((" Automatische Zuordnung misslungen ").PadRight(71, '.'));
-
-            Zuordnungen zuordnungen = new Zuordnungen();
-
-            foreach (var webuntisleistung in (from t in this where t.ZielLeistungId == 0 select t).ToList())
-            {
-                if (!(from z in zuordnungen where z.Quellklasse == webuntisleistung.Klasse where z.Quellfach == webuntisleistung.Fach select z).Any())
+                if (this[i].Beschreibung != "keine Änderung" && this[i].ZielLeistungId == 0 && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(this[i].Klasse+this[i].Fach))
                 {
-                    zuordnungen.Add(new Zuordnung(webuntisleistung.Klasse, webuntisleistung.Fach));
+                    Console.WriteLine("Das Webuntis-Fach " + this[i].Fach + " kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell vornehmen:");
+
+                    var alleZulässigenAtlantisZielfächer = gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(this[i], atlantisLeistungen, aktuellesSchuljahr);
+
+                    Console.WriteLine(" Wollen Sie die Zuordnung zu " + this[i].Fach + " manuell ändern/vornehmen?");
+                    Console.WriteLine(" Bitte Ziffer 0 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben oder ENTER falls keine Änderung gewünscht ist: ");
+
+                    string x = "";
+
+                    x = Console.ReadLine();
+
+
+                    for (int g = 0; g < gespeicherteZuordnungen.Count; g++)
+                    {
+                        if (gespeicherteZuordnungen[g].Quellklasse == this[i].Klasse && gespeicherteZuordnungen[g].Quellfach == this[i].Fach)
+                        {
+                            if (x == "0")
+                            {
+                                gespeicherteZuordnungen.Remove(gespeicherteZuordnungen[g]);
+                            }
+                            if (x == "")
+                            {
+                                this[i].Zielfach = gespeicherteZuordnungen[g].Zielfach;
+                            }
+                            else
+                            {
+                                if (Convert.ToInt32(x) > 0)
+                                {
+                                    gespeicherteZuordnungen[g].Zielfach = alleZulässigenAtlantisZielfächer[Convert.ToInt32(x) - 1];
+                                    this[i].Zielfach = alleZulässigenAtlantisZielfächer[Convert.ToInt32(x) - 1];
+                                }
+                            }
+                        }
+                    }
+
+                    foreach (var item in gespeicherteZuordnungen)
+                    {
+                        if (this[i].Klasse == item.Quellklasse && this[i].Fach == item.Quellfach)
+                        {
+                            var zielfach = (from zi in gespeicherteZuordnungen where zi.Quellklasse == this[i].Klasse where zi.Quellfach == this[i].Fach select zi.Zielfach).FirstOrDefault();
+
+                            if (zielfach != null)
+                            {
+                                var atlantisZielLeistung = (from a in atlantisLeistungen
+                                                            where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
+                                                            where a.SchlüsselExtern == this[i].SchlüsselExtern
+                                                            where a.Schuljahr == aktuellesSchuljahr
+                                                            where a.Klasse == this[i].Klasse
+                                                            where a.Fach == zielfach
+                                                            orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
+                                                            select a).ToList();
+
+                                if (atlantisZielLeistung != null)
+                                {
+                                    this[i].Zuordnen(atlantisZielLeistung, "manuell zugeordnet.");                                                                        
+                                    gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(this[i], atlantisLeistungen, aktuellesSchuljahr);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("   Es wurde keine Änderung vorgenommen.");
+                                }
+                            }
+                        }
+                    }                     
+                    kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Add(this[i].Klasse + this[i].Fach);
                 }
             }
 
-            Console.WriteLine((" " + (from t in this where t.ZielLeistungId == 0 select t).Count().ToString()).PadLeft(30, '.'));
+            // Alle Leistungen ohne Zuordnung werden gelöscht
 
-            return zuordnungen;
+            for (int i = 0; i < this.Count; i++)
+            {
+                if (this[i].ZielLeistungId == 0)
+                {
+                    this.Remove(this[i]);                 
+                }
+            }
+            Console.Write((" Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ").PadRight(75, '.'));
+            Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
         }
-
+            
         internal void FehlendeSchülerInAtlantis(Leistungen atlantisLeistungen)
         {
             List<string> keinSchülerInAtlantis = new List<string>();
@@ -1361,23 +1388,21 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             }
         }
 
-        internal void Add(Leistungen atlantisLeistungen, List<string> interessierendeKlassen)
+        internal void Add(Leistungen atlantisLeistungen)
         {
+            int outputIndex = Global.Output.Count();
             Console.Write((" Neu anzulegende Leistungen in Atlantis ").PadRight(71, '.'));
 
             int i = 0;
 
-            foreach (var w in this)
+            foreach (var w in (from t in this where t.Beschreibung.Contains("NEU") select t).ToList())
             {
-                // Wenn in dem zu beschreibenden Atlantis-Datensatz keine Gesamtnote existiert, ist es eine Neuanlage
-
-                if ((from a in atlantisLeistungen where a.LeistungId == w.ZielLeistungId where a.Gesamtnote == null select a).Any())
-                {
-                    UpdateLeistung(w.Klasse.PadRight(6) + "|" + (w.Name.Substring(0, Math.Min(w.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(4) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + w.ZielLeistungId + ";", w.Datum);
-                    i++;
-                }
+                UpdateLeistung(w.Klasse.PadRight(6) + "|" + (w.Name.Substring(0, Math.Min(w.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(5) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + w.ZielLeistungId + ";", w.Datum);
+                i++;
             }
+
             Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(outputIndex, ("Neu anzulegende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
         }
             
             
@@ -1579,74 +1604,89 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             return gesamtnote;
         }
 
-        internal void Update(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen)
+        internal void Update(Leistungen webuntisLeistungen)
         {
             int outputIndex = Global.Output.Count();
+
             Console.Write((" Leistungen in Atlantis updaten ").PadRight(71, '.'));
+
             int i = 0;
 
-            try
+            foreach (var w in (from t in this where t.Beschreibung.Contains("UPD") select t).ToList())
             {
-                foreach (var a in this)
-                {
-                    // Kein Update, wenn das Konferenzdatum hinter uns liegt.
-
-                    if (DateTime.Now <= a.Konferenzdatum)
-                    {
-                        if (a.SchuelerAktivInDieserKlasse)
-                        {
-                            var w = (from webuntisLeistung in webuntisLeistungen
-                                     where webuntisLeistung.Zielfach == a.Fach
-                                     where webuntisLeistung.Klasse == a.Klasse
-                                     where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
-                                     where ((a.Gesamtpunkte != null && a.Gesamtpunkte != webuntisLeistung.Gesamtpunkte) || (a.Gesamtnote != null && a.Gesamtnote != webuntisLeistung.Gesamtnote) || a.LehrkraftAtlantisId != webuntisLeistung.LehrkraftAtlantisId || a.LehrkraftAtlantisId == 0)
-                                     where webuntisLeistung.Gesamtpunkte != null
-                                     select webuntisLeistung).FirstOrDefault();
-
-                            if (w != null)
-                            {
-                                // Ein '-' in Religion wird deleted, wenn kein anderer Schüler eine Gesamtnote bekommen hat.
-
-                                if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen
-                                                                                 where we.Klasse == w.Klasse
-                                                                                 where we.Zielfach == "REL"
-                                                                                 where (we.Gesamtnote != null && we.Gesamtnote != "-")
-                                                                                 select we).Count() == 0))
-                                {
-                                    if (a.LehrkraftAtlantisId != w.LehrkraftAtlantisId)
-                                    {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.LehrkraftAtlantisId + ">" + w.LehrkraftAtlantisId + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
-                                    }
-
-                                    if (a.Gesamtnote != w.Gesamtnote)
-                                    {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.Gesamtnote + (a.Tendenz ?? " ") + ">" + w.Gesamtnote + (w.Tendenz ?? " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
-                                    }
-
-                                    if (a.EinheitNP == "P")
-                                    {
-                                        UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET      punkte=" + (w.Gesamtpunkte).PadLeft(2) + ", ls_id_1=" + w.LehrkraftAtlantisId + "   WHERE noe_id=" + a.LeistungId + ";", w.Datum);
-
-
-                                        if (a.Tendenz != w.Tendenz)
-                                        {
-                                            UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + ", ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
-                                        }
-                                    }
-                                    i++;
-                                }
-                            }
-                        }
-                    }                    
-                }
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(outputIndex, ("Zu ändernde Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+                UpdateLeistung(w.Klasse.PadRight(6) + "|" + (w.Name.Substring(0, Math.Min(w.Name.Length, 6))).PadRight(6) + "|" + w.Gesamtnote + " " + "|" + w.Fach.PadRight(5) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + w.ZielLeistungId + ";", w.Datum);
+                i++;
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }            
+            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.PrintMessage(outputIndex, ("Zu ändernde Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
         }
+
+        //    int outputIndex = Global.Output.Count();
+        //    Console.Write((" Leistungen in Atlantis updaten ").PadRight(71, '.'));
+        //    int i = 0;
+
+        //    try
+        //    {
+        //        foreach (var a in this)
+        //        {
+        //            // Kein Update, wenn das Konferenzdatum hinter uns liegt.
+
+        //            if (DateTime.Now <= a.Konferenzdatum)
+        //            {
+        //                if (a.SchuelerAktivInDieserKlasse)
+        //                {
+        //                    var w = (from webuntisLeistung in webuntisLeistungen
+        //                             where webuntisLeistung.Zielfach == a.Fach
+        //                             where webuntisLeistung.Klasse == a.Klasse
+        //                             where webuntisLeistung.SchlüsselExtern == a.SchlüsselExtern
+        //                             where ((a.Gesamtpunkte != null && a.Gesamtpunkte != webuntisLeistung.Gesamtpunkte) || (a.Gesamtnote != null && a.Gesamtnote != webuntisLeistung.Gesamtnote) || a.LehrkraftAtlantisId != webuntisLeistung.LehrkraftAtlantisId || a.LehrkraftAtlantisId == 0)
+        //                             where webuntisLeistung.Gesamtpunkte != null
+        //                             select webuntisLeistung).FirstOrDefault();
+
+        //                    if (w != null)
+        //                    {
+        //                        // Ein '-' in Religion wird deleted, wenn kein anderer Schüler eine Gesamtnote bekommen hat.
+
+        //                        if (!(w.Fach == "REL" && w.Gesamtnote == "-" && (from we in webuntisLeistungen
+        //                                                                         where we.Klasse == w.Klasse
+        //                                                                         where we.Zielfach == "REL"
+        //                                                                         where (we.Gesamtnote != null && we.Gesamtnote != "-")
+        //                                                                         select we).Count() == 0))
+        //                        {
+        //                            if (a.LehrkraftAtlantisId != w.LehrkraftAtlantisId)
+        //                            {
+        //                                UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.LehrkraftAtlantisId + ">" + w.LehrkraftAtlantisId + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
+        //                            }
+
+        //                            if (a.Gesamtnote != w.Gesamtnote)
+        //                            {
+        //                                UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + a.Gesamtnote + (a.Tendenz ?? " ") + ">" + w.Gesamtnote + (w.Tendenz ?? " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET      s_note='" + w.Gesamtnote + "', ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
+        //                            }
+
+        //                            if (a.EinheitNP == "P")
+        //                            {
+        //                                UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Gesamtpunkte == null ? "" : a.Gesamtpunkte.Split(',')[0]).PadLeft(2) + ">" + (w.Gesamtpunkte == null ? " " : w.Gesamtpunkte.Split(',')[0]).PadLeft(2) + "|" + a.Fach + (w.Beschreibung == null ? "" : w.Beschreibung), "UPDATE noten_einzel SET      punkte=" + (w.Gesamtpunkte).PadLeft(2) + ", ls_id_1=" + w.LehrkraftAtlantisId + "   WHERE noe_id=" + a.LeistungId + ";", w.Datum);
+
+
+        //                                if (a.Tendenz != w.Tendenz)
+        //                                {
+        //                                    UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 5)) + "|" + (a.Tendenz == null ? "NULL" : a.Tendenz + " ") + ">" + (w.Tendenz == null ? "NU" : w.Tendenz + " ") + "|" + a.Fach + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_einzel SET   s_tendenz=" + (w.Tendenz == null ? "NULL " : "'" + w.Tendenz + "' ") + ", ls_id_1=" + w.LehrkraftAtlantisId + " WHERE noe_id=" + a.LeistungId + ";", w.Datum);
+        //                                }
+        //                            }
+        //                            i++;
+        //                        }
+        //                    }
+        //                }
+        //            }                    
+        //        }
+        //        Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+        //        Global.PrintMessage(outputIndex, ("Zu ändernde Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }            
+        //}
 
         internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
         {
@@ -2054,34 +2094,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             {
                 throw ex;
             }
-
-            OpenFiles(files);
-        }
-
-        private void OpenFiles(List<string> files)
-        {
-            try
-            {
-                Process notepadPlus = new Process();
-                notepadPlus.StartInfo.FileName = "notepad++.exe";
-
-                for (int i = 0; i < files.Count; i++)
-                {
-                    if (i==0)
-                    {
-                        notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
-                    }
-                    else
-                    {
-                        notepadPlus.StartInfo.Arguments = files[i];
-                    }
-                }
-                notepadPlus.Start();
-            }
-            catch (Exception)
-            {
-                System.Diagnostics.Process.Start("Notepad.exe", files[0]);
-            }
-        }        
+        }       
     }
 }

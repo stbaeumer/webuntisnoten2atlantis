@@ -124,7 +124,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.Output.Count();
-            Console.Write(("Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));            
+            Console.Write((" Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));            
             int i = 0;
 
             try
@@ -159,6 +159,7 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
+
                 Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
                 Global.PrintMessage(outputIndex, ("Neu anzulegende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
@@ -171,7 +172,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.Output.Count();
-            Console.Write(("Fehlzeiten in Atlantis updaten").PadRight(71, '.'));
+            Console.Write((" Fehlzeiten in Atlantis updaten").PadRight(71, '.'));
             int i = 0;
 
             try
@@ -218,7 +219,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.Output.Count();
-            Console.Write(("Fehlzeiten in Atlantis löschen").PadRight(71, '.'));            
+            Console.Write((" Fehlzeiten in Atlantis löschen").PadRight(71, '.'));            
             int i = 0;
 
             try
