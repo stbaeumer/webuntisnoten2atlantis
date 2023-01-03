@@ -189,7 +189,10 @@ namespace webuntisnoten2atlantis
 
                 // Falls Neu oder Update
 
-                if ((aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null) || (aL[0].Gesamtnote != Gesamtnote || aL[0].Gesamtpunkte != Gesamtpunkte || aL[0].Tendenz != Tendenz))
+                if (
+                    (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)                                  // Neu
+                    || (aL[0].Gesamtnote != Gesamtnote                                                                                 // UPD 
+                    || (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P") || (aL[0].Tendenz != Tendenz && aL[0].EinheitNP =="P")))     // UPD Gym
                 {
                     this.Query = "UPDATE noten_einzel SET ";
                     
@@ -199,7 +202,7 @@ namespace webuntisnoten2atlantis
                     {
                         this.Beschreibung = "NEU|" + this.Beschreibung;
 
-                        if (Gesamtpunkte != null)
+                        if (Gesamtpunkte != null && aL[0].EinheitNP == "P")
                         {
                             this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
                             this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) +"'" + ", ";
@@ -217,7 +220,7 @@ namespace webuntisnoten2atlantis
                         {
                             this.Query += (" ").PadRight(10) + "  ";
                         }
-                        if (Tendenz != null)
+                        if (Tendenz != null && aL[0].EinheitNP == "P")
                         {
                             this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
                             this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
@@ -229,11 +232,11 @@ namespace webuntisnoten2atlantis
                     }
                     else // Falls Update
                     {
-                        if (aL[0].Gesamtnote != Gesamtnote || aL[0].Gesamtpunkte != Gesamtpunkte || aL[0].Tendenz != Tendenz)
+                        if (aL[0].Gesamtnote != Gesamtnote || (aL[0].Gesamtpunkte != Gesamtpunkte && EinheitNP=="P") || (aL[0].Tendenz != Tendenz && EinheitNP == "P"))
                         {
                             this.Beschreibung = "UPD|" + this.Beschreibung;
 
-                            if (aL[0].Gesamtpunkte != Gesamtpunkte)
+                            if (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P")
                             {
                                 this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
                                 this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
@@ -251,7 +254,7 @@ namespace webuntisnoten2atlantis
                             {
                                 this.Query += (" ").PadRight(10) + "  ";
                             }
-                            if (aL[0].Tendenz != Tendenz)
+                            if (aL[0].Tendenz != Tendenz && aL[0].EinheitNP == "P")
                             {
                                 this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
                                 this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
@@ -271,8 +274,8 @@ namespace webuntisnoten2atlantis
                 }
                 else
                 {
-                    this.Beschreibung = "   |" + this.Beschreibung;
-                    this.Query += ("/* Keine Änderung bei " + aL[0].Nachname + ", " + aL[0].Vorname).PadRight(63) + " in " + aL[0].Fach + ". Es bleibt bei Note " + aL[0].Gesamtnote + (aL[0].Tendenz == null ? " ": aL[0].Tendenz) + " */";
+                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz);
+                    this.Query += "/* Keine Änderung.";
                 }
             }            
         }

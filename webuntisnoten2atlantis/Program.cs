@@ -74,11 +74,6 @@ namespace webuntisnoten2atlantis
 
                 webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, interessierendeKlassen, AktSj));
 
-                // Sortieren
-
-                webuntisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
-                atlantisLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name);
-
                 // Korrekturen durchführen
 
                 webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(interessierendeKlassen);
@@ -88,7 +83,7 @@ namespace webuntisnoten2atlantis
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, webuntisLeistungen);
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
-                webuntisLeistungen.ZielfächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);                
+                webuntisLeistungen.ZielfächerZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);                
 
                 // Add-Delete-Update
 

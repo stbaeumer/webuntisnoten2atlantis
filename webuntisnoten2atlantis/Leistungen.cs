@@ -99,11 +99,11 @@ namespace webuntisnoten2atlantis
                                 throw new Exception("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                             }
 
-                            if (!Global.VerschiedeneKlassenAusMarkPerLesson.Contains(x[2]))
-                            {
-                                Global.VerschiedeneKlassenAusMarkPerLesson.Add(x[2]);
-                                verschiedeneKlassenString += x[2] + ",";
-                            }
+                            //if (!Global.VerschiedeneKlassenAusMarkPerLesson.Contains(x[2]))
+                            //{
+                            //    Global.VerschiedeneKlassenAusMarkPerLesson.Add(x[2]);
+                            //    verschiedeneKlassenString += x[2] + ",";
+                            //}
                         }
                     }
                     catch (Exception ex)
@@ -116,8 +116,7 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));
-                Console.WriteLine(" Die verschiedenen Klassen aus der gezogenen MarksPerLesson-Datei: " + (" " + verschiedeneKlassenString.TrimEnd(',')));
+                Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));                
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
@@ -296,7 +295,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void ZielfächerZuordnen(Leistungen atlantisLeistungen, string aktuellesSchuljahr)
+        internal void ZielfächerZuordnenUndQueryBauen(Leistungen atlantisLeistungen, string aktuellesSchuljahr)
         {
             var kombinationAusKlasseUndFachWirdNurEinmalAufgerufen = new List<string>();
 
@@ -647,7 +646,7 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            AusgabeSchreiben("In folgenden Klassen sind in mehreren Fächern Zeugnisnoten gesetzt. Es fehlen noch: ", kl);
+            //AusgabeSchreiben("In folgenden Klassen sind in mehreren Fächern Zeugnisnoten gesetzt. Es fehlen noch: ", kl);
             Console.WriteLine((" " + kl.Count.ToString()).PadLeft(30, '.'));
         }
 
@@ -733,7 +732,9 @@ namespace webuntisnoten2atlantis
 
                 // Für jedes verschiedene Konferenzdatum der Vergangenheit wird ...
 
-                var verschiedeneKonferenzdatenAlterAbschnitte = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum) where xs.GeholteNote select xs.Konferenzdatum).Distinct();
+                var verschiedeneKonferenzdatenAlterAbschnitte = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum) where xs.GeholteNote select xs.Konferenzdatum).Distinct().ToList();
+
+                var bereitsGeholt = new List<string>();
 
                 foreach (var alteKonferenzdaten in verschiedeneKonferenzdatenAlterAbschnitte)
                 {
@@ -750,13 +751,14 @@ namespace webuntisnoten2atlantis
                             var atlantisZielLeistungen = (from a in this
                                                           where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
                                                           where a.SchlüsselExtern == zuholendeLeistung.SchlüsselExtern
-                                                          where a.Schuljahr == aktSj[0]+"/"+ aktSj[1]
+                                                          where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
                                                           where a.Fach == zuholendeLeistung.Fach
                                                           orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
                                                           select a).ToList();
 
                             zuholendeLeistung.Zuordnen(atlantisZielLeistungen, "" + zuholendeLeistung.Schuljahr);
                             zuholendeLeistung.GeholteNote = true;
+
                             leistungen.Add(zuholendeLeistung);
                         }
 
@@ -852,6 +854,7 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine("Kann es sein, dass für die Auswahl keine Datensätze vorliegen?");
             }
 
+            var leistungenUnsortiert = new Leistungen();
 
             try
             {
@@ -1031,12 +1034,12 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                           where t.Gesamtnote != null && t.Gesamtnote != ""
                                           select t).Any() || (leistung.Konferenzdatum.Year == 1 || leistung.Konferenzdatum > DateTime.Now))
                                     {
-                                        this.Add(leistung);
+                                        leistungenUnsortiert.Add(leistung);
                                     }
                                 }
                                 else  // Leistungen des aktuellen Abschnitts werden immer gezogen.
                                 {
-                                    this.Add(leistung);
+                                    leistungenUnsortiert.Add(leistung);
                                 }
                             }
 
@@ -1047,6 +1050,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                         }
                     }
                     connection.Close();
+
+                    this.AddRange(leistungenUnsortiert.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
                 }
             }
             catch (Exception ex)
@@ -1813,12 +1818,18 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             var leistungen = new Leistungen();
 
-            foreach (var item in this)
+            foreach (var item in this.OrderBy(xx=>xx.Klasse).ThenBy(xx=>xx.Fach).ThenBy(xx=>xx.Nachname))
             {
                 if (ausgewählteKlassen.Contains(item.Klasse))
                 {
                     leistungen.Add(item);
                 }
+            }
+
+            if (leistungen.Count == 0)
+            {
+                Console.WriteLine(" Es wurde kein einziger Leistungsdatensatz gewählt. Die Verarbeitung geht nicht weiter.");
+                Console.ReadKey();
             }
 
             return leistungen;
@@ -2063,7 +2074,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
         {
             try
             {
-                string o = updateQuery.PadRight(103, ' ') + "/* " + message;
+                string o = updateQuery.PadRight(103, ' ') + (updateQuery.Contains("Keine Änderung")?"   ": "/* ") + message;
                 Global.Output.Add((o.Substring(0, Math.Min(178, o.Length))).PadRight(180) + " */");
             }
             catch (Exception ex)
