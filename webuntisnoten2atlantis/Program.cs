@@ -1,13 +1,12 @@
 ﻿// Published under the terms of GPLv3 Stefan Bäumer 2022.
 
-using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
+
 
 namespace webuntisnoten2atlantis
 {
@@ -22,8 +21,6 @@ namespace webuntisnoten2atlantis
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year + 1 - 2000 : DateTime.Now.Year - 2000).ToString()
                 };
-        public static string ExcelPath = @"C:\Users\" + User + @"\Berufskolleg Borken\Kollegium - General\03 Schulleitung\3.04 Termine\2020-21\14 Zeugniskonferenzen HZ\\Zeugniskonferenzen HZ.xlsx";
-        private static object files;
 
         static void Main(string[] args)
         {
@@ -55,48 +52,23 @@ namespace webuntisnoten2atlantis
                 var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "AbsenceTimesTotal" + User + ".CSV");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
                 var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "MarksPerLesson" + User + ".CSV");
-                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + User + ".SQL");
-          
+                
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
                 
-                Leistungen alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
-
-                Abwesenheiten alleAtlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1]);
-                Abwesenheiten alleWebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal);
+                Leistungen webuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
 
                 var interessierendeKlassen = new List<string>();
-                interessierendeKlassen = alleWebuntisLeistungen.GetIntessierendeKlassen(AktSj);
+                webuntisLeistungen = webuntisLeistungen.GetIntessierendeKlassen(AktSj);
+                interessierendeKlassen = (from w in webuntisLeistungen select w.Klasse).Distinct().ToList();
+
+                // Die eingelesenen Dateien für Protokollzwecke filtern
 
                 RelevanteDatensätzeAusCsvFiltern(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
                 RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
 
-
-                Leistungen alleAtlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, alleWebuntisLeistungen);
-
-                Leistungen webuntisLeistungen = new Leistungen();
-                Abwesenheiten webuntisAbwesenheiten = new Abwesenheiten();
-                Leistungen atlantisLeistungen = new Leistungen();
-                Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
-
-                //do
-                //{  
-
-                webuntisLeistungen.AddRange((from a in alleWebuntisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
-
-                if (targetAbsenceTimesTotal != null)
-                {
-                    webuntisAbwesenheiten.AddRange((from a in alleWebuntisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
-                    atlantisAbwesenheiten.AddRange((from a in alleAtlantisAbwesenheiten where interessierendeKlassen.Contains(a.Klasse) select a));
-                }
-
-                atlantisLeistungen.AddRange((from a in alleAtlantisLeistungen where interessierendeKlassen.Contains(a.Klasse) select a).OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
-
-                //atlantisLeistungen.ErzeugeSerienbriefquelleFehlendeTeilleistungen(webuntisLeistungen);
-
-                if (webuntisLeistungen.Count == 0)
-                {
-                    throw new Exception("[!] Es liegt kein einziger Leistungsdatensatz für Ihre Auswahl vor. Ist evtl. die Auswahl in Webuntis eingeschränkt? ");
-                }
+                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, webuntisLeistungen);
+                Abwesenheiten atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
+                Abwesenheiten webuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen);
 
                 // Noten vergangener Abschnitte ziehen
 
@@ -113,15 +85,15 @@ namespace webuntisnoten2atlantis
                 webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                 webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                 atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
-                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, alleWebuntisLeistungen);
+                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, webuntisLeistungen);
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
                 webuntisLeistungen.ZielfächerZuordnen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);                
 
                 // Add-Delete-Update
 
-                webuntisLeistungen.Add(atlantisLeistungen);
-                atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
+                //webuntisLeistungen.Add(atlantisLeistungen);
+                //atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
                 webuntisLeistungen.Update(atlantisLeistungen);
 
                 if (targetAbsenceTimesTotal != null)
@@ -136,19 +108,16 @@ namespace webuntisnoten2atlantis
                     Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
                 }
 
-                alleAtlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
+                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
+                atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
-                Console.WriteLine(@"  \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
-                Console.WriteLine("  -----------------------------------------------------------------");
-                Console.WriteLine("Jetzt die Dateien öffnen (j/n)");
-
-                ConsoleKeyInfo key = Console.ReadKey(true);
                 
-                if (key.Key == ConsoleKey.J)
-                {
-                    OpenFiles(new List<string> { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
-                    Console.ReadKey();
-                }
+                Console.WriteLine(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");                
+                OpenFiles(new List<string> { targetSql });
+
+                Console.WriteLine("  -----------------------------------------------------------------");
+                System.Threading.Thread.Sleep(6000);
+                Environment.Exit(0);
             }
             catch (Exception ex)
             {
@@ -158,6 +127,16 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+
+        private static string Zeichenkette(List<string> interessierendeKlassen)
+        {
+            var x = "";
+            foreach (var item in interessierendeKlassen)
+            {
+                x += item;
+            }
+            return x;
         }
 
         private static void OpenFiles(List<string> files)
@@ -318,75 +297,6 @@ namespace webuntisnoten2atlantis
                 result = true;
             }
             return result;
-        }
-
-        public static Termine ReadExcel(string pfad)
-        {
-            Termine termine = new Termine();
-
-            if (File.Exists(pfad))
-            {
-                Global.WaitForFile(pfad);
-            }
-            else
-            {
-                Console.WriteLine("Die Datei " + pfad + ".xlsx soll jetzt eingelesen werden, kann aber nicht gefunden werden.");
-            }
-
-            Application excel = new Application();
-            Workbook workbook = excel.Workbooks.Open(pfad);
-            Worksheet worksheet = (Worksheet)workbook.Worksheets.get_Item(1);
-            Range xlRange = worksheet.UsedRange;
-
-            try
-            {
-                Console.Write("Lese Exceldatei " + pfad + " ... ");
-
-                // InSpalte D und K stehen die verschiednenen Klassen
-
-                int rowCount = xlRange.Rows.Count;
-
-                for (int spalte = 1; spalte < 8; spalte += 6)
-                {
-                    DateTime zeit = new DateTime();
-                    string raum = "";
-                    string bildungsgang = "";
-
-                    var datum = Convert.ToString(xlRange.Cells[2, spalte].Value2);
-
-                    for (int zeile = 3; zeile < rowCount + 1; zeile++)
-                    {
-                        var termin = new Termin();
-
-                        bildungsgang = Convert.ToString(xlRange.Cells[zeile, spalte + 1].Value2) ?? bildungsgang;
-                        termin.Bildungsgang = bildungsgang;
-                        termin.Klasse = Convert.ToString(xlRange.Cells[zeile, spalte + 2].Value2);
-                        zeit = GetZeit(zeit, datum, Convert.ToString(xlRange.Cells[zeile, spalte + 3].Value2));
-                        termin.Uhrzeit = zeit;
-                        raum = Convert.ToString(xlRange.Cells[zeile, spalte + 4].Value2) ?? raum;
-                        termin.Raum = raum;
-
-                        if (termin.Klasse != null)
-                        {
-                            termine.Add(termin);
-                        }
-                    }
-                }
-
-                workbook.Close(0);
-                excel.Quit();
-                Console.WriteLine(" ... ok.");
-                return termine;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                workbook.Close(0);
-                excel.Quit();
-                Console.ReadKey();
-                return termine;
-            }
         }
 
         private static DateTime GetZeit(DateTime uhrzeit, dynamic datum, dynamic dynamic)

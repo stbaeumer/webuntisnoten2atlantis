@@ -48,7 +48,7 @@ namespace webuntisnoten2atlantis
 
             var i = 1;
 
-            foreach (var quellklasse in (from z in this select z.Quellklasse).Distinct().ToList())
+            foreach (var quellklasse in (from z in atlantisleistungen select z.Klasse).Distinct().ToList())
             {
                 Console.WriteLine(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
 
@@ -71,23 +71,13 @@ namespace webuntisnoten2atlantis
             return alle;
         }
 
-        internal void SpeichernInDenProperties(string quellklasse, string quellfach,string zielfach)
+        internal void SpeichernInDenProperties()
         {
             foreach (var item in this)
             {
-                if (item.Zielfach != null)
-                {
-                    if (item.Quellklasse == quellklasse && item.Quellfach == quellfach)
-                    {
-                        Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + zielfach + ",";
-                    }
-                    else
-                    {
-                        Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
-                    }                    
-                }
+                Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
             }
-
+             
             Properties.Settings.Default.Zuordnungen = Properties.Settings.Default.Zuordnungen.TrimEnd(',');
             Properties.Settings.Default.Save();
         }

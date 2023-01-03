@@ -42,6 +42,7 @@ namespace webuntisnoten2atlantis
         public string Gliederung { get; internal set; }
         public bool Abschlussklasse { get; internal set; }
         public string Beschreibung { get; internal set; }
+        public string Query { get; set; }
         public bool GeholteNote { get; internal set; }
         public bool HatBemerkung { get; internal set; }
         /// <summary>
@@ -180,42 +181,98 @@ namespace webuntisnoten2atlantis
                 
         internal void Zuordnen(List<Leistung> aL, string beschreibung)
         {
+            // Nur, wenn es ein korrespondierendes Atlantis-Fach gibt
+
             if (aL.Count > 0)
             {
+                this.Beschreibung = (aL[0].Nachname.PadRight(10)).Substring(0, 6) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Fach.PadRight(5) + "|" + beschreibung;
+
                 // Falls Neu oder Update
 
-                if ((aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null) || (aL[0].Gesamtnote != Gesamtnote || aL[0].Tendenz != Tendenz))
+                if ((aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null) || (aL[0].Gesamtnote != Gesamtnote || aL[0].Gesamtpunkte != Gesamtpunkte || aL[0].Tendenz != Tendenz))
                 {
+                    this.Query = "UPDATE noten_einzel SET ";
+                    
                     // Falls Neu
 
                     if (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)
                     {
-                        this.Beschreibung = "NEU;" + this.Beschreibung;
+                        this.Beschreibung = "NEU|" + this.Beschreibung;
+
+                        if (Gesamtpunkte != null)
+                        {
+                            this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
+                            this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) +"'" + ", ";
+                        }
+                        else
+                        {
+                            this.Query += (" ").PadRight(14) + "  ";
+                        }
+                        if (Gesamtnote != null)
+                        {
+                            this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
+                            this.Query += "s_note='" + Gesamtnote +"'" + ", ";
+                        }
+                        else
+                        {
+                            this.Query += (" ").PadRight(10) + "  ";
+                        }
+                        if (Tendenz != null)
+                        {
+                            this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
+                            this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
+                        }
+                        else
+                        {
+                            this.Query += (" ").PadRight(13) + "  ";
+                        }
                     }
                     else // Falls Update
                     {
-                        if (aL[0].Gesamtnote != Gesamtnote || aL[0].Tendenz != Tendenz)
+                        if (aL[0].Gesamtnote != Gesamtnote || aL[0].Gesamtpunkte != Gesamtpunkte || aL[0].Tendenz != Tendenz)
                         {
-                            this.Beschreibung = "UPD:" + this.Beschreibung;
+                            this.Beschreibung = "UPD|" + this.Beschreibung;
 
+                            if (aL[0].Gesamtpunkte != Gesamtpunkte)
+                            {
+                                this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
+                                this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
+                            }
+                            else
+                            {
+                                this.Query += (" ").PadRight(14) + "  ";
+                            }
                             if (aL[0].Gesamtnote != Gesamtnote)
                             {
-                                this.Beschreibung = (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote + ";" + this.Beschreibung;
+                                this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
+                                this.Query += "s_note='" + Gesamtnote +"'" + ", ";
+                            }
+                            else
+                            {
+                                this.Query += (" ").PadRight(10) + "  ";
                             }
                             if (aL[0].Tendenz != Tendenz)
                             {
-                                this.Beschreibung = (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz + ";" + this.Beschreibung;
+                                this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
+                                this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
+                            }
+                            else
+                            {
+                                this.Query += (" ").PadRight(14) + "  ";
                             }
                         }
                     }
+
                     this.Zielfach = aL[0].Fach;
                     this.ZielLeistungId = aL[0].LeistungId;
                     this.Beschreibung += beschreibung;
-                    this.LehrkraftAtlantisId = 3844; // DBA
+                    this.Query += "ls_id_1=3844 "; // letzter Bearbeiter
+                    this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
                 else
                 {
-                    this.Beschreibung += "keine Änderung";
+                    this.Beschreibung = "   |" + this.Beschreibung;
+                    this.Query += ("/* Keine Änderung bei " + aL[0].Nachname + ", " + aL[0].Vorname).PadRight(63) + " in " + aL[0].Fach + ". Es bleibt bei Note " + aL[0].Gesamtnote + (aL[0].Tendenz == null ? " ": aL[0].Tendenz) + " */";
                 }
             }            
         }
