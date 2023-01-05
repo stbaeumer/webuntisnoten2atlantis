@@ -712,57 +712,70 @@ namespace webuntisnoten2atlantis
             {
                 Leistungen leistungen = new Leistungen();
 
-                List<string> nn = new List<string>();
+                List<string> leistungenDieserListe = new List<string>();
 
                 Console.WriteLine("");
 
-                Console.WriteLine(" Folgende Atlantis-Leistungen vergangener Jahre sind in den aktuellen Webuntis-Noten nicht vorhanden:");
+                Console.WriteLine(" Folgende Leistungen (vergangener Abschnitte) liegen vor:");
                 Console.WriteLine("");
                 Console.WriteLine("     | Klasse | Fach | Konferenzdatum | Anzahl SuS |");
                 Console.WriteLine("     |========|======|================|============|");
 
-                // Für den aktuellen Abschnitt:
+                // Für jede interessierende Klasse ...
 
-                foreach (var fach in (from l in webuntisLeistungen select l.Fach).Distinct().ToList())
+                foreach (var klasse in interessierendeKlassen)
                 {
-                    var anzahl = (from xs in webuntisLeistungen where xs.Fach == fach select xs).GroupBy(xs => xs.SchlüsselExtern).Count();
+                    // ... werden die aktuellen Leistungen gelistet ...
 
-                    Console.WriteLine("     | " + webuntisLeistungen[0].Klasse.PadRight(7) + "| " + fach.PadRight(5) + "|neu aus Webuntis| " + anzahl.ToString().PadLeft(10) + " |");
-                }
-
-                // Für jedes verschiedene Konferenzdatum der Vergangenheit wird ...
-
-                var verschiedeneKonferenzdatenAlterAbschnitte = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum) where xs.GeholteNote select xs.Konferenzdatum).Distinct().ToList();
-
-                var bereitsGeholt = new List<string>();
-
-                foreach (var alteKonferenzdaten in verschiedeneKonferenzdatenAlterAbschnitte)
-                {
-                    foreach (var fach in (from l in this where l.Konferenzdatum == alteKonferenzdaten select l.Fach).Distinct().ToList())
+                    foreach (var fach in (from l in webuntisLeistungen where l.Klasse == klasse select l.Fach).Distinct().ToList())
                     {
-                        var anzahl = (from xs in this where xs.Konferenzdatum == alteKonferenzdaten where xs.Fach == fach select xs).Count();
+                        var anzahl = (from xs in webuntisLeistungen where xs.Fach == fach select xs).GroupBy(xs => xs.SchlüsselExtern).Count();
 
-                        foreach (var zuholendeLeistung in (from xs in this
-                                                           where xs.Konferenzdatum == alteKonferenzdaten
-                                                           where xs.Fach == fach
-                                                           where xs.Klasse == webuntisLeistungen[0].Klasse
-                                                           select xs).ToList())
+                        Console.WriteLine("     | " + klasse.PadRight(7) + "| " + fach.PadRight(5) + "|neu aus Webuntis| " + anzahl.ToString().PadLeft(10) + " |");
+                        leistungenDieserListe.Add(klasse + "|" + fach + "|" + anzahl);
+                    }
+
+                    // Für jedes verschiedene Konferenzdatum der Vergangenheit wird ...
+
+                    var verschiedeneKonferenzdatenAlterAbschnitte = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum) where xs.GeholteNote where xs.Klasse == klasse select xs.Konferenzdatum).Distinct().ToList();
+
+                    foreach (var alteKonferenzdaten in verschiedeneKonferenzdatenAlterAbschnitte)
+                    {
+                        foreach (var fach in (from l in this where l.Konferenzdatum == alteKonferenzdaten select l.Fach).Distinct().ToList())
                         {
-                            var atlantisZielLeistungen = (from a in this
-                                                          where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
-                                                          where a.SchlüsselExtern == zuholendeLeistung.SchlüsselExtern
-                                                          where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
-                                                          where a.Fach == zuholendeLeistung.Fach
-                                                          orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
-                                                          select a).ToList();
+                            var anzahl = (from xs in this where xs.Konferenzdatum == alteKonferenzdaten where xs.Fach == fach select xs).Count();
 
-                            zuholendeLeistung.Zuordnen(atlantisZielLeistungen, "" + zuholendeLeistung.Schuljahr);
-                            zuholendeLeistung.GeholteNote = true;
+                            // Wenn eine Leistung aktuell aus Webuntis kommt oder für ein jüngeres Konferenzdatum vorliegt, wird sie nicht gezogen
 
-                            leistungen.Add(zuholendeLeistung);
+                            if (!leistungenDieserListe.Contains(klasse + "|" + fach + "|" + anzahl))
+                            {
+                                foreach (var zuholendeLeistung in (from xs in this
+                                                                   where xs.Konferenzdatum == alteKonferenzdaten
+                                                                   where xs.Fach == fach
+                                                                   where xs.Klasse == webuntisLeistungen[0].Klasse
+                                                                   select xs).ToList())
+                                {
+                                    var atlantisZielLeistungen = (from a in this
+                                                                  where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
+                                                                  where a.SchlüsselExtern == zuholendeLeistung.SchlüsselExtern
+                                                                  where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                                                  where a.Fach == zuholendeLeistung.Fach
+                                                                  orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
+                                                                  select a).ToList();
+
+                                    zuholendeLeistung.Zuordnen(atlantisZielLeistungen, "" + zuholendeLeistung.Schuljahr);
+                                    zuholendeLeistung.GeholteNote = true;
+
+                                    leistungen.Add(zuholendeLeistung);
+                                    if (!leistungenDieserListe.Contains(klasse + "|" + fach + "|" + anzahl))
+                                    {
+                                        leistungenDieserListe.Add(klasse + "|" + fach + "|" + anzahl);
+                                    }
+                                }
+
+                                Console.WriteLine("     | " + webuntisLeistungen[0].Klasse.PadRight(7) + "| " + fach.PadRight(5) + "|   " + alteKonferenzdaten.ToShortDateString() + "   |    " + anzahl.ToString().PadLeft(7) + " |");
+                            }
                         }
-
-                        Console.WriteLine("     | " + webuntisLeistungen[0].Klasse.PadRight(7) + "| " + fach.PadRight(5) + "|   " + alteKonferenzdaten.ToShortDateString() + "   |    " + anzahl.ToString().PadLeft(7) + " |");
                     }
                 }
 

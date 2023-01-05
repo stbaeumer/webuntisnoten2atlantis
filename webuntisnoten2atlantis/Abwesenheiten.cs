@@ -64,7 +64,7 @@ namespace webuntisnoten2atlantis
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.PrintMessage(Global.Output.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ).PadLeft(45, '.'));
+                Global.PrintMessage(Global.Output.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ));
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
