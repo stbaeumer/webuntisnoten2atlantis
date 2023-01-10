@@ -20,7 +20,7 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public string Gesamtpunkte { get; internal set; }
         public string Bemerkung { get; internal set; }
-        
+
         /// <summary>
         /// Jede Leistung in Webuntis wird von einer Lehrkraft eingetragen. 
         /// Nur Lehrkräfte, die eine Leistung eintragen, bekommen einen Termin für die Zeugniskonferenz gesetzt.
@@ -79,7 +79,7 @@ namespace webuntisnoten2atlantis
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -178,8 +178,8 @@ namespace webuntisnoten2atlantis
 
             return null;
         }
-                
-        internal void Zuordnen(List<Leistung> aL, string beschreibung)
+
+        internal void AtlantisLeistungZuordnenUndQueryBauen(List<Leistung> aL, string beschreibung)
         {
             // Nur, wenn es ein korrespondierendes Atlantis-Fach gibt
 
@@ -187,15 +187,16 @@ namespace webuntisnoten2atlantis
             {
                 this.Beschreibung = (aL[0].Nachname.PadRight(10)).Substring(0, 6) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Fach.PadRight(5) + "|" + beschreibung;
 
-                // Falls Neu oder Update
+                // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
                 if (
                     (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)                                  // Neu
                     || (aL[0].Gesamtnote != Gesamtnote                                                                                 // UPD 
-                    || (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P") || (aL[0].Tendenz != Tendenz && aL[0].EinheitNP =="P")))     // UPD Gym
+                    || (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P") || (aL[0].Tendenz != Tendenz && aL[0].EinheitNP == "P"))     // UPD Gym
+                   )
                 {
                     this.Query = "UPDATE noten_einzel SET ";
-                    
+
                     // Falls Neu
 
                     if (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)
@@ -205,7 +206,7 @@ namespace webuntisnoten2atlantis
                         if (Gesamtpunkte != null && aL[0].EinheitNP == "P")
                         {
                             this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
-                            this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) +"'" + ", ";
+                            this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
                         }
                         else
                         {
@@ -214,7 +215,7 @@ namespace webuntisnoten2atlantis
                         if (Gesamtnote != null)
                         {
                             this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
-                            this.Query += "s_note='" + Gesamtnote +"'" + ", ";
+                            this.Query += "s_note='" + Gesamtnote + "'" + ", ";
                         }
                         else
                         {
@@ -223,7 +224,7 @@ namespace webuntisnoten2atlantis
                         if (Tendenz != null && aL[0].EinheitNP == "P")
                         {
                             this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
-                            this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
+                            this.Query += "s_tendenz='" + Tendenz + "'" + ", ";
                         }
                         else
                         {
@@ -232,7 +233,7 @@ namespace webuntisnoten2atlantis
                     }
                     else // Falls Update
                     {
-                        if (aL[0].Gesamtnote != Gesamtnote || (aL[0].Gesamtpunkte != Gesamtpunkte && EinheitNP=="P") || (aL[0].Tendenz != Tendenz && EinheitNP == "P"))
+                        if (aL[0].Gesamtnote != Gesamtnote || (aL[0].Gesamtpunkte != Gesamtpunkte && EinheitNP == "P") || (aL[0].Tendenz != Tendenz && EinheitNP == "P"))
                         {
                             this.Beschreibung = "UPD|" + this.Beschreibung;
 
@@ -248,7 +249,7 @@ namespace webuntisnoten2atlantis
                             if (aL[0].Gesamtnote != Gesamtnote)
                             {
                                 this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
-                                this.Query += "s_note='" + Gesamtnote +"'" + ", ";
+                                this.Query += "s_note='" + Gesamtnote + "'" + ", ";
                             }
                             else
                             {
@@ -257,7 +258,7 @@ namespace webuntisnoten2atlantis
                             if (aL[0].Tendenz != Tendenz && aL[0].EinheitNP == "P")
                             {
                                 this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
-                                this.Query += "s_tendenz='" + Tendenz +"'" + ", ";
+                                this.Query += "s_tendenz='" + Tendenz + "'" + ", ";
                             }
                             else
                             {
@@ -277,7 +278,7 @@ namespace webuntisnoten2atlantis
                     this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz);
                     this.Query += "/* Keine Änderung.";
                 }
-            }            
+            }
         }
     }
 }

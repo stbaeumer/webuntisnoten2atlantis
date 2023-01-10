@@ -11,7 +11,7 @@ namespace webuntisnoten2atlantis
     {
         public static Leistungen Defizitleistungen { get; internal set; }
 
-        public static List<string> Output { get; internal set; }
+        public static List<string> SqlZeilen { get; internal set; }
         public static string HzJz { get; internal set; }
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
 
@@ -19,14 +19,14 @@ namespace webuntisnoten2atlantis
         {
             if (message.ToLower().Contains("zu"))
             {
-                Output.Insert(index, "");
+                SqlZeilen.Insert(index, "");
             }
 
-            Output.Insert(index, "/* " + message.PadRight(97) + " */");
+            SqlZeilen.Insert(index, "/* " + message.PadRight(97) + " */");
             
             if (message.ToLower().Contains("zu"))
             {
-                Output.Insert(index, "");
+                SqlZeilen.Insert(index, "");
             }            
         }
 
@@ -77,7 +77,7 @@ namespace webuntisnoten2atlantis
 
         public static void AusgabeSchreiben(string text, List<string> klassen)
         {
-            Global.Output.Add("");
+            Global.SqlZeilen.Add("");
             int z = 0;
 
             do
@@ -101,7 +101,7 @@ namespace webuntisnoten2atlantis
                 zeile = zeile.TrimEnd(' ');
 
                 string o = "/* " + zeile.TrimEnd(' ');
-                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
 
             } while (z < text.Split(' ').Count());
 
@@ -137,7 +137,7 @@ namespace webuntisnoten2atlantis
                 zeile = zeile.TrimEnd(' ');
                 int s = zeile.Length;
                 string o = "/* " + zeile.TrimEnd(',');
-                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
 
             } while (z < klassen.Count);
         }

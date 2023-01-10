@@ -1,4 +1,4 @@
-﻿// Published under the terms of GPLv3 Stefan Bäumer 2022.
+﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,6 @@ using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-
 
 namespace webuntisnoten2atlantis
 {
@@ -26,13 +25,12 @@ namespace webuntisnoten2atlantis
         {
             var width = Console.WindowWidth;
             var height = Console.WindowHeight;
-            Console.SetWindowSize(width, height*2);
-            Global.Output = new List<string>();
+            Console.SetWindowSize(width, height * 2);
+            Global.SqlZeilen = new List<string>();
 
             try
             {
-
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20221224");
+                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230108");
                 Console.WriteLine("=====================================================================================================");
                 Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
                 Console.WriteLine(" ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
@@ -47,14 +45,14 @@ namespace webuntisnoten2atlantis
                 Global.HzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 string targetPath = SetTargetPath();
-                
+
                 string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
-                var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "AbsenceTimesTotal" + User + ".CSV");
+                var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal" + User + ".CSV");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
-                var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "MarksPerLesson" + User + ".CSV");
-                
+                var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "_MarksPerLesson" + User + ".CSV");
+
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
-                
+
                 Leistungen webuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
 
                 var interessierendeKlassen = new List<string>();
@@ -83,12 +81,10 @@ namespace webuntisnoten2atlantis
                 atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, webuntisLeistungen);
                 //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
 
-                webuntisLeistungen.ZielfächerZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);                
+                webuntisLeistungen.ZielfächerZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
 
                 // Add-Delete-Update
 
-                //webuntisLeistungen.Add(atlantisLeistungen);
-                //atlantisLeistungen.Delete(webuntisLeistungen, interessierendeKlassen, AktSj);
                 webuntisLeistungen.Update(atlantisLeistungen);
 
                 if (targetAbsenceTimesTotal != null)
@@ -99,15 +95,15 @@ namespace webuntisnoten2atlantis
                 }
                 else
                 {
-                    int outputIndex = Global.Output.Count();
+                    int outputIndex = Global.SqlZeilen.Count();
                     Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
                 }
 
                 string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
                 atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
-                
-                Console.WriteLine(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");                
+
+                Console.WriteLine(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
                 OpenFiles(new List<string> { targetSql });
 
                 Console.WriteLine("  -----------------------------------------------------------------");
@@ -164,7 +160,7 @@ namespace webuntisnoten2atlantis
             using (var sw = new StreamWriter(targetfile))
             {
                 string line;
-                int zeile = 0;                
+                int zeile = 0;
 
                 while ((line = sr.ReadLine()) != null)
                 {
@@ -179,14 +175,14 @@ namespace webuntisnoten2atlantis
                         }
                     }
 
-                    if (relevanteZeile || zeile == 0) 
+                    if (relevanteZeile || zeile == 0)
                     {
                         sw.WriteLine(line);
                     }
                     zeile++;
                 }
             }
-            
+
             Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(26, '.'));
         }
 
@@ -218,7 +214,7 @@ namespace webuntisnoten2atlantis
                 {
                     Console.WriteLine("   1. Administration > Export klicken");
                     Console.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
-                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");                    
+                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
                     Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
                 }
                 Console.WriteLine(" ");
@@ -339,7 +335,9 @@ namespace webuntisnoten2atlantis
                 Properties.Settings.Default.Save();
 
             } while (Properties.Settings.Default.DBUser == "");
+
             Console.WriteLine("");
+
             do
             {
                 Console.WriteLine(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");

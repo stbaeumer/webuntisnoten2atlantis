@@ -98,9 +98,7 @@ namespace webuntisnoten2atlantis
 
         internal string DialogZurÄnderungAufrufen(Leistungen atlantisleistungen, string x)
         {
-            int n;
-
-            if (int.TryParse(x, out n))
+            if (int.TryParse(x, out int n))
             {
                 var eingabe = int.Parse(x);
 

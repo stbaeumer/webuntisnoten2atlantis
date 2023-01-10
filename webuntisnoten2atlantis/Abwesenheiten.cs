@@ -32,8 +32,8 @@ namespace webuntisnoten2atlantis
                             abwesenheit.StudentId = Convert.ToInt32(x[2]);
                             abwesenheit.Name = x[3] + " " + x[4];
                             abwesenheit.Klasse = x[5];
-                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[7])/45;
-                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8])/45; // unenentschuldigt oder offen
+                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[7]) / 45;
+                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8]) / 45; // unenentschuldigt oder offen
 
                             if (interessierendeKlassen.Contains(abwesenheit.Klasse))
                             {
@@ -52,7 +52,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
                 Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(Global.Output.Count(), "Webuntisabwesenheiten: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+                Global.PrintMessage(Global.SqlZeilen.Count(), "Webuntisabwesenheiten: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
             }
         }
 
@@ -64,7 +64,7 @@ namespace webuntisnoten2atlantis
 
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.PrintMessage(Global.Output.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ));
+                Global.PrintMessage(Global.SqlZeilen.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ));
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -119,10 +119,8 @@ DBA.schueler.name_2 ASC ", connection);
                 throw ex;
             }
             Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(Global.Output.Count,"Atlantisabwesenheiten: ".PadRight(45,'.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+            Global.PrintMessage(Global.SqlZeilen.Count, "Atlantisabwesenheiten: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
         }
-
-        
 
         public Abwesenheiten()
         {
@@ -130,14 +128,14 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            int outputIndex = Global.Output.Count();
-            Console.Write((" Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));            
+            int outputIndex = Global.SqlZeilen.Count();
+            Console.Write((" Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));
             int i = 0;
 
             try
             {
                 foreach (var a in this)
-                {  
+                {
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
                              where webuntisAbwesenheit.StudentId == a.StudentId
                              where webuntisAbwesenheit.Klasse == a.Klasse
@@ -147,7 +145,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesend.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesend.ToString().PadRight(3) + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -162,7 +160,7 @@ DBA.schueler.name_2 ASC ", connection);
 
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -178,14 +176,14 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            int outputIndex = Global.Output.Count();
+            int outputIndex = Global.SqlZeilen.Count();
             Console.Write((" Fehlzeiten in Atlantis updaten").PadRight(71, '.'));
             int i = 0;
 
             try
             {
                 foreach (var a in this)
-                {                    
+                {
                     var w = (from webuntisAbwesenheit in webuntisAbwesenheiten
                              where webuntisAbwesenheit.Klasse == a.Klasse
                              where webuntisAbwesenheit.StudentId == a.StudentId
@@ -195,7 +193,7 @@ DBA.schueler.name_2 ASC ", connection);
                              select webuntisAbwesenheit).FirstOrDefault();
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->" + w.StundenAbwesend.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->" + w.StundenAbwesend.ToString().PadLeft(3) + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_anzahl=" + w.StundenAbwesend.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -207,10 +205,10 @@ DBA.schueler.name_2 ASC ", connection);
                              where a.StundenAbwesendUnentschuldigt != 0
                              where webuntisAbwesenheit.StundenAbwesendUnentschuldigt != 0
                              where a.StundenAbwesendUnentschuldigt != webuntisAbwesenheit.StundenAbwesendUnentschuldigt
-                             select webuntisAbwesenheit).FirstOrDefault();                   
+                             select webuntisAbwesenheit).FirstOrDefault();
                     if (w != null)
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesendUnentschuldigt.ToString().PadLeft(3)+"->"+ w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|" + a.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "->" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -225,8 +223,8 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            int outputIndex = Global.Output.Count();
-            Console.Write((" Fehlzeiten in Atlantis löschen").PadRight(71, '.'));            
+            int outputIndex = Global.SqlZeilen.Count();
+            Console.Write((" Fehlzeiten in Atlantis löschen").PadRight(71, '.'));
             int i = 0;
 
             try
@@ -234,23 +232,23 @@ DBA.schueler.name_2 ASC ", connection);
                 foreach (var a in this)
                 {
                     if ((from w in webuntisAbwesenheiten
-                          where w.StudentId == a.StudentId
-                          where w.Klasse == a.Klasse
-                          where a.StundenAbwesend > 0
-                          where w.StundenAbwesend == 0
-                          select w).Any())
+                         where w.StudentId == a.StudentId
+                         where w.Klasse == a.Klasse
+                         where a.StundenAbwesend > 0
+                         where w.StundenAbwesend == 0
+                         select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) +"->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_anzahl=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                     if ((from w in webuntisAbwesenheiten
-                          where w.StudentId == a.StudentId
-                          where w.Klasse == a.Klasse
-                          where a.StundenAbwesendUnentschuldigt > 0
-                          where w.StundenAbwesendUnentschuldigt == 0
-                          select w).Any())
+                         where w.StudentId == a.StudentId
+                         where w.Klasse == a.Klasse
+                         where a.StundenAbwesendUnentschuldigt > 0
+                         where w.StundenAbwesendUnentschuldigt == 0
+                         select w).Any())
                     {
-                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0,Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
+                        UpdateAbwesenheit(a.Klasse.PadRight(6) + "|" + a.StundenAbwesend.ToString().PadLeft(3) + "->0" + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + "(" + a.HzJz + ")" + a.Beschreibung, "UPDATE noten_kopf SET fehlstunden_ents_unents=0 WHERE nok_id=" + a.NotenkopfId + ";");
                         i++;
                     }
                 }
@@ -268,7 +266,7 @@ DBA.schueler.name_2 ASC ", connection);
             try
             {
                 string o = updateQuery + "/* " + message;
-                Global.Output.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
             }
             catch (Exception ex)
             {
