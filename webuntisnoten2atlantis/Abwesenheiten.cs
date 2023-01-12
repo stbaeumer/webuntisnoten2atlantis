@@ -17,8 +17,6 @@ namespace webuntisnoten2atlantis
             {
                 string überschrift = reader.ReadLine();
 
-                Console.Write(" Abwesenheiten aus Webuntis ".PadRight(71, '.'));
-
                 while (true)
                 {
                     string line = reader.ReadLine();
@@ -51,8 +49,7 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(Global.SqlZeilen.Count(), "Webuntisabwesenheiten: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+                Global.AufConsoleSchreiben("Abwesenheiten aus Webuntis ".PadRight(110, '.') + this.Count.ToString().PadLeft(4));                
             }
         }
 
@@ -60,11 +57,9 @@ namespace webuntisnoten2atlantis
         {
             try
             {
-                Console.Write(" Abwesenheiten aus Atlantis ".PadRight(71, '.'));
-
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.PrintMessage(Global.SqlZeilen.Count(), ("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(75, '.') + " " + typ));
+                Global.AufConsoleSchreiben("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(90, '.') + " " + typ);
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -118,8 +113,7 @@ DBA.schueler.name_2 ASC ", connection);
             {
                 throw ex;
             }
-            Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(Global.SqlZeilen.Count, "Atlantisabwesenheiten: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+            Global.AufConsoleSchreiben("Abwesenheiten aus Atlantis ".PadRight(110, '.') + this.Count.ToString().PadLeft(4));            
         }
 
         public Abwesenheiten()
@@ -129,7 +123,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.SqlZeilen.Count();
-            Console.Write((" Fehlzeiten in Atlantis einfügen").PadRight(71, '.'));
+            
             int i = 0;
 
             try
@@ -165,7 +159,7 @@ DBA.schueler.name_2 ASC ", connection);
                     }
                 }
 
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                Global.AufConsoleSchreiben(("Fehlzeiten in Atlantis einfügen").PadRight(110, '.') + i.ToString().PadLeft(4));
                 Global.PrintMessage(outputIndex, ("Neu anzulegende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
@@ -177,7 +171,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.SqlZeilen.Count();
-            Console.Write((" Fehlzeiten in Atlantis updaten").PadRight(71, '.'));
+            
             int i = 0;
 
             try
@@ -212,8 +206,7 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(outputIndex, ("Zu änderende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+                Global.AufConsoleSchreiben("Fehlzeiten in Atlantis updaten".PadRight(110, '.') + i.ToString().PadLeft(4));                
             }
             catch (Exception ex)
             {
@@ -223,8 +216,7 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            int outputIndex = Global.SqlZeilen.Count();
-            Console.Write((" Fehlzeiten in Atlantis löschen").PadRight(71, '.'));
+            int outputIndex = Global.SqlZeilen.Count();            
             int i = 0;
 
             try
@@ -252,8 +244,7 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-                Global.PrintMessage(outputIndex, ("Zu löschende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+                Global.AufConsoleSchreiben("Fehlzeiten in Atlantis löschen".PadRight(110, '.') + i.ToString().PadLeft(4));                
             }
             catch (Exception ex)
             {

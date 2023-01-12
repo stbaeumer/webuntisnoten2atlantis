@@ -28,15 +28,12 @@ namespace webuntisnoten2atlantis
             Console.SetWindowSize(width, height * 2);
             Global.SqlZeilen = new List<string>();
 
+            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230108");
+            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
+            Global.AufConsoleSchreiben("ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis nach Atlantis übergeben!");
+            
             try
-            {
-                Console.WriteLine(" Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230108");
-                Console.WriteLine("=====================================================================================================");
-                Console.WriteLine(" *Webuntisnoten2Atlantis* erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
-                Console.WriteLine(" ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Ge-");
-                Console.WriteLine(" samtnote von Webuntis nach Atlantis übergeben!");
-                Console.WriteLine("=====================================================================================================");
-
+            {   
                 if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")
                 {
                     Settings();
@@ -65,6 +62,7 @@ namespace webuntisnoten2atlantis
                 RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
 
                 Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, webuntisLeistungen);
+
                 Abwesenheiten atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
                 Abwesenheiten webuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen);
 
@@ -85,7 +83,7 @@ namespace webuntisnoten2atlantis
 
                 // Add-Delete-Update
 
-                webuntisLeistungen.Update(atlantisLeistungen);
+                string hinweis = webuntisLeistungen.Update(atlantisLeistungen);
 
                 if (targetAbsenceTimesTotal != null)
                 {
@@ -103,18 +101,27 @@ namespace webuntisnoten2atlantis
                 atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
 
-                Console.WriteLine(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
+                Global.AufConsoleSchreiben(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
                 OpenFiles(new List<string> { targetSql });
 
-                Console.WriteLine("  -----------------------------------------------------------------");
-                System.Threading.Thread.Sleep(6000);
+                Global.AufConsoleSchreiben("  -----------------------------------------------------------------");
+
+                if (hinweis != "")
+                {
+                    Global.AufConsoleSchreiben("");
+                    Global.AufConsoleSchreiben(hinweis);
+
+                }
+                
+                //System.Threading.Thread.Sleep(6000);
+                Console.ReadKey();
                 Environment.Exit(0);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ooops! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
-                Console.WriteLine("");
-                Console.WriteLine(ex);
+                Global.AufConsoleSchreiben("Ooops! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
+                Global.AufConsoleSchreiben("");
+                Global.AufConsoleSchreiben(ex.Message);
                 Console.ReadKey();
                 Environment.Exit(0);
             }
@@ -152,8 +159,6 @@ namespace webuntisnoten2atlantis
 
         private static void RelevanteDatensätzeAusCsvFiltern(string sourceFile, string targetfile, List<string> interessierendeKlassen)
         {
-            Console.Write((" Datensätze ausgewählter Klassen in " + Path.GetFileName(targetfile)).PadRight(75, '.'));
-
             int anzahlZeilen = 0;
 
             using (var sr = new StreamReader(sourceFile))
@@ -183,7 +188,7 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            Console.WriteLine((" " + anzahlZeilen.ToString()).PadLeft(26, '.'));
+            Global.AufConsoleSchreiben(("Datensätze ausgewählter Klassen in " + Path.GetFileName(targetfile)).PadRight(110, '.') + anzahlZeilen.ToString().PadLeft(4));
         }
 
         private static string CheckFile(string user, string kriterium)
@@ -192,38 +197,38 @@ namespace webuntisnoten2atlantis
 
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
             {
-                Console.WriteLine("");
-                Console.WriteLine(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
-                Console.WriteLine(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
+                Global.AufConsoleSchreiben("");
+                Global.AufConsoleSchreiben(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
+                Global.AufConsoleSchreiben(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("MarksPerLesson"))
                 {
-                    Console.WriteLine("   1. Klassenbuch > Berichte klicken");
-                    Console.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
-                    Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-                    Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-                    Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-                    Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
-                    Console.WriteLine(" ");
-                    Console.WriteLine(" ENTER beendet das Programm.");
+                    Global.AufConsoleSchreiben("   1. Klassenbuch > Berichte klicken");
+                    Global.AufConsoleSchreiben("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
+                    Global.AufConsoleSchreiben("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+                    Global.AufConsoleSchreiben("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+                    Global.AufConsoleSchreiben("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+                    Global.AufConsoleSchreiben("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                    Global.AufConsoleSchreiben(" ");
+                    Global.AufConsoleSchreiben(" ENTER beendet das Programm.");
                     Console.ReadKey();
                     Environment.Exit(0);
                 }
 
                 if (kriterium.Contains("AbsenceTimesTotal"))
                 {
-                    Console.WriteLine("   1. Administration > Export klicken");
-                    Console.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
-                    Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-                    Console.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
+                    Global.AufConsoleSchreiben("   1. Administration > Export klicken");
+                    Global.AufConsoleSchreiben("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
+                    Global.AufConsoleSchreiben("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                    Global.AufConsoleSchreiben("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
                 }
-                Console.WriteLine(" ");
+                Global.AufConsoleSchreiben(" ");
                 sourceFile = null;
             }
 
             if (sourceFile != null)
             {
-                Console.WriteLine(" Gefundene Datei: " + Path.GetFileName(sourceFile).PadRight(36, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
+                Global.AufConsoleSchreiben("Ausgewertete Datei: " + Path.GetFileName(sourceFile).PadRight(47, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
             return sourceFile;
@@ -255,14 +260,14 @@ namespace webuntisnoten2atlantis
                         {
                             if (string.IsNullOrWhiteSpace(Passwort))
                             {
-                                Console.WriteLine("");
-                                Console.WriteLine("Empty value not allowed.");
+                                Global.AufConsoleSchreiben("");
+                                Global.AufConsoleSchreiben("Empty value not allowed.");
                                 CheckPassword(EnterText);
                                 break;
                             }
                             else
                             {
-                                Console.WriteLine("");
+                                Global.AufConsoleSchreiben("");
                                 break;
                             }
                         }
@@ -329,19 +334,19 @@ namespace webuntisnoten2atlantis
                 catch (Exception)
                 {
                     Properties.Settings.Default.DBUser = "";
-                    Console.WriteLine("     Der Datenbankuser scheint nicht zu funktionieren. Flasche Eingabe? Ist Atlantis auf diesem Rechner nicht installiert?");
+                    Global.AufConsoleSchreiben("     Der Datenbankuser scheint nicht zu funktionieren. Flasche Eingabe? Ist Atlantis auf diesem Rechner nicht installiert?");
                 }
 
                 Properties.Settings.Default.Save();
 
             } while (Properties.Settings.Default.DBUser == "");
 
-            Console.WriteLine("");
+            Global.AufConsoleSchreiben("");
 
             do
             {
-                Console.WriteLine(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");
-                Console.WriteLine("    Typischerweise beginnt die Organisationsform der Teilzeitklassen in Atlantis mit 'A'.");
+                Global.AufConsoleSchreiben(" 2. Teil- und Vollzeitklassen lassen sich in Atlantis über die Organisationsform (=Anlage) unterscheiden.");
+                Global.AufConsoleSchreiben("    Typischerweise beginnt die Organisationsform der Teilzeitklassen in Atlantis mit 'A'.");
                 Console.Write("    Wie lautet der Anfangsbuchstabe der Organisationsform Ihrer Teilzeitklassen? " + (Properties.Settings.Default.Klassenart == "" ? "" : "[ " + Properties.Settings.Default.Klassenart + " ]  "));
                 var dbuser = Console.ReadLine();
 
@@ -358,12 +363,12 @@ namespace webuntisnoten2atlantis
 
             } while (Properties.Settings.Default.Klassenart == "");
 
-            Console.WriteLine("");
+            Global.AufConsoleSchreiben("");
 
             do
             {
-                Console.WriteLine(" 3. Bei 3,5-jährigen Teilzeit-Bildungsgängen müssen zum Halbjahr im 4.Jahrgang die alten Noten geholt werden.");
-                Console.WriteLine("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");
+                Global.AufConsoleSchreiben(" 3. Bei 3,5-jährigen Teilzeit-Bildungsgängen müssen zum Halbjahr im 4.Jahrgang die alten Noten geholt werden.");
+                Global.AufConsoleSchreiben("    Für alle anderen Teilzeitklassen werden die Noten am Ende des 3.Jahrgangs geholt.");
                 Console.Write("    Wie lauten die Anfangsbuchstaben oder Klassennamen der 3,5-Jährigen? " + (Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben == "" ? "" : "[ " + Properties.Settings.Default.AbschlussklassenAnfangsbuchstaben + " ]  "));
 
                 var aks = Console.ReadLine();
@@ -407,7 +412,7 @@ namespace webuntisnoten2atlantis
             {
                 do
                 {
-                    Console.WriteLine(" Wo sollen die Dateien gespeichert werden? [ " + pfad + " ]");
+                    Global.AufConsoleSchreiben(" Wo sollen die Dateien gespeichert werden? [ " + pfad + " ]");
                     pfad = Console.ReadLine();
                     if (pfad == "")
                     {
@@ -421,7 +426,7 @@ namespace webuntisnoten2atlantis
                     catch (Exception)
                     {
 
-                        Console.WriteLine("Der Pfad " + pfad + " kann nicht angelegt werden.");
+                        Global.AufConsoleSchreiben("Der Pfad " + pfad + " kann nicht angelegt werden.");
                     }
 
                 } while (!Directory.Exists(pfad));

@@ -50,7 +50,7 @@ namespace webuntisnoten2atlantis
 
             foreach (var quellklasse in (from z in atlantisleistungen select z.Klasse).Distinct().ToList())
             {
-                Console.WriteLine(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
+                Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
 
                 foreach (var atlantisfach in (from a in atlantisleistungen
                                               where a.Klasse == quellklasse
@@ -64,7 +64,7 @@ namespace webuntisnoten2atlantis
                                     where t.Zielfach == atlantisfach 
                                     select t).FirstOrDefault(); 
                     
-                    Console.WriteLine( i.ToString().PadLeft(3) + ". " + (quellklasse + "|" + atlantisfach).PadRight(13) + (zielLeistung != null ? " <<<<= " + dieseLeistung.Fach : "")); i++;
+                    Global.AufConsoleSchreiben( i.ToString().PadLeft(3) + ". " + (quellklasse + "|" + atlantisfach).PadRight(13) + (zielLeistung != null ? " <<<<= " + dieseLeistung.Fach : "")); i++;
                     alle.Add(atlantisfach);
                 }
             }
@@ -86,12 +86,12 @@ namespace webuntisnoten2atlantis
         {
             if (this.Count > 0)
             {
-                Console.WriteLine("");
-                Console.WriteLine(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
+                Global.AufConsoleSchreiben("");
+                Global.AufConsoleSchreiben(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
 
                 for (int i = 0; i < this.Count; i++)
                 {
-                    Console.WriteLine((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
+                    Global.AufConsoleSchreiben((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
                 }
             }
         }
@@ -109,7 +109,7 @@ namespace webuntisnoten2atlantis
                     var xx = Console.ReadLine();
                     xx = xx.ToUpper();
 
-                    Console.WriteLine("");
+                    Global.AufConsoleSchreiben("");
 
                     if ((from a in atlantisleistungen where a.Klasse == this[eingabe - 1].Quellklasse where a.Fach == xx select a).Any() || xx == "")
                     {
@@ -117,17 +117,17 @@ namespace webuntisnoten2atlantis
 
                         int i = 0;
 
-                        Console.WriteLine(" Die Zuordnung des Faches " + xx + " wurde " + i + "x erfolgreich vorgenommen.");
+                        Global.AufConsoleSchreiben(" Die Zuordnung des Faches " + xx + " wurde " + i + "x erfolgreich vorgenommen.");
 
                         if (xx == "")
                         {
                             this[eingabe - 1].Zielfach = null;
-                            Console.WriteLine("Die Zuordnung wird entfernt.");
+                            Global.AufConsoleSchreiben("Die Zuordnung wird entfernt.");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
+                        Global.AufConsoleSchreiben("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
 
                         var verschiedeneFächer = (from a in atlantisleistungen
                                                   where a.Klasse == this[eingabe - 1].Quellklasse
@@ -139,10 +139,10 @@ namespace webuntisnoten2atlantis
 
                             if ((i + 1) % 7 == 0)
                             {
-                                Console.WriteLine("");
+                                Global.AufConsoleSchreiben("");
                             }
                         }
-                        Console.WriteLine("");
+                        Global.AufConsoleSchreiben("");
                     }
                 }
             }

@@ -24,7 +24,7 @@ namespace webuntisnoten2atlantis
             {
                 string überschrift = reader.ReadLine();
 
-                Console.Write(" Leistungsdaten aus Webuntis ".PadRight(71, '.'));
+                //Console.Write(" Leistungsdaten aus Webuntis ".PadRight(71, '.'));
 
                 int i = 1;
 
@@ -72,8 +72,8 @@ namespace webuntisnoten2atlantis
                                 leistung.Klasse = x[2];
                                 leistung.Fach = x[3];
                                 leistung.Bemerkung = x[6];
-                                Console.WriteLine("[!] Achtung: In den Zeilen " + (i - 1) + "-" + i + " hat vermutlich die Lehrkraft eine Bemerkung mit einem Zeilen-");
-                                Console.Write("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ... ");
+                                //Console.WriteLine("[!] Achtung: In den Zeilen " + (i - 1) + "-" + i + " hat vermutlich die Lehrkraft eine Bemerkung mit einem Zeilen-");
+                                //Console.Write("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ... ");
                             }
 
                             if (x.Length == 4)
@@ -82,7 +82,7 @@ namespace webuntisnoten2atlantis
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[2]);
                                 leistung.Gesamtpunkte = x[3].Split('.')[0];
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
-                                Console.WriteLine("hat geklappt.\n");
+                                Global.AufConsoleSchreiben("[!] Achtung: Zeilen " + ((i - 1) + " - " + i).PadRight(7) + ": Lehrer hat Bemerkung mit einem Zeilenumbruch eingebaut. ... Korrigiert.");
 
                                 if (leistungen.LeistungHinzufügen(leistung))
                                 {
@@ -92,7 +92,7 @@ namespace webuntisnoten2atlantis
 
                             if (x.Length < 4)
                             {
-                                Console.WriteLine("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
+                                Global.AufConsoleSchreiben("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
                                 Console.ReadKey();
                                 //OpenFiles(new List<string>() { targetMarksPerLesson });
                                 throw new Exception("\n\n[!] MarksPerLesson.CSV: In der Zeile " + i + " stimmt die Anzahl der Spalten nicht. Das kann passieren, wenn z. B. die Lehrkraft bei einer Bemerkung einen Umbruch eingibt. Mit Suchen & Ersetzen kann die Datei MarksPerLesson.CSV korrigiert werden.");
@@ -109,7 +109,7 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                Console.WriteLine((" " + leistungen.Count.ToString()).PadLeft(30, '.'));                
+                Global.AufConsoleSchreiben("Leistungsdaten aus Webuntis ".PadRight(110, '.') + leistungen.Count.ToString().PadLeft(4));                
             }
             this.AddRange((from l in leistungen select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
         }
@@ -137,7 +137,7 @@ namespace webuntisnoten2atlantis
                         }
                         else
                         {
-                            Console.WriteLine("ACHTUNG: Unterschiedliche Noten im selben Fach bei Schüler " + leistung.Name + "(" + leistung.Fach + ")");
+                            Global.AufConsoleSchreiben("ACHTUNG: Unterschiedliche Noten im selben Fach bei Schüler " + leistung.Name + "(" + leistung.Fach + ")");
                             Console.ReadKey();
                         }
                     }
@@ -148,8 +148,6 @@ namespace webuntisnoten2atlantis
 
         internal void WidersprechendeGesamtnotenKorrigieren(List<string> interessierendeKlassen)
         {
-            Console.Write((" Sich widersprechende Gesamtnoten werden korrigiert ").PadRight(71, '.'));
-
             List<string> liste = new List<string>();
 
             foreach (var ik in interessierendeKlassen)
@@ -195,7 +193,7 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            Console.WriteLine((" " + liste.Count.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben("Sich widersprechende Gesamtnoten werden korrigiert ".PadRight(110, '.') + liste.Count.ToString().PadLeft(4));
 
             if (liste.Count() > 0)
             {
@@ -382,12 +380,12 @@ namespace webuntisnoten2atlantis
 
                     if (webuntisLeistung.Query == null && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(webuntisLeistung.Klasse + webuntisLeistung.Fach))
                     {
-                        Console.WriteLine(" Das Webuntis-Fach **" + webuntisLeistung.Fach + "** kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell vornehmen:");
+                        Global.AufConsoleSchreiben(" Das Webuntis-Fach **" + webuntisLeistung.Fach + "** kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell vornehmen:");
 
                         var alleZulässigenAtlantisZielfächer = gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(webuntisLeistung, atlantisLeistungen, aktuellesSchuljahr);
 
-                        Console.WriteLine(" Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell ändern/vornehmen?");
-                        Console.WriteLine(" Bitte Ziffer 0 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben oder ENTER falls keine Änderung gewünscht ist: ");
+                        Global.AufConsoleSchreiben(" Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell ändern/vornehmen?");
+                        Global.AufConsoleSchreiben(" Bitte Ziffer 0 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben oder ENTER falls keine Änderung gewünscht ist: ");
 
                         string x = "";
 
@@ -478,7 +476,7 @@ namespace webuntisnoten2atlantis
                             }
                             else
                             {
-                                Console.WriteLine("   Es wurde keine Änderung vorgenommen.");
+                                Global.AufConsoleSchreiben("   Es wurde keine Änderung vorgenommen.");
                             }
                         }
                     }
@@ -492,9 +490,8 @@ namespace webuntisnoten2atlantis
                     this[i].Beschreibung += "geholt vom " + this[i].Konferenzdatum.ToShortDateString();
                 }
             }
-
-            Console.Write((" Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ").PadRight(81, '.'));
-            Console.WriteLine((" " + this.Count.ToString()).PadLeft(20, '.'));
+                        
+            Global.AufConsoleSchreiben("Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ".PadRight(110, '.') + this.Count.ToString().PadLeft(4));
         }
             
         internal void FehlendeSchülerInAtlantis(Leistungen atlantisLeistungen)
@@ -577,8 +574,6 @@ namespace webuntisnoten2atlantis
 
             // Alle interessierenden Klassen werden durchlaufen ...
 
-            Console.Write((" Klassen mit fehlenden Zeugnisnoten ").PadRight(71, '.'));
-
             foreach (var iKlasse in interessierendeKlassen)
             {
                 // ... wenn in einer interessierenden Klasse mehr als 3 Fächer bereits Noten bekommen haben, wird angenommen, dass
@@ -603,13 +598,11 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            Console.WriteLine((" " + kl.Count.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben(("Klassen mit fehlenden Zeugnisnoten ").PadRight(110, '.') + kl.Count.ToString().PadLeft(4));
         }
 
         internal void FehlendeZeugnisbemerkungBeiStrich(Leistungen webuntisLeistungen, List<string> interessierendeKlassen)
         {
-            Console.Write((" Fehlende Zeugnisbemerkung bei Strich ").PadRight(71, '.'));
-
             List<string> fehlendeBemerkungen = new List<string>();
 
             try
@@ -652,7 +645,7 @@ namespace webuntisnoten2atlantis
                 {
                     AusgabeSchreiben("Es gibt Schüler*innen " + fehlendeBemerkungen.Count + " in Vollzeitklassen, die einen '-' in einem Nicht-Reli-Fach als Noten bekommen, ohne dass eine entsprechende Zeugnisbemerkung vorliegt:", fehlendeBemerkungen);
                 }
-                Console.WriteLine((" " + fehlendeBemerkungen.Count.ToString()).PadLeft(30, '.'));
+                Global.AufConsoleSchreiben(("Fehlende Zeugnisbemerkung bei Strich ").PadRight(110, '.') + fehlendeBemerkungen.Count.ToString().PadLeft(4));
             }
             catch (Exception ex)
             {
@@ -670,78 +663,101 @@ namespace webuntisnoten2atlantis
 
                 List<string> leistungenDieserListe = new List<string>();
 
-                Console.WriteLine("");
+                Global.AufConsoleSchreiben("");
 
-                Console.WriteLine(" Folgende Leistungen (vergangener Abschnitte) liegen vor:");
-                Console.WriteLine("");
-                Console.WriteLine("     | Klasse | Fach | Konferenzdatum | Anzahl SuS |");
-                Console.WriteLine("     |========|======|================|============|");
+                Global.AufConsoleSchreiben("Folgende Leistungen (vergangener Abschnitte) liegen vor:");
+                Global.AufConsoleSchreiben("");
+                
 
-                // Für jede interessierende Klasse ...
+                var alleVerschiedenenInteressierendenSchüler = (from t in this select t.SchlüsselExtern).Distinct().ToList();
 
-                foreach (var klasse in interessierendeKlassen)
+                var alleVerschiedenenKlassenInteressierenderSchüler = (from t in this select t.Klasse).Distinct().ToList();
+
+                var alleVerschiedenenAlteKonferenzdaten = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum)
+                                                           where xs.GeholteNote
+                                                           select xs.Konferenzdatum).Distinct().ToList();
+
+                var alleLeistungsdatenDerVergangenheit = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum).ThenBy(xs=>xs.Fach)
+                                                                       where xs.GeholteNote
+                                                                       select xs).ToList();
+
+                // Kopfzeile wird geschrieben
+
+                var xx = "Schüler|Klasse |   aktuelle Fächer      |";
+                foreach (var item in alleVerschiedenenAlteKonferenzdaten)
                 {
-                    // ... werden die aktuellen Leistungen gelistet ...
-
-                    foreach (var fach in (from l in webuntisLeistungen where l.Klasse == klasse select l.Fach).Distinct().ToList())
-                    {
-                        var anzahl = (from xs in webuntisLeistungen where xs.Fach == fach select xs).GroupBy(xs => xs.SchlüsselExtern).Count();
-
-                        Console.WriteLine("     | " + klasse.PadRight(7) + "| " + fach.PadRight(5) + "|neu aus Webuntis| " + anzahl.ToString().PadLeft(10) + " |");
-                        leistungenDieserListe.Add(klasse + "|" + fach + "|" + anzahl);
-                    }
-
-                    // Für jedes verschiedene Konferenzdatum der Vergangenheit wird ...
-
-                    var verschiedeneKonferenzdatenAlterAbschnitte = (from xs in this.OrderByDescending(xs => xs.Konferenzdatum) where xs.GeholteNote where xs.Klasse == klasse select xs.Konferenzdatum).Distinct().ToList();
-
-                    foreach (var alteKonferenzdaten in verschiedeneKonferenzdatenAlterAbschnitte)
-                    {
-                        foreach (var fach in (from l in this where l.Konferenzdatum == alteKonferenzdaten select l.Fach).Distinct().ToList())
-                        {
-                            var anzahl = (from xs in this where xs.Konferenzdatum == alteKonferenzdaten where xs.Fach == fach select xs).Count();
-
-                            // Wenn eine Leistung aktuell aus Webuntis kommt oder für ein jüngeres Konferenzdatum vorliegt, wird sie nicht gezogen
-
-                            if (!leistungenDieserListe.Contains(klasse + "|" + fach + "|" + anzahl))
-                            {
-                                foreach (var zuholendeLeistung in (from xs in this
-                                                                   where xs.Konferenzdatum == alteKonferenzdaten
-                                                                   where xs.Fach == fach
-                                                                   where xs.Klasse == webuntisLeistungen[0].Klasse
-                                                                   select xs).ToList())
-                                {                                    
-                                    zuholendeLeistung.GeholteNote = true;
-
-                                    leistungen.Add(zuholendeLeistung);
-                                    if (!leistungenDieserListe.Contains(klasse + "|" + fach + "|" + anzahl))
-                                    {
-                                        leistungenDieserListe.Add(klasse + "|" + fach + "|" + anzahl);
-                                    }
-                                }
-
-                                Console.WriteLine("     | " + webuntisLeistungen[0].Klasse.PadRight(7) + "| " + fach.PadRight(5) + "|   " + alteKonferenzdaten.ToShortDateString() + "   |    " + anzahl.ToString().PadLeft(7) + " |");
-                            }
-                        }
-                    }
+                    xx += " " + item.ToShortDateString() + "    |";
                 }
 
-                Console.WriteLine(" ");
-                string x;
+                Global.AufConsoleSchreiben(xx);
+
+                // Wenn bereits eine Leistung neueren Datums existiert, wird die alte nicht angelegt
+
+                var fachExistiertSchon = new List<string>();
+
+                // alle Schüler werden gelistet.
+
+                foreach (var schülerId in alleVerschiedenenInteressierendenSchüler)
+                {
+                    var aktuelleFächer = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Fach).Distinct().ToList();
+                    var alteFächer = (from s in this where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) select s.Fach).Distinct().ToList();
+                    var aktuelleKlasse = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Klasse).FirstOrDefault();
+
+                    var zeile = schülerId + " | " + aktuelleKlasse.PadRight(6) + "|"; ;
+
+                    foreach (var fa in aktuelleFächer)
+                    {
+                        zeile += fa + ",";
+
+                        if (!fachExistiertSchon.Contains(schülerId + fa))
+                        {
+                            fachExistiertSchon.Add(schülerId + fa);
+                        }
+                    }
+
+                    zeile = zeile.TrimEnd(',').PadRight(40) + "|";
+                                        
+                    foreach (var konferenzdatum in alleVerschiedenenAlteKonferenzdaten)
+                    {
+                        var faa = "";
+                        foreach (var fach in (from s in this where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) where konferenzdatum == s.Konferenzdatum select s.Fach).Distinct().ToList())
+                        {
+                            if (!fachExistiertSchon.Contains(schülerId + fach))
+                            {
+                                fachExistiertSchon.Add(schülerId + fach);
+                                faa += fach + ",";
+                                var l = (from s in this
+                                         where s.SchlüsselExtern == schülerId
+                                         where !aktuelleFächer.Contains(s.Fach)
+                                         where konferenzdatum == s.Konferenzdatum
+                                         where s.Fach == fach
+                                         select s).ToList();
+                                leistungen.Add(l[0]);
+                            }                            
+                        }
+                        zeile = zeile + (faa.TrimEnd(',')).PadRight(15) + "|";                        
+                    }
+                    Global.AufConsoleSchreiben(zeile);
+                }
+
+                Global.AufConsoleSchreiben(" ");
+                ConsoleKeyInfo x;
 
                 do
                 {
-                    Console.WriteLine(" ");
-                    Console.Write("\n Wenn später doch noch Noten über Webuntis eingelesen werden, werden die geholten Noten überschrieben. \n Wollen Sie die Noten aus den alten Abschnitten ziehen? (j/N) ");
-                    x = Console.ReadLine();
-                    Console.WriteLine("");
+                    Global.AufConsoleSchreiben(" ");
+                    Global.AufConsoleSchreiben("Wenn später doch noch Noten über Webuntis eingelesen werden, werden die geholten Noten überschrieben.");
+                    Global.AufConsoleSchreiben("Wollen Sie die Noten aus den alten Abschnitten ziehen? (j/N)");
+                    x = Console.ReadKey();
 
-                } while (x.ToLower() != "j" && x.ToLower() != "n" && x != "");
+                    Global.AufConsoleSchreiben(x.KeyChar.ToString());
+
+                } while (x.KeyChar.ToString() != "j" && x.KeyChar.ToString().ToLower() != "n" && x.KeyChar.ToString() != "");
 
 
                 // Für den Fall, dass die Leistungen nicht geholt werden sollen, ...
 
-                if (x.ToLower() != "j")
+                if (x.KeyChar.ToString().ToLower() != "j")
                 {
                     // ... aber zuvor schonmal geholt wurden, wird alles genullt.
                     
@@ -787,14 +803,6 @@ namespace webuntisnoten2atlantis
 
         public Leistungen(string connetionstringAtlantis, List<string> aktSj, string user, List<string> interessierendeKlassen, Leistungen alleWebuntisLeistungen)
         {
-            Global.SqlZeilen.Add("/* ************************************************************************************************* */");
-            Global.SqlZeilen.Add("/* Diese Datei enthält alle Noten und Fehlzeiten aus Webuntis. Sie können die Datei in Atlantis im-  */");
-            Global.SqlZeilen.Add("/* portieren, indem Sie sie in Atlantis unter Funktionen>SQL-Anweisung hochladen.                    */");
-            Global.SqlZeilen.Add("/* Published under the terms of GPLv3. Hoping for the best!                                          */");
-            Global.SqlZeilen.Add("/* " + (user + " " + DateTime.Now.ToString()).PadRight(97) + " */");
-            Global.SqlZeilen.Add("/* ************************************************************************************************* */");
-            Global.SqlZeilen.Add("");
-
             Global.Defizitleistungen = new Leistungen();
 
             // Es werden alle Atlantisleistungen für alle SuS gezogen.
@@ -821,15 +829,13 @@ namespace webuntisnoten2atlantis
             }
             catch (Exception)
             {
-                Console.WriteLine("Kann es sein, dass für die Auswahl keine Datensätze vorliegen?");
+                Global.AufConsoleSchreiben("Kann es sein, dass für die Auswahl keine Datensätze vorliegen?");
             }
 
             var leistungenUnsortiert = new Leistungen();
 
             try
             {
-                Console.Write((" Leistungsdaten der SuS aus den ausgewählten Klassen aus Atlantis (" + Global.HzJz + ")").PadRight(91, '.'));
-
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
@@ -918,8 +924,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                     leistung.Bereich = bereich;
                                     leistung.Geburtsdatum = theRow["dat_geburt"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["dat_geburt"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                                     leistung.Volljährig = leistung.Geburtsdatum.AddYears(18) > DateTime.Now ? false : true;
-                                    leistung.Klasse = theRow["Klasse"].ToString();
-                                    leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();
+                                    leistung.Klasse = theRow["Klasse"].ToString();                                    
+                                    leistung.Fach = theRow["Fach"] == null ? "" : theRow["Fach"].ToString();                                    
                                     leistung.Gesamtnote = theRow["Note"].ToString() == "" ? null : theRow["Note"].ToString() == "Attest" ? "A" : theRow["Note"].ToString();
                                     leistung.Gesamtpunkte_12_1 = theRow["Punkte_12_1"].ToString() == "" ? null : (theRow["Punkte_12_1"].ToString()).Split(',')[0];
                                     leistung.Gesamtpunkte_12_2 = theRow["Punkte_12_2"].ToString() == "" ? null : (theRow["Punkte_12_2"].ToString()).Split(',')[0];
@@ -983,7 +989,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine("Fehler beim Einlesen der Atlantis-Leistungsdatensätze: ENTER" + ex);
+                                Global.AufConsoleSchreiben("Fehler beim Einlesen der Atlantis-Leistungsdatensätze: ENTER" + ex);
                                 Console.ReadKey();
                             }
 
@@ -1031,13 +1037,11 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             var alleFächerDesAktuellenAbschnitts = (from l in this where (l.Konferenzdatum > DateTime.Now.AddDays(-20) || l.Konferenzdatum.Year == 1) select l.Fach).ToList();
 
-            Console.WriteLine((" " + this.Count.ToString()).PadLeft(10, '.'));
+            Global.AufConsoleSchreiben(("Leistungsdaten der SuS aus den ausgewählten Klassen aus Atlantis (" + Global.HzJz + ") ").PadRight(110, '.') + this.Count.ToString().PadLeft(4));
 
             var xx = (from l in this where l.GeholteNote select l).Count();
 
-            Console.WriteLine(" ... davon Leistungsdaten aus abgeschlossenen Fächern alter Abschnitte:" + (" " + xx.ToString()).PadLeft(23, '.'));
-
-            Global.PrintMessage(Global.SqlZeilen.Count(), "Atlantisleistungen: ".PadRight(45, '.') + (" " + this.Count.ToString()).PadLeft(45, '.'));
+            Global.AufConsoleSchreiben((" ... davon Leistungsdaten aus abgeschlossenen Fächern alter Abschnitte ").PadRight(110,'.') + xx.ToString().PadLeft(4));            
         }
 
         private bool AtlantisLeistungZiehen(Leistung leistung)
@@ -1202,12 +1206,11 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 //    }
                 //}
             }
-            Console.WriteLine((" " + i).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben((" " + i).PadLeft(30, '.'));
         }
 
         internal void BindestrichfächerZuordnen(Leistungen atlantisLeistungen)
-        {
-            Console.Write((" Bindestrichfächer zuordnen ").PadRight(71, '.'));
+        {   
             int i = 0;
 
             // Bei Webuntis-Bindestrich-Fächern (z.B. VEF-GUP) 
@@ -1238,12 +1241,11 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     }
                 }
             }
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben("Bindestrichfächer zuordnen ".PadRight(110, '.') + i.ToString().PadLeft(4));
         }
 
         internal void ReligionsabwählerBehandeln(Leistungen atlantisLeistungen)
-        {
-            Console.Write((" Religionsabwähler mit '-' versehen ").PadRight(71, '.'));
+        {   
             int i = 0;
 
             // Für die verschiednenen Klassen ...
@@ -1296,7 +1298,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     }
                 }
             }
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben("Religionsabwähler mit '-' versehen ".PadRight(110, '.') + i.ToString().PadLeft(4));
         }
 
         internal void ReligionZuordnen()
@@ -1312,7 +1314,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     i++;
                 }
             }
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben((" " + i.ToString()).PadLeft(30, '.'));
         }
 
         internal void WeitereFächerZuordnen(Leistungen atlantisLeistungen)
@@ -1365,7 +1367,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     }
                 }
             }
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben((" " + i.ToString()).PadLeft(30, '.'));
         }
 
         public Leistungen()
@@ -1383,8 +1385,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
         internal void Add(Leistungen atlantisLeistungen)
         {
             int outputIndex = Global.SqlZeilen.Count();
-            Console.Write((" Neu anzulegende Leistungen in Atlantis ").PadRight(71, '.'));
-
+            
             int i = 0;
 
             foreach (var w in (from t in this where t.Beschreibung.Contains("NEU") select t).ToList())
@@ -1393,7 +1394,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 i++;
             }
 
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+            Global.AufConsoleSchreiben(("Neu anzulegende Leistungen in Atlantis ").PadRight(110, '.') + i.ToString().PadLeft(4));
             Global.PrintMessage(outputIndex, ("Neu anzulegende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
         }
 
@@ -1474,31 +1475,34 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             return null;
         }
 
-        internal void Update(Leistungen webuntisLeistungen)
+        internal string Update(Leistungen atlantisLeistungen)
         {
-            if (webuntisLeistungen is null)
+            if (atlantisLeistungen is null)
             {
-                throw new ArgumentNullException(nameof(webuntisLeistungen));
+                throw new ArgumentNullException(nameof(atlantisLeistungen));
             }
 
             int outputIndex = Global.SqlZeilen.Count();
 
-            Console.Write((" Leistungen in Atlantis updaten ").PadRight(71, '.'));
-
             int i = 0;
 
-            foreach (var w in (from t in this where t.Beschreibung != null where t.Query!= null select t).ToList())
+            foreach (var w in (from t in this.OrderBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
             {
                 UpdateLeistung(w.Beschreibung, w.Query);
                 i++;
             }
-            Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-            Global.PrintMessage(outputIndex, ("Zu ändernde Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
+
+            Global.AufConsoleSchreiben(("Leistungen in Atlantis updaten ").PadRight(110, '.') + i.ToString().PadLeft(4));
+            
+            if (i==0)
+            {
+                return "A C H T U N G: Es wurde keine einzige Leistung angelegt oder verändert. Das kann daran liegen, dass das Notenblatt in Atlantis nicht richtig angelegt ist. Die Tabelle zum manuellen eintragen der Noten muss in der Notensammelerfassung sichtbar sein.";
+            }
+            return "";
         }
 
         internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
-        {
-            Console.Write((" Zu löschende Leistungen in Atlantis ").PadRight(71, '.'));
+        {   
             int outputIndex = Global.SqlZeilen.Count();                        
             int i = 0;
 
@@ -1546,9 +1550,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                             }                            
                         }
                     }
-                }
-                Global.PrintMessage(outputIndex, (" Zu löschende Leistungen in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
-                Console.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
+                }                
+                Global.AufConsoleSchreiben(("Zu löschende Leistungen in Atlantis ").PadRight(71, '.') + i.ToString().PadLeft(4));
             }
             catch (Exception ex)
             {
@@ -1571,7 +1574,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     ausgewählteKlassenString += ik + ",";
                 }
 
-                Console.Write(" Mögliche Klassen aus der Webuntis-Datei: [ " + ausgewählteKlassenString.TrimEnd(',') + " ]: ");
+                Console.Write("Mögliche Klassen aus der Webuntis-Datei: [ " + ausgewählteKlassenString.TrimEnd(',') + " ]: ");
 
                 var x = Console.ReadLine();
 
@@ -1584,7 +1587,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     }
                 }
 
-                AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet:", AddAbschlusszeugnis(ausgewählteKlassen));
+                AusgabeSchreiben("Folgende Klassen mit Gesamtnoten in Webuntis werden ausgewertet: ", AddAbschlusszeugnis(ausgewählteKlassen));
 
                 foreach (var item in this.OrderBy(xx => xx.Klasse).ThenBy(xx => xx.Fach).ThenBy(xx => xx.Nachname))
                 {
@@ -1596,13 +1599,13 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
                 if (leistungen.Count == 0)
                 {
-                    Console.WriteLine(" Es wurde kein einziger Leistungsdatensatz gewählt. Die Verarbeitung geht nicht weiter.");
+                    Global.AufConsoleSchreiben(" Es wurde kein einziger Leistungsdatensatz gewählt. Die Verarbeitung geht nicht weiter.");
                     Console.ReadKey();
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Bei der Auswahl interessierender Klassen ist es zum Fehler gekommen. \n " + ex);
+                Global.AufConsoleSchreiben("Bei der Auswahl interessierender Klassen ist es zum Fehler gekommen. \n " + ex);
             }
             
             return leistungen;
@@ -1629,8 +1632,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
         public void AusgabeSchreiben(string text, List<string> klassen)
         {
             try
-            {
-                Global.SqlZeilen.Add("");
+            {                
                 int z = 0;
 
                 do
@@ -1654,7 +1656,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     zeile = zeile.TrimEnd(' ');
 
                     string o = "/* " + zeile.TrimEnd(' ');
-                    Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                    Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(181) + "*/");
 
                 } while (z < text.Split(' ').Count());
 
@@ -1668,7 +1670,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     {
                         if (klassen[z].Length >= 95)
                         {
-                            klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 95));
+                            klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 150));
                             zeile += klassen[z];
                             throw new Exception();
                         }
@@ -1688,7 +1690,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     zeile = zeile.TrimEnd(' ');
                     int s = zeile.Length;
                     string o = "/* " + zeile.TrimEnd(',');
-                    Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                    Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(181) + "*/");
 
                 } while (z < klassen.Count);
             }

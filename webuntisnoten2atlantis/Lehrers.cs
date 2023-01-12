@@ -18,12 +18,10 @@ namespace webuntisnoten2atlantis
 
         public Lehrers(string connetionstringAtlantis, List<string> aktSj)
         {
+            var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
+
             try
             {
-                var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
-
-                Console.Write((" Lehrer*innen aus Atlantis (" + typ + ")").PadRight(71, '.'));
-
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
                     DataSet dataSet = new DataSet();
@@ -60,7 +58,7 @@ WHERE vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.
             {
                 throw ex;
             }
-            Console.WriteLine((" " + this.Count.ToString()).PadLeft(30, '.'));            
+            Global.AufConsoleSchreiben(("Lehrer*innen aus Atlantis (" + typ + ") ").PadRight(110, '.') + this.Count.ToString().PadLeft(4));            
         }        
     }
 }

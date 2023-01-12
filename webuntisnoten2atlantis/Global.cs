@@ -16,18 +16,8 @@ namespace webuntisnoten2atlantis
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
 
         internal static void PrintMessage(int index, string message)
-        {
-            if (message.ToLower().Contains("zu"))
-            {
-                SqlZeilen.Insert(index, "");
-            }
-
-            SqlZeilen.Insert(index, "/* " + message.PadRight(97) + " */");
-            
-            if (message.ToLower().Contains("zu"))
-            {
-                SqlZeilen.Insert(index, "");
-            }            
+        {            
+            SqlZeilen.Insert(index, "/* " + message.PadRight(177) + " */");
         }
 
         public static bool WaitForFile(string fullPath)
@@ -51,19 +41,19 @@ namespace webuntisnoten2atlantis
                 }
                 catch (FileNotFoundException)
                 {
-                    Console.WriteLine("Die Datei {0} soll jetzt eingelsen werden, existiert aber nicht.", fullPath);
+                    Global.AufConsoleSchreiben("Die Datei " + fullPath  + " soll jetzt eingelsen werden, existiert aber nicht.");
 
                     if (anzahlVersuche > 10)
-                        Console.WriteLine("Bitte Programm beenden.");
+                        Global.AufConsoleSchreiben("Bitte Programm beenden.");
 
                     System.Threading.Thread.Sleep(4000);
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine("Die Datei {0} ist gesperrt", fullPath);
+                    Global.AufConsoleSchreiben("Die Datei " + fullPath  + " ist gesperrt");
 
                     if (anzahlVersuche > 10)
-                        Console.WriteLine("Bitte Programm beenden.");
+                        Global.AufConsoleSchreiben("Bitte Programm beenden.");
 
                     System.Threading.Thread.Sleep(4000);
                 }
@@ -75,71 +65,77 @@ namespace webuntisnoten2atlantis
             return true;
         }
 
-        public static void AusgabeSchreiben(string text, List<string> klassen)
+        internal static void AufConsoleSchreiben(string zeile)
         {
-            Global.SqlZeilen.Add("");
-            int z = 0;
-
-            do
-            {
-                var zeile = "";
-
-                try
-                {
-                    while ((zeile + text.Split(' ')[z] + ", ").Length <= 96)
-                    {
-                        zeile += text.Split(' ')[z] + " ";
-                        z++;
-                    }
-                }
-                catch (Exception)
-                {
-                    z++;
-                    zeile.TrimEnd(',');
-                }
-
-                zeile = zeile.TrimEnd(' ');
-
-                string o = "/* " + zeile.TrimEnd(' ');
-                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
-
-            } while (z < text.Split(' ').Count());
-
-
-
-            z = 0;
-
-            do
-            {
-                var zeile = " ";
-
-                try
-                {
-                    if (klassen[z].Length >= 95)
-                    {
-                        klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 95));
-                        zeile += klassen[z];
-                        throw new Exception();
-                    }
-
-                    while ((zeile + klassen[z] + ", ").Length <= 97)
-                    {
-                        zeile += klassen[z] + ", ";
-                        z++;
-                    }
-                }
-                catch (Exception)
-                {
-                    z++;
-                    zeile.TrimEnd(',');
-                }
-
-                zeile = zeile.TrimEnd(' ');
-                int s = zeile.Length;
-                string o = "/* " + zeile.TrimEnd(',');
-                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
-
-            } while (z < klassen.Count);
+            Console.WriteLine(zeile);
+            Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
         }
+
+        //public static void AusgabeSchreiben(string text, List<string> klassen)
+        //{
+        //    Global.SqlZeilen.Add("");
+        //    int z = 0;
+
+        //    do
+        //    {
+        //        var zeile = "";
+
+        //        try
+        //        {
+        //            while ((zeile + text.Split(' ')[z] + ", ").Length <= 96)
+        //            {
+        //                zeile += text.Split(' ')[z] + " ";
+        //                z++;
+        //            }
+        //        }
+        //        catch (Exception)
+        //        {
+        //            z++;
+        //            zeile.TrimEnd(',');
+        //        }
+
+        //        zeile = zeile.TrimEnd(' ');
+
+        //        string o = "/* " + zeile.TrimEnd(' ');
+        //        Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+
+        //    } while (z < text.Split(' ').Count());
+
+
+
+        //    z = 0;
+
+        //    do
+        //    {
+        //        var zeile = " ";
+
+        //        try
+        //        {
+        //            if (klassen[z].Length >= 95)
+        //            {
+        //                klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 95));
+        //                zeile += klassen[z];
+        //                throw new Exception();
+        //            }
+
+        //            while ((zeile + klassen[z] + ", ").Length <= 97)
+        //            {
+        //                zeile += klassen[z] + ", ";
+        //                z++;
+        //            }
+        //        }
+        //        catch (Exception)
+        //        {
+        //            z++;
+        //            zeile.TrimEnd(',');
+        //        }
+
+        //        zeile = zeile.TrimEnd(' ');
+        //        int s = zeile.Length;
+        //        string o = "/* " + zeile.TrimEnd(',');
+        //        Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+
+        //    } while (z < klassen.Count);
+        //}
     }
 }
