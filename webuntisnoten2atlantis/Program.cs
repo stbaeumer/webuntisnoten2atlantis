@@ -28,12 +28,13 @@ namespace webuntisnoten2atlantis
             Console.SetWindowSize(width, height * 2);
             Global.SqlZeilen = new List<string>();
 
-            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230108");
+            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230115");
             Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
             Global.AufConsoleSchreiben("ACHTUNG: Wenn ein Lehrer es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis nach Atlantis übergeben!");
-            
+            Global.AufConsoleSchreiben(@"  Pfad zu den Dateien: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
+
             try
-            {   
+            {
                 if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")
                 {
                     Settings();
@@ -50,72 +51,77 @@ namespace webuntisnoten2atlantis
 
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                Leistungen webuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
+                string bisherigeKlassen = "";
 
-                var interessierendeKlassen = new List<string>();
-                webuntisLeistungen = webuntisLeistungen.GetIntessierendeKlassen(AktSj);
-                interessierendeKlassen = (from w in webuntisLeistungen select w.Klasse).Distinct().ToList();
-
-                // Die eingelesenen Dateien für Protokollzwecke filtern
-
-                RelevanteDatensätzeAusCsvFiltern(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
-                RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
-
-                Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, webuntisLeistungen);
-
-                Abwesenheiten atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
-                Abwesenheiten webuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen);
-
-                // Noten vergangener Abschnitte ziehen
-
-                webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, interessierendeKlassen, AktSj));
-
-                // Korrekturen durchführen
-
-                webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(interessierendeKlassen);
-                webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
-                atlantisLeistungen.GetKlassenMitFehlendenZeugnisnoten(interessierendeKlassen, webuntisLeistungen);
-                //atlantisLeistungen.Gym12NotenInDasGostNotenblattKopieren(interessierendeKlassen, AktSj);
-
-                webuntisLeistungen.ZielfächerZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
-
-                // Add-Delete-Update
-
-                string hinweis = webuntisLeistungen.Update(atlantisLeistungen);
-
-                if (targetAbsenceTimesTotal != null)
+                do
                 {
-                    atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
-                    atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
-                    atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
-                }
-                else
-                {
-                    int outputIndex = Global.SqlZeilen.Count();
-                    Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
-                }
+                    Leistungen webuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
 
-                string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
-                atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
+                    var interessierendeKlassen = new List<string>();
+                    webuntisLeistungen = webuntisLeistungen.GetIntessierendeKlassen(AktSj);
+                    interessierendeKlassen = (from w in webuntisLeistungen select w.Klasse).Distinct().ToList();
 
+                    bisherigeKlassen += (from w in webuntisLeistungen select w.Klasse).FirstOrDefault() + ",";
 
-                Global.AufConsoleSchreiben(@"  Pfad in Zwischenablage: \\fs01\Schulverwaltung\webuntisnoten2atlantis\Dateien");
-                OpenFiles(new List<string> { targetSql });
+                    // Die eingelesenen Dateien für Protokollzwecke filtern
 
-                Global.AufConsoleSchreiben("  -----------------------------------------------------------------");
+                    RelevanteDatensätzeAusCsvFiltern(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
+                    RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
 
-                if (hinweis != "")
-                {
-                    Global.AufConsoleSchreiben("");
-                    Global.AufConsoleSchreiben(hinweis);
+                    Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, webuntisLeistungen);
 
-                }
-                
+                    Abwesenheiten atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
+                    Abwesenheiten webuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen);
+
+                    // Noten vergangener Abschnitte ziehen
+
+                    webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, interessierendeKlassen, AktSj));
+
+                    // Korrekturen durchführen
+
+                    webuntisLeistungen = webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
+                    webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
+                    webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                    atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
+                    
+                    webuntisLeistungen.ZielfächerZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
+
+                    // Add-Delete-Update
+
+                    string hinweis = webuntisLeistungen.Update(atlantisLeistungen);
+
+                    if (targetAbsenceTimesTotal != null)
+                    {
+                        atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                        atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                        atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+                    }
+                    else
+                    {
+                        int outputIndex = Global.SqlZeilen.Count();
+                        Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
+                    }
+
+                    string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
+                                        
+                    OpenFiles(new List<string> { targetSql });
+
+                    if (hinweis != "")
+                    {
+                        Global.AufConsoleSchreiben("");
+                        Global.AufConsoleSchreiben(hinweis);
+                    }
+
+                    Global.AufConsoleSchreiben("  -----------------------------------------------------------------");
+
+                    Global.AufConsoleSchreiben("Bereits durchlaufene Klassen: " + bisherigeKlassen.TrimEnd(','));
+
+                    atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
+
+                } while (true);
                 //System.Threading.Thread.Sleep(6000);
-                Console.ReadKey();
-                Environment.Exit(0);
+                //Console.ReadKey();
+                //Environment.Exit(0);
             }
             catch (Exception ex)
             {

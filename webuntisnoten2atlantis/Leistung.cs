@@ -185,7 +185,7 @@ namespace webuntisnoten2atlantis
 
             if (aL.Count > 0)
             {
-                this.Beschreibung = (aL[0].Nachname.PadRight(10)).Substring(0, 6) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Fach.PadRight(5) + "|" + beschreibung;
+                this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 6) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Fach.PadRight(5) + "|";
 
                 // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
@@ -228,7 +228,7 @@ namespace webuntisnoten2atlantis
                         }
                         else
                         {
-                            this.Query += (" ").PadRight(13) + "  ";
+                            this.Query += (" ").PadRight(14) + "  ";
                         }
                     }
                     else // Falls Update
@@ -268,8 +268,7 @@ namespace webuntisnoten2atlantis
                     }
 
                     this.Zielfach = aL[0].Fach;
-                    this.ZielLeistungId = aL[0].LeistungId;
-                    this.Beschreibung += beschreibung;
+                    this.ZielLeistungId = aL[0].LeistungId;this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote=="-"? "Zeugnisbemerkung?|" :"");
                     this.Query += "ls_id_1=3844 "; // letzter Bearbeiter
                     this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
