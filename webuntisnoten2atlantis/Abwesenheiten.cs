@@ -59,7 +59,7 @@ namespace webuntisnoten2atlantis
             {
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.AufConsoleSchreiben("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(90, '.') + " " + typ);
+                Global.AufConsoleSchreiben("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(Global.PadRight, '.') + "  " + typ);
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -159,7 +159,7 @@ DBA.schueler.name_2 ASC ", connection);
                     }
                 }
 
-                Global.AufConsoleSchreiben(("Fehlzeiten in Atlantis einfügen").PadRight(110, '.') + i.ToString().PadLeft(4));
+                Global.AufConsoleSchreiben(("Fehlzeiten in Atlantis einfügen").PadRight(Global.PadRight, '.') + i.ToString().PadLeft(4));
                 Global.PrintMessage(outputIndex, ("Neu anzulegende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)

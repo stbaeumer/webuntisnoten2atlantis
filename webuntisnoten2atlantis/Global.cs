@@ -14,6 +14,7 @@ namespace webuntisnoten2atlantis
         public static List<string> SqlZeilen { get; internal set; }
         public static string HzJz { get; internal set; }
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
+        public static int PadRight { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {            
