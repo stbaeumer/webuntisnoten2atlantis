@@ -8,39 +8,39 @@ namespace webuntisnoten2atlantis
 {
     public class Zuordnungen : List<Zuordnung>
     {
-        public Zuordnungen()
-        {
-            foreach (var item in Properties.Settings.Default.Zuordnungen.Split(','))
-            {
-                if (item != "")
-                {
-                    var quelle = item.Split(';')[0];
-                    var ziel = item.Split(';')[1];
+        //public Zuordnungen()
+        //{
+        //    foreach (var item in Properties.Settings.Default.Zuordnungen.Split(','))
+        //    {
+        //        if (item != "")
+        //        {
+        //            var quelle = item.Split(';')[0];
+        //            var ziel = item.Split(';')[1];
 
-                    Zuordnung zuordnung = new Zuordnung();
-                    zuordnung.Quellklasse = quelle.Split('|')[0];
-                    zuordnung.Quellfach = quelle.Split('|')[1];
-                    zuordnung.Zielfach = ziel.Split('|')[0];
-                    this.Add(zuordnung);
-                }
-            }
-        }
+        //            Zuordnung zuordnung = new Zuordnung();
+        //            zuordnung.Quellklasse = quelle.Split('|')[0];
+        //            zuordnung.Quellfach = quelle.Split('|')[1];
+        //            zuordnung.Zielfach = ziel.Split('|')[0];
+        //            this.Add(zuordnung);
+        //        }
+        //    }
+        //}
 
-        public Zuordnungen(Leistungen webuntisLeistungen, Abwesenheiten atlantisAbwesenheiten)
-        {
-            this.Add(new Zuordnung(" FU", ""));
-            this.Add(new Zuordnung("FS19*|INW", "IF"));
-            this.Add(new Zuordnung("HBT19A|FPE", "FPEL"));
-            this.Add(new Zuordnung("WE18A|KKS*", "KKS"));
-            this.Add(new Zuordnung("KR", "REL"));
-            this.Add(new Zuordnung("ER", "REL"));
-            this.Add(new Zuordnung("KR ", "REL"));
-            this.Add(new Zuordnung("ER ", "REL"));
-            this.Add(new Zuordnung("NF ", ""));
-            this.Add(new Zuordnung("", ""));
-            this.Add(new Zuordnung("", ""));
-            this.Add(new Zuordnung("", ""));
-        }
+        //public Zuordnungen(Leistungen webuntisLeistungen, Abwesenheiten atlantisAbwesenheiten)
+        //{
+        //    this.Add(new Zuordnung(" FU", ""));
+        //    this.Add(new Zuordnung("FS19*|INW", "IF"));
+        //    this.Add(new Zuordnung("HBT19A|FPE", "FPEL"));
+        //    this.Add(new Zuordnung("WE18A|KKS*", "KKS"));
+        //    this.Add(new Zuordnung("KR", "REL"));
+        //    this.Add(new Zuordnung("ER", "REL"));
+        //    this.Add(new Zuordnung("KR ", "REL"));
+        //    this.Add(new Zuordnung("ER ", "REL"));
+        //    this.Add(new Zuordnung("NF ", ""));
+        //    this.Add(new Zuordnung("", ""));
+        //    this.Add(new Zuordnung("", ""));
+        //    this.Add(new Zuordnung("", ""));
+        //}
 
         public List<string> AlleZulässigenAtlantisZielFächerAuflisten(Leistung dieseLeistung, Leistungen atlantisleistungen, string aktSj)
         {
@@ -48,10 +48,10 @@ namespace webuntisnoten2atlantis
 
             var i = 1;
 
+            Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
+
             foreach (var quellklasse in (from z in atlantisleistungen select z.Klasse).Distinct().ToList())
             {
-                Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
-
                 foreach (var atlantisfach in (from a in atlantisleistungen
                                               where a.Klasse == quellklasse
                                               where a.Schuljahr == aktSj
@@ -70,18 +70,7 @@ namespace webuntisnoten2atlantis
             }
             return alle;
         }
-
-        internal void SpeichernInDenProperties()
-        {
-            foreach (var item in this)
-            {
-                Properties.Settings.Default.Zuordnungen += item.Quellklasse + "|" + item.Quellfach + ";" + item.Zielfach + ",";
-            }
-             
-            Properties.Settings.Default.Zuordnungen = Properties.Settings.Default.Zuordnungen.TrimEnd(',');
-            Properties.Settings.Default.Save();
-        }
-
+                
         internal void AlleNichtAutomatischZugewiesenenFächerAnzeigen()
         {
             if (this.Count > 0)

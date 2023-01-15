@@ -29,12 +29,11 @@ namespace webuntisnoten2atlantis
             Global.SqlZeilen = new List<string>();
             Global.PadRight = 110;
 
-            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis | Published under the terms of GPLv3 | Stefan Bäumer " + DateTime.Now.Year + " | Version 20230115");
-            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit entsprechenden Befehlen zum Import in Atlantis.");
-            Global.AufConsoleSchreiben("    ** ACHTUNG: Wenn die Lehrkraft es versäumt hat, mindestens 1 Teilleistung zu dokumentieren, **");
-            Global.AufConsoleSchreiben("    ** wird keine Gesamtnote von Webuntis nach Atlantis übergeben!                              **");
-            Global.AufConsoleSchreiben(@"========================================================================================================================");
-            Global.AufConsoleSchreiben(@" ");
+            Global.AufConsoleSchreiben("   Webuntisnoten2Atlantis   |   Published under the terms of GPLv3   |   Stefan Bäumer   " + DateTime.Now.Year + " | Version 20230115");
+            Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis.");
+            Global.AufConsoleSchreiben("    ** ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren, wird     **");
+            Global.AufConsoleSchreiben("    **      keine Gesamtnote von Webuntis nach Atlantis übergeben!                              **");
+            
 
             try
             {
@@ -53,12 +52,15 @@ namespace webuntisnoten2atlantis
 
                 string bisherigeKlassen = "";
 
+                
+
                 Leistungen möglicheKlassen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer,"");
                 var möglicheKlassenString = möglicheKlassen.GetMöglicheKlassen();
                 do
                 {
+                    Global.SqlZeilen = new List<string>();
                     var interessierendeKlassen = new List<string>();
-                    Global.AufConsoleSchreiben(möglicheKlassenString);
+                    Console.WriteLine(möglicheKlassenString);
                     interessierendeKlassen.Add(möglicheKlassen.GetIntessierendeKlassen(AktSj));
 
                     var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + interessierendeKlassen[0] + "_" + User + ".CSV");
@@ -89,7 +91,7 @@ namespace webuntisnoten2atlantis
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                     atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
                     
-                    webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1]);
+                    webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlassen[0]);
 
                     // Add-Delete-Update
 
@@ -117,9 +119,11 @@ namespace webuntisnoten2atlantis
                         Global.AufConsoleSchreiben(hinweis);
                     }
 
-                    Global.AufConsoleSchreiben("  -----------------------------------------------------------------");
+                    Global.AufConsoleSchreiben("-".PadRight(Global.PadRight,'-') + "----");
 
                     Global.AufConsoleSchreiben("Bereits durchlaufene Klassen: " + bisherigeKlassen.TrimEnd(','));
+
+                    Global.AufConsoleSchreiben("-".PadRight(Global.PadRight, '-') + "----");
 
                     atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
@@ -439,8 +443,10 @@ namespace webuntisnoten2atlantis
 
                 } while (!Directory.Exists(pfad));
             }
-
-            Global.AufConsoleSchreiben(@"Pfad zu den Dateien: " + pfad);
+            
+            Global.AufConsoleSchreiben(("    ** Pfad zu den Dateien: " + pfad).PadRight(95,' ') + " **");
+            Global.AufConsoleSchreiben(@"========================================================================================================================");
+            Global.AufConsoleSchreiben(@" ");
 
             return pfad;
         }
