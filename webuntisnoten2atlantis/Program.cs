@@ -31,8 +31,8 @@ namespace webuntisnoten2atlantis
 
             Global.AufConsoleSchreiben("   Webuntisnoten2Atlantis   |   Published under the terms of GPLv3   |   Stefan Bäumer   " + DateTime.Now.Year + " | Version 20230115");
             Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis.");
-            Global.AufConsoleSchreiben("    ** ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren, wird     **");
-            Global.AufConsoleSchreiben("    **      keine Gesamtnote von Webuntis nach Atlantis übergeben!                              **");
+            Global.AufConsoleSchreiben("    ** ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren,              **");
+            Global.AufConsoleSchreiben("    **          wird keine Gesamtnote von Webuntis nach Atlantis übergeben!                         **");
             
 
             try
@@ -51,11 +51,9 @@ namespace webuntisnoten2atlantis
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
                 string bisherigeKlassen = "";
-
-                
-
                 Leistungen möglicheKlassen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer,"");
                 var möglicheKlassenString = möglicheKlassen.GetMöglicheKlassen();
+                
                 do
                 {
                     Global.SqlZeilen = new List<string>();
@@ -85,7 +83,7 @@ namespace webuntisnoten2atlantis
                     webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, interessierendeKlassen, AktSj));
 
                     // Korrekturen durchführen
-
+                    
                     webuntisLeistungen = webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
                     webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                     webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
@@ -119,11 +117,11 @@ namespace webuntisnoten2atlantis
                         Global.AufConsoleSchreiben(hinweis);
                     }
 
-                    Global.AufConsoleSchreiben("-".PadRight(Global.PadRight,'-') + "----");
+                    Console.WriteLine("-".PadRight(Global.PadRight,'-') + "----");
 
-                    Global.AufConsoleSchreiben("Bereits durchlaufene Klassen: " + bisherigeKlassen.TrimEnd(','));
+                    Console.WriteLine("Bereits durchlaufene Klassen: " + bisherigeKlassen.TrimEnd(','));
 
-                    Global.AufConsoleSchreiben("-".PadRight(Global.PadRight, '-') + "----");
+                    Console.WriteLine("-".PadRight(Global.PadRight, '-') + "----");
 
                     atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
 
@@ -444,7 +442,7 @@ namespace webuntisnoten2atlantis
                 } while (!Directory.Exists(pfad));
             }
             
-            Global.AufConsoleSchreiben(("    ** Pfad zu den Dateien: " + pfad).PadRight(95,' ') + " **");
+            Global.AufConsoleSchreiben(("    ** Pfad zu den Dateien: " + pfad).PadRight(99,' ') + " **");
             Global.AufConsoleSchreiben(@"========================================================================================================================");
             Global.AufConsoleSchreiben(@" ");
 

@@ -53,6 +53,10 @@ namespace webuntisnoten2atlantis
                                     leistung.Name = x[1];
                                     leistung.Klasse = x[2];
                                     leistung.Fach = x[3];
+                                    if (leistung.Fach == "D G1")
+                                    {
+                                        string aaa = "";
+                                    }
                                     leistung.Gesamtpunkte = x[9].Split('.')[0] == "" ? null : x[9].Split('.')[0];
                                     leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                     leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
@@ -63,6 +67,11 @@ namespace webuntisnoten2atlantis
 
                                     if (leistungen.LeistungHinzufügen(leistung))
                                     {
+                                        if (leistung.Fach == "")
+                                        {                                            
+                                            leistung.Fach = "leer";
+                                        }
+                                        
                                         leistungen.Add(leistung);
                                     }
                                 }
@@ -94,6 +103,12 @@ namespace webuntisnoten2atlantis
 
                                     if (leistung.Klasse == klasse && leistungen.LeistungHinzufügen(leistung))
                                     {
+                                        if (leistung.Fach != "")
+                                        {
+                                            Global.AufConsoleSchreiben(leistung.Klasse + " " + leistung.Lehrkraft + ": Das Fach ist leer.");
+                                            leistung.Fach = "leer";
+                                        }
+
                                         leistungen.Add(leistung);
                                     }
                                 }
@@ -443,7 +458,7 @@ namespace webuntisnoten2atlantis
 
             // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
 
-            foreach (var webuntisLeistung in this)
+            foreach (var webuntisLeistung in this.OrderBy(x=>x.Klasse).ThenBy(x=>x.Fach))
             {
                 // Zielleistungen dieses Schülers im aktuellen Abschnitt werden ermittelt.
 
@@ -454,20 +469,16 @@ namespace webuntisnoten2atlantis
                                               where a.HzJz == Global.HzJz
                                               orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
                                               select a).ToList();
-
-                if (webuntisLeistung.Fach == "DV")
-                {
-                    string aaa = "";
-                }
+                                
                 // Wenn es den Schüler überhaupt nicht in Atlantis gibt, dann wird die Verarbeitung abgebrochen
 
-                if (atlantisZielLeistungen.Count > 0)
+                if (atlantisZielLeistungen.Count > 0 && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(webuntisLeistung.Klasse + webuntisLeistung.Fach))
                 {
                     // Im Idealfall stimmen die Fachnamen überein.
 
                     if (webuntisLeistung.Query == null)
                     {
-                        var aL = (from a in atlantisZielLeistungen
+                        var aL = (from a in atlantisZielLeistungen.OrderBy(x=>x.Bereich)
                                   where a.Fach == webuntisLeistung.Fach // Prüfung auf Fachnamensgleichheit
                                   select a).ToList();
 
@@ -542,6 +553,40 @@ namespace webuntisnoten2atlantis
                         }
                     }
 
+                    // NB1 -> N
+
+                    if (webuntisLeistung.Query == null)
+                    {
+                        if (webuntisLeistung.Fach.StartsWith("NB1"))
+                        {
+                            if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "N")
+                            {
+                                var aL = (from a in atlantisZielLeistungen
+                                          where a.Fach == "N"
+                                          select a).ToList();
+
+                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->N|");
+                            }
+                        }
+                    }
+
+                    // EB2 -> N
+
+                    if (webuntisLeistung.Query == null)
+                    {
+                        if (webuntisLeistung.Fach.StartsWith("EB1") || webuntisLeistung.Fach.StartsWith("EB2"))
+                        {
+                            if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
+                            {
+                                var aL = (from a in atlantisZielLeistungen
+                                          where a.Fach == "E"
+                                          select a).ToList();
+
+                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->E|");
+                            }
+                        }
+                    }
+
                     // Kurse mit Leerzeichen
 
                     if (webuntisLeistung.Query == null)
@@ -595,43 +640,49 @@ namespace webuntisnoten2atlantis
 
                     // Wenn keine automatische Zuordnung vorgenommen wurde:
 
-                    if (webuntisLeistung.Query == null && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(webuntisLeistung.Klasse + webuntisLeistung.Fach))
+                    if (webuntisLeistung.Query == null)
                     {
-                        Global.AufConsoleSchreiben("Das Webuntis-Fach **" + webuntisLeistung.Fach + "** kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell zuordnen:");
+                        Global.AufConsoleSchreiben("Das Webuntis-Fach **" + webuntisLeistung.Fach + "** (" + webuntisLeistung.Lehrkraft + ") kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell zuordnen:");
 
                         var alleZulässigenAtlantisZielfächer = gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(webuntisLeistung, atlantisLeistungen, aktuellesSchuljahr);
 
-                        Global.AufConsoleSchreiben(" Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell vornehmen?");
+                        //Global.AufConsoleSchreiben("Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell vornehmen?");
 
                         bool wiederholen = true;
 
                         int index = 0;
 
-                        ConsoleKeyInfo eingabe;
+                        string eingabe;
 
                         do
                         {
-                            Global.AufConsoleSchreiben(" Bitte Ziffer 1 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben oder ENTER falls keine Änderung gewünscht ist: ");
-
-                            eingabe = Console.ReadKey();
-
-                            if (char.IsDigit(eingabe.KeyChar))
-                            {
-                                index = int.Parse(eingabe.KeyChar.ToString()); // use Parse if it's a Digit
+                            Console.Write(" Bitte Zahl 1 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben: ");
+                                                        
+                            try
+                            { 
+                                eingabe = Console.ReadLine();
+                                index = int.Parse(eingabe);
 
                                 if (index > 0 && index <= alleZulässigenAtlantisZielfächer.Count)
                                 {
                                     wiederholen = false;
                                 }
                             }
+                            catch (Exception)
+                            {
+                            }
                         } while (wiederholen);
+
+                        Global.AufConsoleSchreiben("Ihre Auswahl: " + webuntisLeistung.Fach + " wird " + alleZulässigenAtlantisZielfächer[index - 1] + " zugeordnet.");
 
                         // Die Zuordnung wird für alle anderen Schüler ebenfalls vorgenommen
 
-                        foreach (var w in (from w in this
-                                           where w.Fach == webuntisLeistung.Fach
-                                           where w.Klasse == interessierendeKlasse
-                                           select w).ToList())
+                        var ww = (from w in this
+                                  where w.Fach == webuntisLeistung.Fach
+                                  where w.Klasse == interessierendeKlasse
+                                  select w).ToList();
+                                                
+                        foreach (var w in ww)
                         {
                             var aL = (from a in atlantisLeistungen
                                       where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
@@ -644,12 +695,12 @@ namespace webuntisnoten2atlantis
 
                             if (aL.Count > 0)
                             {
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|manuell zugeordnet|");
+                                w.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|manuell zugeordnet|");
                             }
                             else
                             {
-                                webuntisLeistung.Query = "/* Das Fach " + webuntisLeistung.Fach + " wurde keinem Atlantisfach zugeordnet.";
-                                webuntisLeistung.Beschreibung = "";
+                                w.Query = "/* " + w.Name + ": Das Fach " + webuntisLeistung.Fach + " wurde keinem Atlantisfach zugeordnet. Das kann passieren, wenn die Belegung in Atlantis von der in Webuntis abweicht.";
+                                w.Beschreibung = "";
                             }
                         }
 
@@ -894,7 +945,7 @@ namespace webuntisnoten2atlantis
                         Global.AufConsoleSchreiben("Wollen Sie die Noten aus den alten Abschnitten ziehen? (j/N)");
                         x = Console.ReadKey();
 
-                        Global.AufConsoleSchreiben(x.Key.ToString());
+                        Global.AufConsoleSchreiben("Ihre Auswahl: " + x.Key.ToString());
 
                     } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
 
@@ -903,28 +954,28 @@ namespace webuntisnoten2atlantis
                     // Für den Fall, dass die Leistungen nicht geholt werden sollen, ...
 
                     if (x.Key.ToString().ToLower() != "j")
-                    {                           
+                    {
                         foreach (var zuholendeLeistung in leistungen)
                         {
-                            // ... aber zuvor schonmal geholt wurden, also schon eine Note gesetzt ist, wird alles genullt.
+                            //// ... aber zuvor schonmal geholt wurden, also schon eine Note gesetzt ist, wird alles genullt.
 
-                            var atlantisZielLeistungen = (from a in this
-                                                          where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
-                                                          where a.SchlüsselExtern == zuholendeLeistung.SchlüsselExtern
-                                                          where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
-                                                          where a.HzJz == Global.HzJz
-                                                          where a.Fach == zuholendeLeistung.Fach
-                                                          where a.Klasse == zuholendeLeistung.Klasse
-                                                          where (a.Gesamtnote != null || a.Tendenz != null || a.Gesamtpunkte != null)
-                                                          orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
-                                                          select a).ToList();
-                            if (atlantisZielLeistungen.Count > 0)
-                            {
-                                zuholendeLeistung.Gesamtnote = "";
-                                zuholendeLeistung.Gesamtpunkte = "";
-                                zuholendeLeistung.Tendenz = "";
-                                zuHolendeLeistungen.Add(zuholendeLeistung);
-                            }
+                            //var atlantisZielLeistungen = (from a in this
+                            //                              where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
+                            //                              where a.SchlüsselExtern == zuholendeLeistung.SchlüsselExtern
+                            //                              where a.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                            //                              where a.HzJz == Global.HzJz
+                            //                              where a.Fach == zuholendeLeistung.Fach
+                            //                              where a.Klasse == zuholendeLeistung.Klasse
+                            //                              where (a.Gesamtnote != null || a.Tendenz != null || a.Gesamtpunkte != null)
+                            //                              orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
+                            //                              select a).ToList();
+                            //if (atlantisZielLeistungen.Count > 0)
+                            //{
+                            //    zuholendeLeistung.Gesamtnote = "";
+                            //    zuholendeLeistung.Gesamtpunkte = "";
+                            //    zuholendeLeistung.Tendenz = "";
+                            //    zuHolendeLeistungen.Add(zuholendeLeistung);
+                            //}
                         }
                         leistungen = new Leistungen();
                         leistungen.AddRange(zuHolendeLeistungen);
@@ -1070,38 +1121,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                     leistung.Gesamtpunkte_13_1 = theRow["Punkte_13_1"].ToString() == "" ? null : (theRow["Punkte_13_1"].ToString()).Split(',')[0];
                                     leistung.Gesamtpunkte_13_2 = theRow["Punkte_13_2"].ToString() == "" ? null : (theRow["Punkte_13_2"].ToString()).Split(',')[0];
                                     leistung.Gesamtpunkte = theRow["Punkte"].ToString() == "" ? null : (theRow["Punkte"].ToString()).Split(',')[0];
-
-                                    // In der Gym ab Jahrgang 2 wird die Gesamtnote an die Kursabschnittnote angepasst.
-                                    // Das kann notwendig sein, wenn manuell eine Kursabschnittnote gesetzt wurde.
-
-                                    //if (leistung.EinheitNP == "P" && leistung.Jahrgang == 2 && leistung.HzJz == "GO" && leistung.Datum.Month == 1)
-                                    //{
-                                    //    if (leistung.Gesamtpunkte != leistung.Gesamtpunkte_12_1)
-                                    //    {
-                                    //        leistung.Gesamtpunkte = leistung.Gesamtpunkte_12_1;                                                
-                                    //    }
-                                    //}
-                                    //if (leistung.EinheitNP == "P" && leistung.Jahrgang == 2 && leistung.HzJz == "GO" && leistung.Datum.Month > 2)
-                                    //{
-                                    //    if (leistung.Gesamtpunkte != leistung.Gesamtpunkte_12_2)
-                                    //    {
-                                    //        leistung.Gesamtpunkte = leistung.Gesamtpunkte_12_2;
-                                    //    }
-                                    //}
-                                    //if (leistung.EinheitNP == "P" && leistung.Jahrgang == 3 && leistung.HzJz == "GO" && leistung.Datum.Month == 1)
-                                    //{
-                                    //    if (leistung.Gesamtpunkte != leistung.Gesamtpunkte_13_1)
-                                    //    {
-                                    //        leistung.Gesamtpunkte = leistung.Gesamtpunkte_13_1;
-                                    //    }
-                                    //}
-                                    //if (leistung.EinheitNP == "P" && leistung.Jahrgang == 3 && leistung.HzJz == "GO" && leistung.Datum.Month > 2)
-                                    //{
-                                    //    if (leistung.Gesamtpunkte != leistung.Gesamtpunkte_13_2)
-                                    //    {
-                                    //        leistung.Gesamtpunkte = leistung.Gesamtpunkte_13_2;
-                                    //    }
-                                    //}
                                     leistung.Tendenz = theRow["Tendenz"].ToString() == "" ? null : theRow["Tendenz"].ToString();
                                     leistung.EinheitNP = theRow["Einheit"].ToString() == "" ? "N" : theRow["Einheit"].ToString();
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"].ToString());
@@ -1626,8 +1645,10 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             Global.AufConsoleSchreiben((" "));
             Global.AufConsoleSchreiben(("Leistungen in Atlantis updaten: "));
+            Global.AufConsoleSchreiben(("=============================== "));
+            Global.AufConsoleSchreiben((" "));
 
-            foreach (var w in (from t in this.OrderBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
+            foreach (var w in (from t in this.OrderBy(x=>x.Klasse).ThenBy(x => x.Fach).ThenBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
             {
                 UpdateLeistung(w.Beschreibung, w.Query);
                 i++;

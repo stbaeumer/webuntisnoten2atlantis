@@ -185,7 +185,13 @@ namespace webuntisnoten2atlantis
 
             if (aL.Count > 0)
             {
-                this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 6) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Fach.PadRight(5) + "|";
+                this.EinheitNP = aL[0].EinheitNP;
+                this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 3) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Klasse.PadRight(5) + "|" + aL[0].Fach.PadRight(5) + "|";
+
+                if (aL[0].LeistungId == 4547233)
+                {
+                    string aaa = "";
+                }
 
                 // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
@@ -205,7 +211,7 @@ namespace webuntisnoten2atlantis
 
                         if (Gesamtpunkte != null && aL[0].EinheitNP == "P")
                         {
-                            this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
+                            this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) + "]";
                             this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
                         }
                         else
@@ -214,7 +220,7 @@ namespace webuntisnoten2atlantis
                         }
                         if (Gesamtnote != null)
                         {
-                            this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
+                            this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadRight(1)) + "]->[" + Gesamtnote.PadRight(1) + "]";
                             this.Query += "s_note='" + Gesamtnote + "'" + ", ";
                         }
                         else
@@ -223,8 +229,8 @@ namespace webuntisnoten2atlantis
                         }
                         if (Tendenz != null && aL[0].EinheitNP == "P")
                         {
-                            this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
-                            this.Query += "s_tendenz='" + Tendenz + "'" + ", ";
+                            this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (Tendenz == null ? " " : Tendenz) + "]";
+                            this.Query += ("s_tendenz='" + Tendenz + "'").PadRight(13) + ",  ";
                         }
                         else
                         {
@@ -239,7 +245,7 @@ namespace webuntisnoten2atlantis
 
                             if (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P")
                             {
-                                this.Beschreibung = this.Beschreibung + ("Punkte:" + (aL[0].Gesamtpunkte == null ? "null" : aL[0].Gesamtpunkte) + "->" + Gesamtpunkte).PadRight(15) + "|";
+                                this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) +"]";
                                 this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
                             }
                             else
@@ -248,7 +254,7 @@ namespace webuntisnoten2atlantis
                             }
                             if (aL[0].Gesamtnote != Gesamtnote)
                             {
-                                this.Beschreibung = this.Beschreibung + ("Note:" + (aL[0].Gesamtnote == null ? "null" : aL[0].Gesamtnote) + "->" + Gesamtnote).PadRight(12) + "|";
+                                this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadLeft(1)) + "]->[" + Gesamtnote.PadLeft(1) + "]";
                                 this.Query += "s_note='" + Gesamtnote + "'" + ", ";
                             }
                             else
@@ -257,8 +263,8 @@ namespace webuntisnoten2atlantis
                             }
                             if (aL[0].Tendenz != Tendenz && aL[0].EinheitNP == "P")
                             {
-                                this.Beschreibung = this.Beschreibung + ("Tendenz:" + (aL[0].Tendenz == null ? "null" : aL[0].Tendenz) + "->" + Tendenz).PadRight(15) + "|";
-                                this.Query += "s_tendenz='" + Tendenz + "'" + ", ";
+                                this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (Tendenz == null ? " " : Tendenz) + "]";
+                                this.Query += ("s_tendenz='" + Tendenz + "',").PadRight(16);
                             }
                             else
                             {
@@ -268,14 +274,15 @@ namespace webuntisnoten2atlantis
                     }
 
                     this.Zielfach = aL[0].Fach;
-                    this.ZielLeistungId = aL[0].LeistungId;this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote=="-"? "Zeugnisbemerkung?|" :"");
+                    this.ZielLeistungId = aL[0].LeistungId;
+                    this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote=="-"? "Zeugnisbemerkung?|" :"");
                     this.Query += "ls_id_1=3844 "; // letzter Bearbeiter
                     this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
                 else
                 {
-                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz);
-                    this.Query += "/* Keine Änderung.";
+                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)":"");
+                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=3844 WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
             }
         }

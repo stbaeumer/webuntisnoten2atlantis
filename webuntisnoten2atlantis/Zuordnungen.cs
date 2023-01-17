@@ -48,7 +48,7 @@ namespace webuntisnoten2atlantis
 
             var i = 1;
 
-            Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + "): ");
+            //Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + ": ");
 
             foreach (var quellklasse in (from z in atlantisleistungen select z.Klasse).Distinct().ToList())
             {
