@@ -276,13 +276,13 @@ namespace webuntisnoten2atlantis
                     this.Zielfach = aL[0].Fach;
                     this.ZielLeistungId = aL[0].LeistungId;
                     this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote=="-"? "Zeugnisbemerkung?|" :"");
-                    this.Query += "ls_id_1=3844 "; // letzter Bearbeiter
+                    this.Query += "ls_id_1=1337 "; // letzter Bearbeiter
                     this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
                 else
                 {
                     this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)":"");
-                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=3844 WHERE noe_id=" + aL[0].LeistungId + ";";
+                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
             }
         }

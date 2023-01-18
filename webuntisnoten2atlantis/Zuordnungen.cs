@@ -64,7 +64,7 @@ namespace webuntisnoten2atlantis
                                     where t.Zielfach == atlantisfach 
                                     select t).FirstOrDefault(); 
                     
-                    Global.AufConsoleSchreiben( i.ToString().PadLeft(3) + ". " + (quellklasse + "|" + atlantisfach).PadRight(13) + (zielLeistung != null ? " <<<<= " + dieseLeistung.Fach : "")); i++;
+                    Console.WriteLine( i.ToString().PadLeft(3) + ". " + (quellklasse + "|" + atlantisfach).PadRight(13) + (zielLeistung != null ? " <<<<= " + dieseLeistung.Fach : "")); i++;
                     alle.Add(atlantisfach);
                 }
             }

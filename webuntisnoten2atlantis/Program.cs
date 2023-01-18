@@ -27,12 +27,12 @@ namespace webuntisnoten2atlantis
             var height = Console.WindowHeight;
             Console.SetWindowSize(width, height * 2);
             Global.SqlZeilen = new List<string>();
-            Global.PadRight = 110;
+            Global.PadRight = 116;
 
-            Global.AufConsoleSchreiben("   Webuntisnoten2Atlantis   |   Published under the terms of GPLv3   |   Stefan Bäumer   " + DateTime.Now.Year + " | Version 20230115");
+            Global.AufConsoleSchreiben("  Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230118");
             Global.AufConsoleSchreiben("Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis.");
-            Global.AufConsoleSchreiben("    ** ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren,              **");
-            Global.AufConsoleSchreiben("    **          wird keine Gesamtnote von Webuntis nach Atlantis übergeben!                         **");
+            Global.AufConsoleSchreiben("**     ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren,                                **");
+            Global.AufConsoleSchreiben("**              wird keine Gesamtnote von Webuntis nach Atlantis übergeben!                                           **");
             
 
             try
@@ -238,7 +238,7 @@ namespace webuntisnoten2atlantis
 
             if (sourceFile != null)
             {
-                Global.AufConsoleSchreiben("Ausgewertete Datei: " + Path.GetFileName(sourceFile).PadRight(47, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
+                Global.AufConsoleSchreiben("Ausgewertete Datei: " + Path.GetFileName(sourceFile).PadRight(53, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
             return sourceFile;
@@ -442,7 +442,7 @@ namespace webuntisnoten2atlantis
                 } while (!Directory.Exists(pfad));
             }
             
-            Global.AufConsoleSchreiben(("    ** Pfad zu den Dateien: " + pfad).PadRight(99,' ') + " **");
+            Global.AufConsoleSchreiben(("**     Pfad zu den Dateien: " + pfad).PadRight(117,' ') + " **");
             Global.AufConsoleSchreiben(@"========================================================================================================================");
             Global.AufConsoleSchreiben(@" ");
 

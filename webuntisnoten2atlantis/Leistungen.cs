@@ -174,7 +174,7 @@ namespace webuntisnoten2atlantis
         {
             var möglicheKlassen = (from k in this.OrderBy(xx => xx.Klasse) where k.Klasse != null select k.Klasse).Distinct().ToList();
 
-            var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei:\n ";
+            var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei:\n";
             int i = 0;
 
             foreach (var ik in möglicheKlassen)
