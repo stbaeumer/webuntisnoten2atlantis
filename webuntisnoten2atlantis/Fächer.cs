@@ -14,7 +14,7 @@ namespace webuntisnoten2atlantis
 
         public Fächer(Leistungen webuntisLeistungen, string klasse)
         {
-            var verschiedeneAktuelleFächer = (from s in webuntisLeistungen where s.Klasse == klasse select s.Fach).Distinct().ToList();
+            var verschiedeneAktuelleFächer = (from s in webuntisLeistungen.OrderBy(x=>x.Klasse).ThenBy(x=>x.Fach) where s.Klasse == klasse select s.Fach).Distinct().ToList();
 
             // Alle aktuellen Fächer werden gesammelt.
 
@@ -45,7 +45,7 @@ namespace webuntisnoten2atlantis
 
                 foreach (var konferenzdatum in alleVerschiedenenAlteKonferenzdaten)
                 {
-                    foreach (var fach in (from s in Global.GeholteLeistungen where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) where konferenzdatum == s.Konferenzdatum select s.Fach).Distinct().ToList())
+                    foreach (var fach in (from s in Global.GeholteLeistungen.OrderBy(x=>x.Klasse).ThenBy(x=>x.Fach) where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) where konferenzdatum == s.Konferenzdatum select s.Fach).Distinct().ToList())
                     {
                         if (!fachExistiertSchon.Contains(schülerId + fach.Replace("  ", " ")))
                         {
@@ -80,7 +80,7 @@ namespace webuntisnoten2atlantis
                 
                 if (konferenzdatum.Year == 1) 
                 {
-                    f += "aus Webuntis".PadRight(breite * 4 - 1) + "|";
+                    f += "aus Webuntis".Substring(0,Math.Min(12, breite * 4 - 1)).PadRight(breite * 4 - 1) + "|";
                 }
                 else 
                 {
