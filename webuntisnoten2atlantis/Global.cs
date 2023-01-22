@@ -15,10 +15,15 @@ namespace webuntisnoten2atlantis
         public static string HzJz { get; internal set; }
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
         public static int PadRight { get; internal set; }
+        public static Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum { get; internal set; }
+        public static Leistungen GeholteLeistungen { get; internal set; }
+        public static Leistungen Notenblatt { get; internal set; }
+        public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }
+        public static Abwesenheiten WebuntisAbwesenheiten { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {            
-            SqlZeilen.Insert(index, "/* " + message.PadRight(177) + " */");
+            SqlZeilen.Insert(index, "/* " + message.PadRight(Global.PadRight + 27) +" */");
         }
 
         public static bool WaitForFile(string fullPath)
@@ -42,19 +47,19 @@ namespace webuntisnoten2atlantis
                 }
                 catch (FileNotFoundException)
                 {
-                    Global.AufConsoleSchreiben("Die Datei " + fullPath  + " soll jetzt eingelsen werden, existiert aber nicht.");
+                    Global.WriteLine("Die Datei " + fullPath  + " soll jetzt eingelsen werden, existiert aber nicht.");
 
                     if (anzahlVersuche > 10)
-                        Global.AufConsoleSchreiben("Bitte Programm beenden.");
+                        Global.WriteLine("Bitte Programm beenden.");
 
                     System.Threading.Thread.Sleep(4000);
                 }
                 catch (IOException)
                 {
-                    Global.AufConsoleSchreiben("Die Datei " + fullPath  + " ist gesperrt");
+                    Global.WriteLine("Die Datei " + fullPath  + " ist gesperrt");
 
                     if (anzahlVersuche > 10)
-                        Global.AufConsoleSchreiben("Bitte Programm beenden.");
+                        Global.WriteLine("Bitte Programm beenden.");
 
                     System.Threading.Thread.Sleep(4000);
                 }
@@ -66,10 +71,26 @@ namespace webuntisnoten2atlantis
             return true;
         }
 
-        internal static void AufConsoleSchreiben(string zeile)
+        internal static void WriteLine(string zeile)
         {
             Console.WriteLine(zeile);
             Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
+        }
+
+        internal static void Write(string zeile)
+        {
+            Console.Write(zeile);
+            Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
+        }
+
+        internal static string List2String(List<string> interessierendeKlassen, Char delimiter)
+        {
+            var s = "";
+            foreach (var item in interessierendeKlassen)
+            {
+                s += item + delimiter;
+            }
+            return s.TrimEnd(delimiter);
         }
 
         //public static void AusgabeSchreiben(string text, List<string> klassen)

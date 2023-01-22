@@ -62,6 +62,8 @@
   <ItemGroup>
     <Compile Include="Abwesenheit.cs" />
     <Compile Include="Abwesenheiten.cs" />
+    <Compile Include="Fach.cs" />
+    <Compile Include="Fächer.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Lehrer.cs" />
     <Compile Include="Lehrers.cs" />

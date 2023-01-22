@@ -11,7 +11,7 @@ namespace webuntisnoten2atlantis
 {
     public class Abwesenheiten : List<Abwesenheit>
     {
-        public Abwesenheiten(string inputAbwesenheitenCsv, List<string> interessierendeKlassen)
+        public Abwesenheiten(string inputAbwesenheitenCsv, List<string> interessierendeKlassen, Leistungen alleWebuntisleistungen)
         {
             using (StreamReader reader = new StreamReader(inputAbwesenheitenCsv))
             {
@@ -49,7 +49,25 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                Global.AufConsoleSchreiben("Abwesenheiten aus Webuntis ".PadRight(110, '.') + this.Count.ToString().PadLeft(4));                
+                Global.WriteLine("Abwesenheiten aus Webuntis ".PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
+
+                // Für Schüler in Webuntis ohne Abwesenheit wird kein Datensatz exportiert.
+                // Damit ein möglicherweise händisch angelegter Datenatz in Fucklantis überschrieben wird,
+                // muss hier für jeden Schüler ohne Datensatz einer angelegt werden:
+
+                foreach (var item in alleWebuntisleistungen)
+                {
+                    if (!(from t in this where t.StudentId == item.SchlüsselExtern select t).Any())
+                    {
+                        Abwesenheit abwesenheit = new Abwesenheit();                        
+                        abwesenheit.StudentId = item.SchlüsselExtern;
+                        abwesenheit.Name = item.Name;
+                        abwesenheit.Klasse = item.Klasse;
+                        abwesenheit.StundenAbwesend = 0;
+                        abwesenheit.StundenAbwesendUnentschuldigt = 0; // unenentschuldigt oder offen
+                        this.Add(abwesenheit);
+                    }
+                }
             }
         }
 
@@ -59,7 +77,7 @@ namespace webuntisnoten2atlantis
             {
                 var typ = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
-                Global.AufConsoleSchreiben("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(Global.PadRight, '.') + "  " + typ);
+                Global.WriteLine("Die Atlantis-Abwesenheiten & -Leistungen beziehen sich auf den Abschnitt: ".PadRight(Global.PadRight, '.') + "  " + typ);
 
                 using (OdbcConnection connection = new OdbcConnection(connetionstringAtlantis))
                 {
@@ -113,7 +131,7 @@ DBA.schueler.name_2 ASC ", connection);
             {
                 throw ex;
             }
-            Global.AufConsoleSchreiben("Abwesenheiten aus Atlantis ".PadRight(110, '.') + this.Count.ToString().PadLeft(4));            
+            Global.WriteLine("Abwesenheiten aus Atlantis ".PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));            
         }
 
         public Abwesenheiten()
@@ -158,9 +176,6 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-
-                Global.AufConsoleSchreiben(("Fehlzeiten in Atlantis einfügen").PadRight(Global.PadRight, '.') + i.ToString().PadLeft(4));
-                Global.PrintMessage(outputIndex, ("Neu anzulegende Abwesenheiten in Atlantis: ").PadRight(65, '.') + (" " + i.ToString()).PadLeft(30, '.'));
             }
             catch (Exception ex)
             {
@@ -206,7 +221,6 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                Global.AufConsoleSchreiben("Fehlzeiten in Atlantis updaten".PadRight(110, '.') + i.ToString().PadLeft(4));                
             }
             catch (Exception ex)
             {
@@ -244,7 +258,6 @@ DBA.schueler.name_2 ASC ", connection);
                         i++;
                     }
                 }
-                Global.AufConsoleSchreiben("Fehlzeiten in Atlantis löschen".PadRight(110, '.') + i.ToString().PadLeft(4));                
             }
             catch (Exception ex)
             {
@@ -256,8 +269,8 @@ DBA.schueler.name_2 ASC ", connection);
         {
             try
             {
-                string o = updateQuery + "/* " + message;
-                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
+                string o = updateQuery.PadRight(80) + "/* " + message;
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(Global.PadRight + 31) + "*/");
             }
             catch (Exception ex)
             {

@@ -188,11 +188,6 @@ namespace webuntisnoten2atlantis
                 this.EinheitNP = aL[0].EinheitNP;
                 this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 3) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Klasse.PadRight(5) + "|" + aL[0].Fach.PadRight(5) + "|";
 
-                if (aL[0].LeistungId == 4547233)
-                {
-                    string aaa = "";
-                }
-
                 // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
                 if (
@@ -282,9 +277,36 @@ namespace webuntisnoten2atlantis
                 else
                 {
                     this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)":"");
-                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + ";";
+                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + "*/";
                 }
             }
+        }
+
+        internal bool NoteDesAktuellenAbschnitts(List<string> interessierendeKlassen, List<string> aktSj)
+        {
+            if (Konferenzdatum >= DateTime.Now.Date || Konferenzdatum.Year == 1)
+            {
+                if (interessierendeKlassen.Contains(Klasse))
+                {
+                    if (Schuljahr == aktSj[0] + "/" + aktSj[1])
+                    {
+                        return true;
+                    }
+                }                
+            }
+            return false;
+        }
+
+        internal bool leistungDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum(List<string> aktSj)
+        {
+            if (Konferenzdatum > DateTime.Now.Date.AddDays(-14) && Konferenzdatum.Date < DateTime.Now.Date)
+            {
+                if (Schuljahr == aktSj[0] + "/" + aktSj[1])
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

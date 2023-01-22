@@ -7,41 +7,7 @@ using System.Linq;
 namespace webuntisnoten2atlantis
 {
     public class Zuordnungen : List<Zuordnung>
-    {
-        //public Zuordnungen()
-        //{
-        //    foreach (var item in Properties.Settings.Default.Zuordnungen.Split(','))
-        //    {
-        //        if (item != "")
-        //        {
-        //            var quelle = item.Split(';')[0];
-        //            var ziel = item.Split(';')[1];
-
-        //            Zuordnung zuordnung = new Zuordnung();
-        //            zuordnung.Quellklasse = quelle.Split('|')[0];
-        //            zuordnung.Quellfach = quelle.Split('|')[1];
-        //            zuordnung.Zielfach = ziel.Split('|')[0];
-        //            this.Add(zuordnung);
-        //        }
-        //    }
-        //}
-
-        //public Zuordnungen(Leistungen webuntisLeistungen, Abwesenheiten atlantisAbwesenheiten)
-        //{
-        //    this.Add(new Zuordnung(" FU", ""));
-        //    this.Add(new Zuordnung("FS19*|INW", "IF"));
-        //    this.Add(new Zuordnung("HBT19A|FPE", "FPEL"));
-        //    this.Add(new Zuordnung("WE18A|KKS*", "KKS"));
-        //    this.Add(new Zuordnung("KR", "REL"));
-        //    this.Add(new Zuordnung("ER", "REL"));
-        //    this.Add(new Zuordnung("KR ", "REL"));
-        //    this.Add(new Zuordnung("ER ", "REL"));
-        //    this.Add(new Zuordnung("NF ", ""));
-        //    this.Add(new Zuordnung("", ""));
-        //    this.Add(new Zuordnung("", ""));
-        //    this.Add(new Zuordnung("", ""));
-        //}
-
+    {        
         public List<string> AlleZulässigenAtlantisZielFächerAuflisten(Leistung dieseLeistung, Leistungen atlantisleistungen, string aktSj)
         {
             List<string> alle = new List<string>();
@@ -50,7 +16,7 @@ namespace webuntisnoten2atlantis
 
             //Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + ": ");
 
-            foreach (var quellklasse in (from z in atlantisleistungen select z.Klasse).Distinct().ToList())
+            foreach (var quellklasse in (from z in atlantisleistungen where z.Klasse == dieseLeistung.Klasse select z.Klasse).Distinct().ToList())
             {
                 foreach (var atlantisfach in (from a in atlantisleistungen
                                               where a.Klasse == quellklasse
@@ -75,12 +41,12 @@ namespace webuntisnoten2atlantis
         {
             if (this.Count > 0)
             {
-                Global.AufConsoleSchreiben("");
-                Global.AufConsoleSchreiben(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
+                Global.WriteLine("");
+                Global.WriteLine(" Folgende Fächer können keinem Atlantisfach zugeordnet werden oder wurden bereits manuell zugeordnet:");
 
                 for (int i = 0; i < this.Count; i++)
                 {
-                    Global.AufConsoleSchreiben((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
+                    Global.WriteLine((" " + (i + 1).ToString().PadLeft(2) + ". " + this[i].Quellklasse.PadRight(6) + "|" + this[i].Quellfach.PadRight(6) + (this[i].Zielfach != null ? "   ->  " + this[i].Zielfach : "")).PadRight(34));
                 }
             }
         }
@@ -98,7 +64,7 @@ namespace webuntisnoten2atlantis
                     var xx = Console.ReadLine();
                     xx = xx.ToUpper();
 
-                    Global.AufConsoleSchreiben("");
+                    Global.WriteLine("");
 
                     if ((from a in atlantisleistungen where a.Klasse == this[eingabe - 1].Quellklasse where a.Fach == xx select a).Any() || xx == "")
                     {
@@ -106,17 +72,17 @@ namespace webuntisnoten2atlantis
 
                         int i = 0;
 
-                        Global.AufConsoleSchreiben(" Die Zuordnung des Faches " + xx + " wurde " + i + "x erfolgreich vorgenommen.");
+                        Global.WriteLine(" Die Zuordnung des Faches " + xx + " wurde " + i + "x erfolgreich vorgenommen.");
 
                         if (xx == "")
                         {
                             this[eingabe - 1].Zielfach = null;
-                            Global.AufConsoleSchreiben("Die Zuordnung wird entfernt.");
+                            Global.WriteLine("Die Zuordnung wird entfernt.");
                         }
                     }
                     else
                     {
-                        Global.AufConsoleSchreiben("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
+                        Global.WriteLine("[FEHLER] Ihre Zuordnung war nicht möglich. Das Fach *" + xx + "* gibt es in Atlantis nicht. Die Fächer sind:");
 
                         var verschiedeneFächer = (from a in atlantisleistungen
                                                   where a.Klasse == this[eingabe - 1].Quellklasse
@@ -128,10 +94,10 @@ namespace webuntisnoten2atlantis
 
                             if ((i + 1) % 7 == 0)
                             {
-                                Global.AufConsoleSchreiben("");
+                                Global.WriteLine("");
                             }
                         }
-                        Global.AufConsoleSchreiben("");
+                        Global.WriteLine("");
                     }
                 }
             }
