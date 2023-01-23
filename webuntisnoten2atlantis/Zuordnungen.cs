@@ -8,7 +8,7 @@ namespace webuntisnoten2atlantis
 {
     public class Zuordnungen : List<Zuordnung>
     {        
-        public List<string> AlleZulässigenAtlantisZielFächerAuflisten(Leistung dieseLeistung, Leistungen atlantisleistungen, string aktSj)
+        public List<string> AlleZulässigenAtlantisZielFächerAuflisten(Leistung dieseLeistung, Leistungen atlantisleistungen, string aktSj, List<string> interessierendeKlassen)
         {
             List<string> alle = new List<string>();
 
@@ -16,7 +16,7 @@ namespace webuntisnoten2atlantis
 
             //Global.AufConsoleSchreiben(" Für Auswahl zulässige Atlantisfächer im Schuljahr: " + aktSj + ": ");
 
-            foreach (var quellklasse in (from z in atlantisleistungen where z.Klasse == dieseLeistung.Klasse select z.Klasse).Distinct().ToList())
+            foreach (var quellklasse in (from z in atlantisleistungen where interessierendeKlassen.Contains(z.Klasse) select z.Klasse).Distinct().ToList())
             {
                 foreach (var atlantisfach in (from a in atlantisleistungen
                                               where a.Klasse == quellklasse

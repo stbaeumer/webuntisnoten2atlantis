@@ -89,7 +89,7 @@ namespace webuntisnoten2atlantis
                         webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                         atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
 
-                        webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlassen[0]);
+                        webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
 
                     }
 

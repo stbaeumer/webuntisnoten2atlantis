@@ -211,7 +211,7 @@ namespace webuntisnoten2atlantis
                         }
                         else
                         {
-                            this.Query += (" ").PadRight(14) + "  ";
+                            this.Query += (" ").PadRight(11) + "  ";
                         }
                         if (Gesamtnote != null)
                         {
@@ -245,7 +245,7 @@ namespace webuntisnoten2atlantis
                             }
                             else
                             {
-                                this.Query += (" ").PadRight(14) + "  ";
+                                this.Query += (" ").PadRight(11) + "  ";
                             }
                             if (aL[0].Gesamtnote != Gesamtnote)
                             {
