@@ -6,7 +6,7 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 * Klassen- und Fächerbezeichnungen sind (mit Ausnahmen) identisch in Untis und Atlantis.
 * Ein Notenblatt wurde in Atlantis angelegt.
-* Zeugnisnoten wurden als Gesamtnoten in Webuntis erfasst.
+* Zeugnisnoten wurden als Gesamtnoten in Webuntis erfasst. Alle Noten in allen Anlagen werden als Noten mit Tendenzen (+ oder -) eingegeben. Die Lehrkraft muss Teilleistungen in Webuntis eingetragen haben, damit die Gesamtnote übertragen wird.
 * Der Benutzer hat die Berechtigung Prüfungen und Fehlzeiten aus Webuntis zu exportieren und SQL-Dateien in Atlantis zu importieren.
 * Die Schülerinnen und Schüler haben in Webuntis die Atlantis-ID als externen Schlüssel gesetzt bekommen.
 
