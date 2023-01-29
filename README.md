@@ -10,21 +10,21 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 * Der Benutzer hat die Berechtigung Prüfungen und Fehlzeiten aus Webuntis zu exportieren und SQL-Dateien in Atlantis zu importieren.
 * Die Schülerinnen und Schüler haben in Webuntis die Atlantis-ID als externen Schlüssel gesetzt bekommen.
 
-## Vorgehen
+## Schritte
 
 1. Prüfungen aus Webuntis exportieren und im Download-Ordner ablegen.
 2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner ablegen.
 3. *WebuntisNoten2Atlantis* starten.
-   Falls die Zuordnung eines Webuntis-Fachs nicht möglich ist, wird das angezeigt. Eine Zuordnung kann dann vorgenommen werden.
+   Falls die Zuordnung eines Webuntis-Fachs nicht möglich ist, wird das angezeigt. Eine Zuordnung kann dann händisch vorgenommen werden.
 4. Erzeugte SQL-Datei in Atlantis importieren.
 
 ### Prüfungen aus Webuntis exportieren
 
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Klassenbuch > Berichte* gehen.
-3. Alle Klassen wählen. Das aktuelle Schuljahr wählen.
-4. Unter der Rubrik *Noten* das Icon *CSV-Ausgabe* klicken. Der Haken bei *Notennamen ausgeben* darf nicht gesetzt sein. 
-5. Die Datei *MarksPerLesson.CSV* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und es kann dauern, bis Webuntis die Datei bereitstellt. Die Datei hat folgenden Aufbau:
+3. Alle Klassen wählen oder auch nur eine Klasse wählen oder auch nur einen Schüler in einer Klasse wählen. Das aktuelle Schuljahr oder das Halbjahr wählen.
+4. Unter der Rubrik *Noten* das Icon *CSV-Ausgabe* klicken. Der Haken bei *Notennamen ausgeben* darf _nicht_ gesetzt sein. 
+5. Die Datei *MarksPerLesson.CSV* im Download-Ordner speichern. Die Datei hat möglicherweise sehr viele Zeilen und es kann dauern, bis Webuntis die Datei bereitstellt. Die Datei hat folgenden Aufbau:
 
 ```
 Datum	Name	Klasse	Fach	Prüfungsart	Note	Bemerkung	Benutzer	Schlüssel (extern)	Gesamtnote
@@ -38,14 +38,14 @@ Die Gesamtnote steht in der letzten Spalte als Punktzahl von ```0``` bis ```15``
 1. Mit administrativer Berechtigung in Webuntis anmelden.
 2. Den Pfad *Administration > Export* gehen.
 3. Hinter *Gesamtfehlzeiten* das Icon *CSV-Ausgabe* klicken.
-5. Die Datei *AbsenceTimesTotal.CSV* auf dem Desktop speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
+5. Die Datei *AbsenceTimesTotal.CSV* i Download-Ordner speichern. Die Datei hat möglicherweise sehr viele Zeilen und folgenden Aufbau:
 
 ```
 studentId	name		klasse	klasseId	absentMins	absentMinsNotExcused	absentHours	absentHoursNotExcused
 		151989	Müller	Ina	HBW20A	2984	360	0	8	1
 ```
 
-Die Atlantis-ID heißt hier ```studentId```. Diese Schülerin hat 360 Minuten gefehlt. Davon waren 8 Minuten unentschldigt.
+Die Atlantis-ID heißt hier ```studentId```. Diese Schülerin hat 360 Minuten gefehlt. Davon sind 0 Minuten unentschldigt.
 
 ### WebuntisNoten2Atlantis bedienen
 
