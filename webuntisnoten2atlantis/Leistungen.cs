@@ -179,7 +179,7 @@ namespace webuntisnoten2atlantis
                 do
                 {
                     Console.WriteLine(" ");
-                    Global.WriteLine("Soll das Notenblatt (Noten & Abwesenheiten) zuerst einmal komplett gelöscht werden? (j/N)");
+                    Global.WriteLine("Soll das Atlantis-Notenblatt (Noten & Abwesenheiten) zuerst einmal komplett geleert werden? (j/N)");
                     x = Console.ReadKey();
                 } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
 

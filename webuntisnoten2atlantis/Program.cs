@@ -30,10 +30,10 @@ namespace webuntisnoten2atlantis
             Global.PadRight = 116;
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230130  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230330  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
-            Global.WriteLine("| ACHTUNG: Wenn es die Lehrkraft versäumt hat, die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
+            Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
             Global.WriteLine("| nach Atlantis übergeben!                                                                                             |");
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
 

@@ -269,8 +269,8 @@ DBA.schueler.name_2 ASC ", connection);
         {
             try
             {
-                string o = updateQuery.PadRight(80) + "/* " + message;
-                Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(Global.PadRight + 31) + "*/");
+                string o = updateQuery.PadRight(103) + "/* " + message;
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(125, o.Length))).PadRight(Global.PadRight + 31) + "*/");
             }
             catch (Exception ex)
             {
