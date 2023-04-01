@@ -20,6 +20,7 @@ namespace webuntisnoten2atlantis
         public static Leistungen Notenblatt { get; internal set; }
         public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }
         public static Abwesenheiten WebuntisAbwesenheiten { get; internal set; }
+        public static bool BlaueBriefe { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {            

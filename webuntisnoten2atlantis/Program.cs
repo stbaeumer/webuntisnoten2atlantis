@@ -50,9 +50,12 @@ namespace webuntisnoten2atlantis
                 string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
 
+                IstBlauerBrief();
+                
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
                 Leistungen möglicheKlassen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer, new List<string>());
+
                 var möglicheKlassenString = möglicheKlassen.GetMöglicheKlassen();
 
                 do
@@ -73,8 +76,15 @@ namespace webuntisnoten2atlantis
                     RelevanteDatensätzeAusCsvFiltern(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
 
                     Leistungen atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlassen, webuntisLeistungen);
-                    Abwesenheiten atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
-                    Global.WebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen, webuntisLeistungen);
+
+                    Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
+                    
+                    if (sourceAbsenceTimesTotal != null)
+                    {
+                        atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
+                        Global.WebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen, webuntisLeistungen);
+                    }
+                    
 
                     if (webuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen))
                     {                                             
@@ -135,6 +145,29 @@ namespace webuntisnoten2atlantis
             }
         }
 
+        private static void IstBlauerBrief()
+        {
+            ConsoleKeyInfo x;
+            do
+            {
+                Console.WriteLine(" ");
+                Global.WriteLine("Wollen Sie Blaue Briefe nach Atlantis übertragen? (j/N)");
+                x = Console.ReadKey();
+            } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
+
+            Global.WriteLine(" Ihre Auswahl: " + (x.Key.ToString() == "Enter" || x.Key.ToString().ToUpper() == "N" ? "N" : "J"));
+            Global.WriteLine(" ");
+
+            if (x.Key.ToString().ToLower() == "j")
+            {
+                Global.BlaueBriefe = true;
+            }
+            else
+            {
+                Global.BlaueBriefe = false;
+            }
+        }
+
         private static string Zeichenkette(List<string> interessierendeKlassen)
         {
             var x = "";
@@ -167,36 +200,44 @@ namespace webuntisnoten2atlantis
 
         private static void RelevanteDatensätzeAusCsvFiltern(string sourceFile, string targetfile, List<string> interessierendeKlassen)
         {
-            int anzahlZeilen = 0;
-
-            using (var sr = new StreamReader(sourceFile))
-            using (var sw = new StreamWriter(targetfile))
+            try
             {
-                string line;
-                int zeile = 0;
+                int anzahlZeilen = 0;
 
-                while ((line = sr.ReadLine()) != null)
+                using (var sr = new StreamReader(sourceFile))
+                using (var sw = new StreamWriter(targetfile))
                 {
-                    bool relevanteZeile = false;
+                    string line;
+                    int zeile = 0;
 
-                    foreach (var iK in interessierendeKlassen)
+                    while ((line = sr.ReadLine()) != null)
                     {
-                        if (line.Contains(iK))
+                        bool relevanteZeile = false;
+
+                        foreach (var iK in interessierendeKlassen)
                         {
-                            relevanteZeile = true;
-                            anzahlZeilen++;
+                            if (line.Contains(iK))
+                            {
+                                relevanteZeile = true;
+                                anzahlZeilen++;
+                            }
                         }
-                    }
 
-                    if (relevanteZeile || zeile == 0)
-                    {
-                        sw.WriteLine(line);
+                        if (relevanteZeile || zeile == 0)
+                        {
+                            sw.WriteLine(line);
+                        }
+                        zeile++;
                     }
-                    zeile++;
                 }
-            }
 
-            //Global.AufConsoleSchreiben(("Datensätze der Klasse " + interessierendeKlassen[0] + " in " + Path.GetFileName(targetfile)).PadRight(Global.PadRight, '.') + anzahlZeilen.ToString().PadLeft(4));
+                //Global.AufConsoleSchreiben(("Datensätze der Klasse " + interessierendeKlassen[0] + " in " + Path.GetFileName(targetfile)).PadRight(Global.PadRight, '.') + anzahlZeilen.ToString().PadLeft(4));
+
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private static string CheckFile(string user, string kriterium)

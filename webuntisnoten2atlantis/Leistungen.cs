@@ -42,6 +42,7 @@ namespace webuntisnoten2atlantis
 
                             // Es wird nur die interessierende Klasse ausgewertet
 
+                            
                             if (klassen.Count == 0 || klassen.Contains(x[2]))
                             {
                                 i++;
@@ -53,6 +54,9 @@ namespace webuntisnoten2atlantis
                                     leistung.Name = x[1];
                                     leistung.Klasse = x[2];
                                     leistung.Fach = x[3];
+                                    leistung.Prüfungsart = x[4];
+                                    leistung.Note = Gesamtpunkte2Gesamtnote(x[5]); // Für die Blauen Briefe
+                                    leistung.Punkte = x[5].Length > 0 ?  x[5].Substring(0,1) : ""; // Für die blauen Briefe
                                     leistung.Gesamtpunkte = x[9].Split('.')[0] == "" ? null : x[9].Split('.')[0];
                                     leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                     leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
@@ -61,14 +65,26 @@ namespace webuntisnoten2atlantis
                                     leistung.LehrkraftAtlantisId = (from l in lehrers where l.Kuerzel == leistung.Lehrkraft select l.AtlantisId).FirstOrDefault();
                                     leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
 
-                                    if (leistungen.LeistungHinzufügen(leistung))
+                                    if (Global.BlaueBriefe)
                                     {
-                                        if (leistung.Fach == "")
-                                        {                                            
-                                            leistung.Fach = "leer";
+                                        if (leistung.Prüfungsart.StartsWith("M"))
+                                        {
+                                            leistung.Gesamtnote = leistung.Note;
+                                            leistung.Gesamtpunkte = leistung.Punkte;
+                                            leistungen.Add(leistung);
                                         }
-                                        
-                                        leistungen.Add(leistung);
+                                    }
+                                    else
+                                    {
+                                        if (leistungen.LeistungHinzufügen(leistung))
+                                        {
+                                            if (leistung.Fach == "")
+                                            {
+                                                leistung.Fach = "leer";
+                                            }
+
+                                            leistungen.Add(leistung);
+                                        }
                                     }
                                 }
 
@@ -81,6 +97,8 @@ namespace webuntisnoten2atlantis
                                     leistung.Name = x[1];
                                     leistung.Klasse = x[2];
                                     leistung.Fach = x[3];
+                                    leistung.Prüfungsart = x[4];
+                                    leistung.Note = x[5];
                                     leistung.Bemerkung = x[6];
                                     //Console.WriteLine("[!] Achtung: In den Zeilen " + (i - 1) + "-" + i + " hat vermutlich die Lehrkraft eine Bemerkung mit einem Zeilen-");
                                     //Console.Write("      umbruch eingebaut. Es wird nun versucht trotzdem korrekt zu importieren ... ");
@@ -227,7 +245,18 @@ namespace webuntisnoten2atlantis
 
         public string GetMöglicheKlassen()
         {
-            var möglicheKlassen = (from k in this.OrderBy(xx => xx.Klasse) where k.Klasse != null select k.Klasse).Distinct().ToList();
+            var möglicheKlassen = (from l in this.OrderBy(xx => xx.Klasse) 
+                                   where l.Klasse != null                                    
+                                   select l.Klasse).Distinct().ToList();
+
+            if (Global.BlaueBriefe)
+            {
+                möglicheKlassen = (from l in this.OrderBy(xx => xx.Klasse)
+                                       where l.Klasse != null
+                                       where l.Klasse.Contains(DateTime.Now.AddYears(-1).Year.ToString().Substring(2, 2))
+                                       where l.Prüfungsart.ToLower().Contains("mahnung")
+                                       select l.Klasse).Distinct().ToList();
+            }
 
             var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei:\n ";
             int i = 0;
@@ -1640,11 +1669,19 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             {
                 return "6";
             }
+            if (gesamtpunkte == "0.0")
+            {
+                return "6";
+            }
             if (gesamtpunkte == "1")
             {
                 return "5";
             }
             if (gesamtpunkte == "2")
+            {
+                return "5";
+            }
+            if (gesamtpunkte == "2.0")
             {
                 return "5";
             }
@@ -1806,6 +1843,17 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             var interessierendeKlassen = new List<string>();
 
+            //if (Global.BlaueBriefe)
+            //{
+            //    foreach (var item in this)
+            //    {
+            //        if (!interessierendeKlassen.Contains(item.Klasse))
+            //        {
+            //            interessierendeKlassen.Add(item.Klasse);
+            //        }
+            //    }
+            //    return interessierendeKlassen;
+            //}
             try
             {
                 do

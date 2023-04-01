@@ -62,6 +62,8 @@ namespace webuntisnoten2atlantis
         public int LehrkraftAtlantisId { get; internal set; }
         public string Zielfach { get; internal set; }
         public int ZielLeistungId { get; internal set; }
+        public string Note { get; internal set; }
+        public string Punkte { get; internal set; }
 
         public bool IstAbschlussklasse()
         {
@@ -81,6 +83,11 @@ namespace webuntisnoten2atlantis
             }
 
             return false;
+        }
+
+        internal void IstPrüfungsart(bool blaueBriefe)
+        {
+            string a = "";
         }
 
         internal string Gesamtnote2Gesamtpunkte(string gesamtnote)
