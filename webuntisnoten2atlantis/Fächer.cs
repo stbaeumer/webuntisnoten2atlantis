@@ -26,42 +26,70 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Leistungen GetAlleVergangenenFächer(Leistungen atlantisLeistungen, Leistungen webuntisLeistungen, List<int> alleVerschiedenenInteressierendenSchüler, List<DateTime> alleVerschiedenenAlteKonferenzdaten)
+        public Leistungen GetAlleVergangenenLeistungen(Leistungen atlantisLeistungen, Leistungen webuntisLeistungen, List<int> alleVerschiedenenInteressierendenSchüler, List<DateTime> alleVerschiedenenAlteKonferenzdaten)
         {   
             var leistungen = new Leistungen();
 
+            var f = new Fächer();
+            f.AddRange(this);
+
+            var schuelerLeistungExistiertSchon = new List<string>();
+
             foreach (var schülerId in alleVerschiedenenInteressierendenSchüler)
             {
-                var fachExistiertSchon = new List<string>();
-
-                foreach (var aktuellesFach in this)
+                if (schülerId == 153274)
                 {
-                    fachExistiertSchon.Add(schülerId + aktuellesFach.Name.Replace("  "," "));
+                    string a = "";
                 }
-                
-                var aktuelleFächer = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Fach).Distinct().ToList();
-                var alteFächer = (from s in atlantisLeistungen where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) select s.Fach).Distinct().ToList();
-                var aktuelleKlasse = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Klasse).FirstOrDefault();
+                foreach (var aktuellesFach in f)
+                {
+                    foreach (var alias in aktuellesFach.NameAliase)
+                    {
+                        schuelerLeistungExistiertSchon.Add(schülerId + alias.Replace("  ", " "));
+                    }                    
+                }
+
+                var aktuelleFächerDiesesSchülers = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Fach).Distinct().ToList();
+                var alteFächerDiesesSchülers = (from s in atlantisLeistungen where s.SchlüsselExtern == schülerId where !aktuelleFächerDiesesSchülers.Contains(s.Fach) select s.Fach).Distinct().ToList();
+                var aktuelleKlasseDiesesSchülers = (from s in webuntisLeistungen where s.SchlüsselExtern == schülerId select s.Klasse).FirstOrDefault();
+
+                // Für alle vergangenen Konferenzdaten, ...
 
                 foreach (var konferenzdatum in alleVerschiedenenAlteKonferenzdaten)
                 {
-                    foreach (var fach in (from s in Global.GeholteLeistungen.OrderBy(x=>x.Klasse).ThenBy(x=>x.Fach) where s.SchlüsselExtern == schülerId where !aktuelleFächer.Contains(s.Fach) where konferenzdatum == s.Konferenzdatum select s.Fach).Distinct().ToList())
+                    // ... werden alle vergangenen Fächer des Schülers durchlaufen.
+
+                    foreach (var fach in (from s in Global.GeholteLeistungen.OrderBy(x => x.Klasse).ThenBy(x => x.Fach) where s.SchlüsselExtern == schülerId where !aktuelleFächerDiesesSchülers.Contains(s.Fach) where konferenzdatum == s.Konferenzdatum select s.Fach).Distinct().ToList())
                     {
-                        if (!fachExistiertSchon.Contains(schülerId + fach.Replace("  ", " ")))
+                        // Wenn bereits eine Note in diesem Fach vorliegt, wird keine weitere Note gezogen
+
+                        if (!schuelerLeistungExistiertSchon.Contains(schülerId + fach.Replace("  ", " ")))
                         {
-                            fachExistiertSchon.Add(schülerId + fach.Replace("  ", " "));
+                            schuelerLeistungExistiertSchon.Add(schülerId + fach.Replace("  ", " "));
 
                             var l = (from s in Global.GeholteLeistungen
                                      where s.SchlüsselExtern == schülerId
-                                     where !aktuelleFächer.Contains(s.Fach)
+                                     where !aktuelleFächerDiesesSchülers.Contains(s.Fach)
                                      where s.Konferenzdatum == konferenzdatum
                                      where s.Fach == fach
                                      select s).ToList();
-                            leistungen.Add(l[0]);
 
-                            if (!(from xx in this where xx.Klasse == l[0].Klasse where xx.Name == l[0].Fach where xx.Lehrkraft == l[0].Lehrkraft select xx).Any())
+                            // Bei Religionsabwählern wird keine Religion als Leistung angelegt.
+
+                            if (!(l[0].ReligionAbgewählt && (l[0].Fach == "KR" || l[0].Fach =="ER" || l[0].Fach == "REL" || l[0].Fach.StartsWith("ER ") || l[0].Fach.StartsWith("KR "))))
                             {
-                                this.Add(new Fach(l[0].Klasse, l[0].Fach, l[0].Lehrkraft, l[0].Konferenzdatum.Year == 1 ? DateTime.Now : l[0].Konferenzdatum));
+                                leistungen.Add(l[0]);
+
+                                // Wenn diese Leistung an einem  
+
+                                if (!(from xx in this
+                                      where xx.Klasse.Substring(0, 3) == l[0].Klasse.Substring(0, 3) // Klassenwechsler nehmen die Note aus Parrallelklasse mit 
+                                      where xx.Name == l[0].Fach
+                                      where xx.Lehrkraft == l[0].Lehrkraft
+                                      select xx).Any())
+                                {
+                                    this.Add(new Fach(l[0].Klasse, l[0].Fach, l[0].Lehrkraft, l[0].Konferenzdatum.Year == 1 ? DateTime.Now : l[0].Konferenzdatum));
+                                }
                             }
                         }
                     }
@@ -76,7 +104,7 @@ namespace webuntisnoten2atlantis
 
             foreach (var konferenzdatum in (from ff in this select ff.Konferenzdatum).Distinct().ToList())
             {
-                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count();
+                var breite = Math.Max(2, (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count());
                 
                 if (konferenzdatum.Year == 1) 
                 {
@@ -97,11 +125,15 @@ namespace webuntisnoten2atlantis
 
             foreach (var konferenzdatum in (from ff in this select ff.Konferenzdatum).Distinct().ToList())
             {
-                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count();
+                // Wenn nur ein Fach zu dieser Konferenz zugeordnet werden kann, dann wird die Spalte um eine leere Einheit verbreitert
+
+                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count() == 1 ? 7 : 3;
+
+                var x = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).ToList();
 
                 foreach (var fach in (from t in this where t.Konferenzdatum == konferenzdatum select t).ToList())
                 {
-                    f += fach.Name.PadRight(3).Substring(0,3) + "|";
+                    f += fach.Name.PadRight(3).Substring(0,3).PadRight(breite) + "|";
                 }
             }
 
@@ -111,11 +143,13 @@ namespace webuntisnoten2atlantis
 
             foreach (var konferenzdatum in (from ff in this select ff.Konferenzdatum).Distinct().ToList())
             {
-                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count();
+                // Wenn nur ein Fach zu dieser Konferenz zugeordnet werden kann, dann wird die Spalte um eine leere Einheit verbreitert
+
+                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count() == 1 ? 7 : 3;
 
                 foreach (var fach in (from t in this where t.Konferenzdatum == konferenzdatum select t).ToList())
                 {
-                    f += (fach.Lehrkraft == null ? "" :fach.Lehrkraft).PadRight(3) + "|";
+                    f += (fach.Lehrkraft == null ? "" :fach.Lehrkraft).PadRight(breite) + "|";
                 }
             }
 
@@ -132,6 +166,10 @@ namespace webuntisnoten2atlantis
 
             foreach (var konferenzdatum in (from ff in this select ff.Konferenzdatum).Distinct().ToList())
             {
+                // Wenn nur ein Fach zu dieser Konferenz zugeordnet werden kann, dann wird die Spalte um eine leere Einheit verbreitert
+
+                var breite = (from ff in this where ff.Konferenzdatum == konferenzdatum select ff).Count() == 1 ? 7 : 3;
+
                 foreach (var fach in (from t in this where t.Konferenzdatum == konferenzdatum select t).ToList())
                 {
                     // Wenn es zu diesemFach eine Schülerleistung gibt
@@ -140,10 +178,10 @@ namespace webuntisnoten2atlantis
 
                     leistungen.AddRange((from a in alleGeholtenLeistungenDesSchülers where a.Fach == fach.Name select a).ToList());
                                         
-                    f += (leistungen.Count == 0? "": leistungen.FirstOrDefault().Gesamtnote + leistungen.FirstOrDefault().Tendenz).PadRight(3).Substring(0, 3) + "|";
+                    f += (leistungen.Count == 0? "": leistungen.FirstOrDefault().Gesamtnote + leistungen.FirstOrDefault().Tendenz).PadRight(3).Substring(0, 3).PadRight(breite) + "|";
                 }
             }
-            Global.WriteLine(f);
+            Global.WriteLine(f.PadRight(8));
         }
     }
 }

@@ -85,7 +85,6 @@ namespace webuntisnoten2atlantis
                         Global.WebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlassen, webuntisLeistungen);
                     }
                     
-
                     if (webuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen))
                     {                                             
                         // Noten vergangener Abschnitte ziehen
@@ -100,7 +99,6 @@ namespace webuntisnoten2atlantis
                         atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlassen);
 
                         webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlassen);
-
                     }
 
                     // Add-Delete-Update

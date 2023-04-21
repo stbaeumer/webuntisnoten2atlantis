@@ -2,7 +2,7 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="webuntisnoten2atlantis.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="Klassenwahl" Type="System.String" Scope="User">
+    <Setting Name="InteressierendeKlassen" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Zeugnisarten" Type="System.String" Scope="User">

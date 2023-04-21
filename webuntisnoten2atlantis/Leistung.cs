@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace webuntisnoten2atlantis
 {
@@ -64,6 +65,8 @@ namespace webuntisnoten2atlantis
         public int ZielLeistungId { get; internal set; }
         public string Note { get; internal set; }
         public string Punkte { get; internal set; }
+        public DateTime DatumReligionAbmeldung { get; internal set; }
+        public List<string> FachAliases { get; internal set; }
 
         public bool IstAbschlussklasse()
         {
@@ -314,6 +317,20 @@ namespace webuntisnoten2atlantis
                 }
             }
             return false;
+        }
+
+        internal bool HatReligionAbgewählt()
+        {
+            // Wenn bereits eine andere Leistung dieses Schülers mit einer Reliabmeldung festgestellt wurde, hat er abgewählt
+
+            if ((from x in Global.GeholteLeistungen where x.ReligionAbgewählt select x).Any())
+            {
+                return true;
+            }
+
+            // Wenn eine Abmeldung mit neuerem Datum vorliegt, ist der Schüler abgemeldet.
+
+            return this.DatumReligionAbmeldung.Year > 1 ? true : false;
         }
     }
 }

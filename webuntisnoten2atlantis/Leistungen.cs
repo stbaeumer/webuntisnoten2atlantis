@@ -280,10 +280,10 @@ namespace webuntisnoten2atlantis
         {
             // Wenn ein Webuntisdatensatz keine Gesamtnote enthält, wird er nicht angelegt
 
-            if (leistung.Gesamtnote == null)
-            {
-                return false;
-            }
+            //if (leistung.Gesamtnote == null)
+            //{
+            //    return false;
+            //}
 
             // Wenn es noch keine WebuntisLeistung zu SchülerID und Fach und selber Gesamtnote gibt, wird sie hinzugefügt.
             // Bei widersprechenden Gesamtnoten wird später gelöscht.
@@ -982,7 +982,7 @@ namespace webuntisnoten2atlantis
 
                     // Alle vergangenen Fächer werden hinzugefügt
 
-                    geholteLeistungen = fächer.GetAlleVergangenenFächer(this, webuntisLeistungen, alleVerschiedenenInteressierendenSchüler, alleVerschiedenenAlteKonferenzdaten);
+                    geholteLeistungen = fächer.GetAlleVergangenenLeistungen(this, webuntisLeistungen, alleVerschiedenenInteressierendenSchüler, alleVerschiedenenAlteKonferenzdaten);
                                         
                     fächer.KonferenzdatenZeileErzeugen();
                                         
@@ -1140,6 +1140,7 @@ DBA.schueler.dat_geburt,
 DBA.schueler.pu_id AS SchlüsselExtern,
 DBA.schue_sj.s_religions_unterricht AS Religion,
 DBA.schue_sj.dat_austritt AS ausgetreten,
+DBA.schue_sj.dat_rel_abmeld AS DatumReligionAbmeldung,
 DBA.schue_sj.vorgang_akt_satz_jn AS SchuelerAktivInDieserKlasse,
 DBA.schue_sj.vorgang_schuljahr AS Schuljahr,
 (substr(schue_sj.s_berufs_nr,4,5)) AS Fachklasse,
@@ -1188,8 +1189,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                 {
                                     leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"]);
-
-                                    leistung.ReligionAbgewählt = theRow["Religion"].ToString() == "N";
                                     leistung.Schuljahr = theRow["Schuljahr"].ToString();
                                     leistung.Gliederung = theRow["Gliederung"].ToString();
                                     leistung.HatBemerkung = (theRow["Bemerkung1"].ToString() + theRow["Bemerkung2"].ToString() + theRow["Bemerkung3"].ToString()).Contains("Fehlzeiten") ? true : false;
@@ -1221,10 +1220,20 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                     leistung.Zeugnisart = theRow["Zeugnisart"].ToString();
                                     leistung.Zeugnistext = theRow["Zeugnistext"].ToString();
                                     leistung.Konferenzdatum = theRow["Konferenzdatum"].ToString().Length < 3 ? new DateTime() : (DateTime.ParseExact(theRow["Konferenzdatum"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)).AddHours(15);
+                                    leistung.DatumReligionAbmeldung = theRow["DatumReligionAbmeldung"].ToString().Length < 3 ? new DateTime() : DateTime.ParseExact(theRow["DatumReligionAbmeldung"].ToString(), "dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                                     leistung.SchuelerAktivInDieserKlasse = theRow["SchuelerAktivInDieserKlasse"].ToString() == "J";
                                     leistung.Abschlussklasse = leistung.IstAbschlussklasse();
                                     leistung.Beschreibung = "";
                                     leistung.GeholteNote = false;
+
+                                    
+
+                                    leistung.ReligionAbgewählt = leistung.HatReligionAbgewählt();
+
+                                    if (leistung.SchlüsselExtern == 150562 && !leistung.ReligionAbgewählt)
+                                    {
+                                        string a = "";
+                                    }
 
                                     // Noten des aktuellen Abschnitts werden immer gezogen
 
@@ -1551,6 +1560,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                             leistung.Gesamtpunkte = "99";
                             leistung.Bemerkung = "";
                             leistung.Lehrkraft = "";
+                            leistung.DatumReligionAbmeldung = aLeistung.DatumReligionAbmeldung;
                             leistung.Beschreibung = "abgewählt,";
                             leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
                             this.Add(leistung);
@@ -1839,50 +1849,25 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
         {
             var anzahlKlassen = (from t in this select t.Klasse).Distinct().Count();
 
-            var vorbelegung = anzahlKlassen == 1 ? this.FirstOrDefault().Klasse : null;
-
             var interessierendeKlassen = new List<string>();
 
-            //if (Global.BlaueBriefe)
-            //{
-            //    foreach (var item in this)
-            //    {
-            //        if (!interessierendeKlassen.Contains(item.Klasse))
-            //        {
-            //            interessierendeKlassen.Add(item.Klasse);
-            //        }
-            //    }
-            //    return interessierendeKlassen;
-            //}
             try
             {
-                do
+                Console.WriteLine("Bitte die interessierenden Klassen kommasepariert angeben [" + Properties.Settings.Default.InteressierendeKlassen + "] :");
+                
+                var x = Console.ReadLine();
+
+                if (x == "")
                 {
-                    Console.Write("  Bitte eine Klasse wählen " + (vorbelegung == null ? "" : "(" + vorbelegung + ")") + " : ");
-
-                    var x = Console.ReadLine();
-
-                    List<string> xx = x.ToUpper().Replace(" ", "").Split(',').ToList();
-
-                    if (vorbelegung!= null)
-                    {
-                        xx.Add(vorbelegung);
-                    }
-
-                    foreach (var eingabe in xx)
-                    {
-                        foreach (var item in this)
-                        {
-                            if (item.Klasse != "" && (item.Klasse == eingabe || item.Klasse.StartsWith(eingabe)))
-                            {
-                                if (!interessierendeKlassen.Contains(item.Klasse))
-                                {
-                                    interessierendeKlassen.Add(item.Klasse);
-                                }
-                            }
-                        }
-                    }
-                } while (interessierendeKlassen.Count == 0);
+                    interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.Split(','));
+                    x = Properties.Settings.Default.InteressierendeKlassen;
+                }
+                else
+                {
+                    interessierendeKlassen.AddRange(x.Split(','));
+                    Properties.Settings.Default.InteressierendeKlassen = x;
+                    Properties.Settings.Default.Save();
+                }
             }
             catch (Exception ex)
             {
