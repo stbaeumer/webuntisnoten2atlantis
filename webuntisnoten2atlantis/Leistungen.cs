@@ -241,15 +241,20 @@ namespace webuntisnoten2atlantis
                                               where konferenzdatum == l.Konferenzdatum
                                               select l).Distinct().ToList())
                     {
-                        // Wenn bereits eine Note in diesem Fach vorliegt, wird keine weitere Note gezogen
+                        // Wenn das Fach aktuell unterrichtet wird, wird keine Note geholt.  
 
-                        if (!(from l in geholteLeistungen where l.SchlüsselExtern == schülerId where l.FachAliases.Contains(leistung.Fach) select l).Any())
+                        if (!(from l in webuntisLeistungen where l.SchlüsselExtern == schülerId where l.FachAliases.Contains(leistung.Fach) select l).Any())
                         {
-                            // Bei Religionsabwählern wird keine Religion als Leistung angelegt.
+                            // Wenn bereits eine geholte Note in diesem Fach vorliegt, wird keine weitere Note gezogen
 
-                            if (!(leistung.ReligionAbgewählt && (leistung.FachAliases.Contains("REL"))))
+                            if (!(from l in geholteLeistungen where l.SchlüsselExtern == schülerId where l.FachAliases.Contains(leistung.Fach) select l).Any())
                             {
-                                geholteLeistungen.Add(leistung);
+                                // Bei Religionsabwählern wird keine Religion als Leistung angelegt.
+
+                                if (!(leistung.ReligionAbgewählt && (leistung.FachAliases.Contains("REL"))))
+                                {
+                                    geholteLeistungen.Add(leistung);
+                                }
                             }
                         }
                     }
@@ -329,49 +334,19 @@ namespace webuntisnoten2atlantis
                         this.Add(l);
                     }
 
-                    foreach (var abwesenheit in Global.WebuntisAbwesenheiten)
+                    if (Global.WebuntisAbwesenheiten != null)
                     {
-                        abwesenheit.StundenAbwesend = 0;
-                        abwesenheit.StundenAbwesendUnentschuldigt = 0;
+                        foreach (var abwesenheit in Global.WebuntisAbwesenheiten)
+                        {
+                            abwesenheit.StundenAbwesend = 0;
+                            abwesenheit.StundenAbwesendUnentschuldigt = 0;
+                        }
                     }
-
+                    
                     return false;
                 }
             }
             return true;
-        }
-
-        public string MöglicheKlassenToString()
-        {
-            var möglicheKlassen = (from l in this.OrderBy(xx => xx.Klasse) 
-                                   where l.Klasse != null                                    
-                                   select l.Klasse).Distinct().ToList();
-
-            if (Global.BlaueBriefe)
-            {
-                möglicheKlassen = (from l in this.OrderBy(xx => xx.Klasse)
-                                       where l.Klasse != null
-                                       where l.Klasse.Contains(DateTime.Now.AddYears(-1).Year.ToString().Substring(2, 2))
-                                       where l.Prüfungsart.ToLower().Contains("mahnung")
-                                       select l.Klasse).Distinct().ToList();
-            }
-
-            var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei:\n ";
-            int i = 0;
-
-            foreach (var ik in möglicheKlassen)
-            {
-                if (ik.Length > 3)
-                {
-                    if (i % 17 == 0)
-                    {
-                        möglicheKlassenString += "\n ";
-                    }
-                    möglicheKlassenString += ik + " ";
-                }
-                i++;
-            }
-            return möglicheKlassenString.TrimEnd(' ');
         }
 
         private bool LeistungHinzufügen(Leistung leistung)
@@ -1082,9 +1057,8 @@ namespace webuntisnoten2atlantis
                     ConsoleKeyInfo x;
 
                     do
-                    {
-                        Global.WriteLine("Wenn später doch noch Noten über Webuntis eingelesen werden, werden die geholten Noten überschrieben.");
-                        Global.WriteLine(" Wollen Sie die vergangenen Leistungen aus den alten Abschnitten in Klasse " + klasse[0] + " hohlen? (j/N)");
+                    {                        
+                        Global.WriteLine("Wollen Sie die vergangenen Leistungen aus den alten Abschnitten in Klasse " + klasse[0] + " hohlen? (j/N)");
                         x = Console.ReadKey();
                     } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
 
@@ -1107,7 +1081,10 @@ namespace webuntisnoten2atlantis
                         if (Global.HzJz == "JZ")
                         {   
                             var l = new Leistungen();
-                            l.AddRange((from g in geholteLeistungen where g.Konferenzdatum.Year == DateTime.Now.Year select g).ToList());
+                            l.AddRange((from g in geholteLeistungen 
+                                        where g.Gesamtnote != null 
+                                        where g.Gesamtnote != null                                        
+                                        where g.Konferenzdatum.Year == DateTime.Now.Year select g).ToList());
 
                             string a = "";
 
@@ -1119,7 +1096,7 @@ namespace webuntisnoten2atlantis
                                 }                                
                             }
 
-                            Global.WriteLine("Da es sich um Jahreszeugnisse handelt, werden die Noten in " + a.TrimEnd(',') + " aus dem Halbjahr gezogen.");
+                            Global.WriteLine("   Da es sich um Jahreszeugnisse handelt, werden die Noten in " + a.TrimEnd(',') + " dennoch aus dem Halbjahr gezogen.");
 
                             return l; 
                         }
@@ -1890,53 +1867,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 throw ex;
             }
         }
-                
-        internal List<string> GetIntessierendeKlassen(List<string> aktSj)
-        {
-            var anzahlKlassen = (from t in this select t.Klasse).Distinct().Count();
-
-            var interessierendeKlassen = new List<string>();
-
-            try
-            {
-                Console.Write("  Bitte die interessierenden Klassen kommasepariert angeben [" + Properties.Settings.Default.InteressierendeKlassen + "]: ");
-                
-                var x = Console.ReadLine();
-
-                if (x == "")
-                {
-                    interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.Split(','));
-                    x = Properties.Settings.Default.InteressierendeKlassen;
-                }
-                else
-                {
-                    var interessierendeKlassenString = "";
-                    foreach (var klasse in (from l in this where l.Klasse != "" select l.Klasse).Distinct().ToList())
-                    {
-                        foreach (var item in x.ToUpper().Replace(" ","").Split(','))
-                        {
-                            if (klasse != "" && klasse.StartsWith(item.Replace(" ", "").ToUpper()))
-                            {
-                                interessierendeKlassen.Add(klasse);
-                                interessierendeKlassenString += klasse + ",";
-                            }
-                        }                        
-                    }
-                    
-                    Properties.Settings.Default.InteressierendeKlassen = interessierendeKlassenString.TrimEnd(',');
-                    Properties.Settings.Default.Save();
-                }
-            }
-            catch (Exception ex)
-            {
-                Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
-            }
-            Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeKlassen,','));
-            Global.WriteLine(" ");
-
-            return interessierendeKlassen;
-        }
-
+             
         public void AusgabeSchreiben(string text, List<string> klassen)
         {
             try

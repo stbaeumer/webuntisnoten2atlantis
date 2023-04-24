@@ -54,14 +54,16 @@ namespace webuntisnoten2atlantis
 
                 Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                Leistungen möglicheKlassen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer, new List<string>());
-
+                List<string> möglicheKlassen = (from m in new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer, new List<string>())
+                                                where m.Klasse != "" 
+                                                where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
+                                                select m.Klasse).Distinct().ToList();
                 do
                 {
                     Global.SqlZeilen = new List<string>();
                     var interessierendeKlassen = new List<string>();
-                    Console.WriteLine(möglicheKlassen.MöglicheKlassenToString());
-                    interessierendeKlassen.AddRange(möglicheKlassen.GetIntessierendeKlassen(AktSj));
+                    Console.WriteLine(Global.List2String(möglicheKlassen,','));
+                    interessierendeKlassen.AddRange(GetIntessierendeKlassen(möglicheKlassen, AktSj));
 
                     var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
                     var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "_MarksPerLesson_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
@@ -147,6 +149,101 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+
+        private static IEnumerable<string> GetIntessierendeKlassen(List<string> möglicheKlassen, List<string> aktSj)
+        {
+            var interessierendeKlassen = new List<string>();
+
+            try
+            {
+                do
+                {
+                    Console.Write("  Bitte die interessierenden Klassen kommasepariert angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
+
+                    var x = Console.ReadLine();
+
+                    if (x == "")
+                    {
+                        interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.Split(','));
+                        x = Properties.Settings.Default.InteressierendeKlassen;
+                    }
+                    else
+                    {
+                        var interessierendeKlassenString = "";
+
+                        foreach (var klasse in möglicheKlassen)
+                        {
+                            foreach (var item in x.ToUpper().Replace(" ", "").Split(','))
+                            {
+                                if (klasse != "" && klasse.StartsWith(item.Replace(" ", "").ToUpper()))
+                                {
+                                    interessierendeKlassen.Add(klasse);
+                                    interessierendeKlassenString += klasse + ",";
+                                }
+                            }
+                        }
+
+                        Properties.Settings.Default.InteressierendeKlassen = interessierendeKlassenString.TrimEnd(',');
+                        Properties.Settings.Default.Save();
+                    }
+                } while (Properties.Settings.Default.InteressierendeKlassen == "");
+            }
+            catch (Exception ex)
+            {
+                Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
+            }
+            Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeKlassen, ','));
+            Global.WriteLine(" ");
+
+            return interessierendeKlassen;
+        }
+
+        private static string GetVorschlag(List<string> möglicheKlassen)
+        {
+            string vorschlag = "";
+
+            // Wenn in den Properties ein Eintrag existiert, ...
+
+            if (Properties.Settings.Default.InteressierendeKlassen != null && Properties.Settings.Default.InteressierendeKlassen != "")
+            {
+                // ... wird für alle kommaseparierten Einträge geprüft ...
+
+                foreach (var item in Properties.Settings.Default.InteressierendeKlassen.Split(','))
+                {
+                    // ... ob es in den möglichen Klassen Kandidaten gibt.
+
+                    if ((from t in möglicheKlassen where t.StartsWith(item) select t).Any())
+                    {
+                        // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
+
+                        vorschlag += item + ",";
+                    }
+                }
+            }
+            Properties.Settings.Default.InteressierendeKlassen = vorschlag;
+            Properties.Settings.Default.Save();
+            return vorschlag.TrimEnd(',');
+        }
+
+        private static string MöglicheKlassenToString(List<string> möglicheKlassen)
+        {
+            var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei: ";
+            int i = 0;
+
+            foreach (var ik in möglicheKlassen)
+            {
+                if (ik.Length > 3)
+                {
+                    if (i % 17 == 0)
+                    {
+                        möglicheKlassenString += "\n ";
+                    }
+                    möglicheKlassenString += ik + " ";
+                }
+                i++;
+            }
+            return möglicheKlassenString.TrimEnd(' ');
         }
 
         private static void BlaueBriefeErstellen()
