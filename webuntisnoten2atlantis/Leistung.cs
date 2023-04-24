@@ -44,7 +44,7 @@ namespace webuntisnoten2atlantis
         public bool Abschlussklasse { get; internal set; }
         public string Beschreibung { get; internal set; }
         public string Query { get; set; }
-        public bool GeholteNote { get; internal set; }
+
         public bool HatBemerkung { get; internal set; }
         /// <summary>
         /// Wenn Schüler der Anlage A die Zeugnisart A01AS gesetzt haben, dann werden für sie alte Noten geholt.
@@ -67,6 +67,7 @@ namespace webuntisnoten2atlantis
         public string Punkte { get; internal set; }
         public DateTime DatumReligionAbmeldung { get; internal set; }
         public List<string> FachAliases { get; internal set; }
+        public bool IstGeholteNote { get; set; }
 
         public bool IstAbschlussklasse()
         {
@@ -86,6 +87,60 @@ namespace webuntisnoten2atlantis
             }
 
             return false;
+        }
+
+        internal void GetFachAliases()
+        {
+            FachAliases = new List<string>();
+
+            var nameAliases = new List<string>();
+
+            if (Fach == "PKG" || Fach == "PK")
+            {
+                nameAliases.Add("PK");
+                nameAliases.Add("PKG");
+            }
+            if (Fach == "N" || Fach == "NB1" || Fach == "NB2" || Fach == "NA1" || Fach == "NA2")
+            {
+                nameAliases.Add("N");
+                nameAliases.Add("NB1");
+                nameAliases.Add("NB2");
+                nameAliases.Add("NA1");
+                nameAliases.Add("NA2");
+            }
+            if (Fach == "S" || Fach == "SB1" || Fach == "SB2" || Fach == "SA1" || Fach == "SA2")
+            {
+                nameAliases.Add("S");
+                nameAliases.Add("SB1");
+                nameAliases.Add("SB2");
+                nameAliases.Add("SA1");
+                nameAliases.Add("SA2");
+            }
+
+            if (Fach == "E" || Fach == "EB1" || Fach == "EB2" || Fach == "EA1" || Fach == "EA2")
+            {
+                nameAliases.Add("E");
+                nameAliases.Add("EB1");
+                nameAliases.Add("EB2");
+                nameAliases.Add("EA1");
+                nameAliases.Add("EA2");
+            }
+
+            if (Fach == "KR" || Fach == "ER" || Fach == "REL" || Fach == "KR " || Fach == "ER ")
+            {
+                nameAliases.Add("KR");
+                nameAliases.Add("ER");
+                nameAliases.Add("REL");
+                nameAliases.Add("KR ");
+                nameAliases.Add("ER ");
+            }
+
+            if (!nameAliases.Contains(Fach))
+            {
+                nameAliases.Add(Fach);
+            }            
+
+            FachAliases.AddRange(nameAliases);
         }
 
         internal void IstPrüfungsart(bool blaueBriefe)
@@ -250,7 +305,7 @@ namespace webuntisnoten2atlantis
 
                             if (aL[0].Gesamtpunkte != Gesamtpunkte && aL[0].EinheitNP == "P")
                             {
-                                this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) +"]";
+                                this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) + "]";
                                 this.Query += "punkte=" + ("'" + Gesamtpunkte).PadLeft(3) + "'" + ", ";
                             }
                             else
@@ -280,14 +335,14 @@ namespace webuntisnoten2atlantis
 
                     this.Zielfach = aL[0].Fach;
                     this.ZielLeistungId = aL[0].LeistungId;
-                    this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote=="-"? "Zeugnisbemerkung?|" :"");
+                    this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && this.Gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
                     this.Query += "ls_id_1=1337 "; // letzter Bearbeiter
                     this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
                 }
                 else
                 {
-                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)":"");
-                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null? " ": aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + "*/";
+                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)" : "");
+                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + this.Gesamtpunkte.PadLeft(2) + "',".PadRight(2) + " s_note='" + aL[0].Gesamtnote.PadRight(1) + "', s_tendenz='" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + "*/";
                 }
             }
         }
@@ -302,7 +357,7 @@ namespace webuntisnoten2atlantis
                     {
                         return true;
                     }
-                }                
+                }
             }
             return false;
         }
@@ -319,11 +374,11 @@ namespace webuntisnoten2atlantis
             return false;
         }
 
-        internal bool HatReligionAbgewählt()
+        internal bool HatReligionAbgewählt(Leistungen atlantisLeistungen)
         {
             // Wenn bereits eine andere Leistung dieses Schülers mit einer Reliabmeldung festgestellt wurde, hat er abgewählt
 
-            if ((from x in Global.GeholteLeistungen where x.ReligionAbgewählt select x).Any())
+            if ((from x in atlantisLeistungen where x.IstGeholteNote where x.ReligionAbgewählt select x).Any())
             {
                 return true;
             }
@@ -331,6 +386,41 @@ namespace webuntisnoten2atlantis
             // Wenn eine Abmeldung mit neuerem Datum vorliegt, ist der Schüler abgemeldet.
 
             return this.DatumReligionAbmeldung.Year > 1 ? true : false;
+        }
+
+        internal void GeholteNote(Leistungen bisherigeAtlantisLeistungen, Leistungen alleWebuntisLeistungen)
+        {
+            // Wenn die Leistung ein min. 50 Tage zurückliegendes Konferenzdatum hat ...
+
+            if (Konferenzdatum.AddDays(50) <= DateTime.Now.Date && Konferenzdatum.Year > 1 && Gesamtnote != null)
+            {
+                // und keine Leistung in diesem Fach in Webuntis vorliegt ...
+
+                if (!(from w in alleWebuntisLeistungen
+                      where w.Klasse == Klasse
+                      where w.FachAliases.Contains(Fach)
+                      where w.SchlüsselExtern == SchlüsselExtern
+                      where w.Gesamtnote != null
+                      where w.Gesamtnote != ""
+                      select w).Any())
+                {
+                    // ... und auch keine geholte Atlantisleistung neueren Datums vorliegt ... 
+
+                    if (!(from t in (from tt in bisherigeAtlantisLeistungen
+                                     where (tt.Konferenzdatum.Year > 1 && tt.Konferenzdatum < DateTime.Now) // es werden nur vergangene Leistungen
+                                     select tt).ToList()                                                    // miteinander verglichen.
+                          where t.Konferenzdatum > Konferenzdatum
+                          where t.FachAliases.Contains(Fach)
+                          where t.SchlüsselExtern == SchlüsselExtern
+                          where t.Gesamtnote != null && t.Gesamtnote != ""
+                          select t).Any() || (Konferenzdatum.Year == 1 || Konferenzdatum > DateTime.Now))
+                    {
+                        IstGeholteNote = true;
+                        return;
+                    }
+                }
+            }
+            IstGeholteNote = false;
         }
     }
 }

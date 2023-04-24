@@ -16,15 +16,14 @@ namespace webuntisnoten2atlantis
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
         public static int PadRight { get; internal set; }
         public static Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum { get; internal set; }
-        public static Leistungen GeholteLeistungen { get; internal set; }
         public static Leistungen Notenblatt { get; internal set; }
         public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }
         public static Abwesenheiten WebuntisAbwesenheiten { get; internal set; }
         public static bool BlaueBriefe { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
-        {            
-            SqlZeilen.Insert(index, "/* " + message.PadRight(Global.PadRight + 27) +" */");
+        {
+            SqlZeilen.Insert(index, "/* " + message.PadRight(Global.PadRight + 27) + " */");
         }
 
         public static bool WaitForFile(string fullPath)
@@ -48,7 +47,7 @@ namespace webuntisnoten2atlantis
                 }
                 catch (FileNotFoundException)
                 {
-                    Global.WriteLine("Die Datei " + fullPath  + " soll jetzt eingelsen werden, existiert aber nicht.");
+                    Global.WriteLine("Die Datei " + fullPath + " soll jetzt eingelsen werden, existiert aber nicht.");
 
                     if (anzahlVersuche > 10)
                         Global.WriteLine("Bitte Programm beenden.");
@@ -57,7 +56,7 @@ namespace webuntisnoten2atlantis
                 }
                 catch (IOException)
                 {
-                    Global.WriteLine("Die Datei " + fullPath  + " ist gesperrt");
+                    Global.WriteLine("Die Datei " + fullPath + " ist gesperrt");
 
                     if (anzahlVersuche > 10)
                         Global.WriteLine("Bitte Programm beenden.");
@@ -93,72 +92,5 @@ namespace webuntisnoten2atlantis
             }
             return s.TrimEnd(delimiter);
         }
-
-        //public static void AusgabeSchreiben(string text, List<string> klassen)
-        //{
-        //    Global.SqlZeilen.Add("");
-        //    int z = 0;
-
-        //    do
-        //    {
-        //        var zeile = "";
-
-        //        try
-        //        {
-        //            while ((zeile + text.Split(' ')[z] + ", ").Length <= 96)
-        //            {
-        //                zeile += text.Split(' ')[z] + " ";
-        //                z++;
-        //            }
-        //        }
-        //        catch (Exception)
-        //        {
-        //            z++;
-        //            zeile.TrimEnd(',');
-        //        }
-
-        //        zeile = zeile.TrimEnd(' ');
-
-        //        string o = "/* " + zeile.TrimEnd(' ');
-        //        Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
-
-        //    } while (z < text.Split(' ').Count());
-
-
-
-        //    z = 0;
-
-        //    do
-        //    {
-        //        var zeile = " ";
-
-        //        try
-        //        {
-        //            if (klassen[z].Length >= 95)
-        //            {
-        //                klassen[z] = klassen[z].Substring(0, Math.Min(klassen[z].Length, 95));
-        //                zeile += klassen[z];
-        //                throw new Exception();
-        //            }
-
-        //            while ((zeile + klassen[z] + ", ").Length <= 97)
-        //            {
-        //                zeile += klassen[z] + ", ";
-        //                z++;
-        //            }
-        //        }
-        //        catch (Exception)
-        //        {
-        //            z++;
-        //            zeile.TrimEnd(',');
-        //        }
-
-        //        zeile = zeile.TrimEnd(' ');
-        //        int s = zeile.Length;
-        //        string o = "/* " + zeile.TrimEnd(',');
-        //        Global.SqlZeilen.Add((o.Substring(0, Math.Min(101, o.Length))).PadRight(101) + "*/");
-
-        //    } while (z < klassen.Count);
-        //}
     }
 }
