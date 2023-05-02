@@ -13,8 +13,9 @@ namespace webuntisnoten2atlantis
     {
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=";
         public static string Passwort = "";
+        public static bool Debug = false;
         public static string User = System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1];
-        public static string Zeitstempel = DateTime.Now.ToString("yyMMdd-HHmmss");
+        public static string Zeitstempel = DateTime.Now.ToString("yyMMdd-HHmmss");        
         public static List<string> AktSj = new List<string>
                 {
                     (DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1).ToString(),
@@ -22,7 +23,11 @@ namespace webuntisnoten2atlantis
                 };
 
         static void Main(string[] args)
-        {
+        {   
+            #if DEBUG
+                Debug = true;
+            #endif
+
             var width = Console.WindowWidth;
             var height = Console.WindowHeight;
             Console.SetWindowSize(width, height * 2);
@@ -44,80 +49,90 @@ namespace webuntisnoten2atlantis
                     Settings();
                 }
 
-                Global.HzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
+                var hzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 string targetPath = SetTargetPath();
                 string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
 
-                BlaueBriefeErstellen();
+                var alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                Lehrers alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
+                // Alle Webuntis-Leistungen, bereinigt um Leistungen mit leerem Fach, mit leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote 
 
-                List<string> möglicheKlassen = (from m in new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer, new List<string>())
-                                                where m.Klasse != "" 
-                                                where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
-                                                select m.Klasse).Distinct().ToList();
+                var alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
+
+                if (BlaueBriefeErstellen())
+                {
+                    alleWebuntisLeistungen = alleWebuntisLeistungen.GetBlaueBriefeLeistungen();
+                }
+
+                var alleMöglicheKlassen = (from m in alleWebuntisLeistungen
+                                           where m.Klasse != ""
+                                           where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
+                                           select m.Klasse).Distinct().ToList();
+
                 do
                 {
                     Global.SqlZeilen = new List<string>();
-                    var interessierendeKlassen = new List<string>();
-                    Console.WriteLine(Global.List2String(möglicheKlassen,','));
-                    interessierendeKlassen.AddRange(GetIntessierendeKlassen(möglicheKlassen, AktSj));
+                    
+                    Console.WriteLine(Global.List2String(alleMöglicheKlassen,','));
+
+                    var interessierendeKlassen = GetIntessierendeKlassen(alleMöglicheKlassen, AktSj);
 
                     var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
                     var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "_MarksPerLesson_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
-                    
+
+                    RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
+                    RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
+
                     Leistungen atlantisLeistungen = new Leistungen();
 
-                    foreach (var klasse in interessierendeKlassen)
+                    foreach (var interessierendeKlasse in interessierendeKlassen)
                     {
-                        var interessierendeKlasse = new List<string>() { klasse };
-                        
-                        Leistungen webuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer, interessierendeKlasse);
+                        var interessierendeSchülerDieserKlasse = (from m in alleWebuntisLeistungen where m.Klasse == interessierendeKlasse select m.SchlüsselExtern).Distinct().ToList();
 
-                        // Die eingelesenen Dateien für Protokollzwecke filtern
-
-                        RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlasse);
-                        RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlasse);
-
-                        Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
-
-                        if (sourceAbsenceTimesTotal != null)
+                        if (Debug)
                         {
-                            atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
-                            Global.WebuntisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, webuntisLeistungen);
+                            interessierendeSchülerDieserKlasse = GetIntessierendeSchüler(AktSj, interessierendeSchülerDieserKlasse);
                         }
 
-                        atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, webuntisLeistungen);
+                        var interessierendeWebuntisLeistungen = alleWebuntisLeistungen.GetIntessierendeWebuntisLeistungen(interessierendeSchülerDieserKlasse, interessierendeKlasse);
 
-                        Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(webuntisLeistungen, klasse, AktSj);
+                        interessierendeWebuntisLeistungen.LinkZumTeamsChatErzeugen(alleAtlantisLehrer);
+
+                        atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, interessierendeWebuntisLeistungen);
+
+                        Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
                         
-                        atlantisLeistungen.TabelleErzeugen(webuntisLeistungen, geholteLeistungen, klasse, AktSj);
+                        atlantisLeistungen.TabelleErzeugen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj);
 
-                        if (webuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen))
+                        var webuntisAbwesenheiten = sourceAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, interessierendeWebuntisLeistungen);
+
+                        if (interessierendeWebuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen,webuntisAbwesenheiten,targetAbsenceTimesTotal))
                         {                            
-                            webuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(webuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj));
+                            interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj));
 
                             // Korrekturen durchführen
 
-                            webuntisLeistungen = webuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
-                            webuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                            webuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                            atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(webuntisLeistungen, interessierendeKlasse);
+                            interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
+                            //interessierendeWebuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
+                            interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                            atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
 
-                            webuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
+                            interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
                         }
 
                         // Add-Delete-Update
 
-                        string hinweis = webuntisLeistungen.Update(atlantisLeistungen);
+                        string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen);
 
-                        if (targetAbsenceTimesTotal != null)
+                        if (sourceAbsenceTimesTotal != null)
                         {
-                            atlantisAbwesenheiten.Add(Global.WebuntisAbwesenheiten);
-                            atlantisAbwesenheiten.Delete(Global.WebuntisAbwesenheiten);
-                            atlantisAbwesenheiten.Update(Global.WebuntisAbwesenheiten);
+                            Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
+                            atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
+                            atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                            atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                            atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
                         }
                         else
                         {
@@ -132,7 +147,6 @@ namespace webuntisnoten2atlantis
                         }
 
                         Console.WriteLine("-".PadRight(Global.PadRight, '-') + "----");
-
                     }
 
                     string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
@@ -151,7 +165,32 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static IEnumerable<string> GetIntessierendeKlassen(List<string> möglicheKlassen, List<string> aktSj)
+        private static Leistungen GetBlaueBriefeLeistungen()
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool BlaueBriefeErstellen()
+        {
+            ConsoleKeyInfo x;
+            do
+            {
+                Console.WriteLine(" ");
+                Global.WriteLine("Wollen Sie Blaue Briefe nach Atlantis übertragen?\n Wenn Sie j tippen, werden nur Leistungen der Prüfungsart 'Mahnung' berücksichtigt (j/N)");
+                x = Console.ReadKey();
+            } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
+
+            Global.WriteLine("  Ihre Auswahl: " + (x.Key.ToString() == "Enter" || x.Key.ToString().ToUpper() == "N" ? "N" : "J"));
+            Global.WriteLine(" ");
+
+            if (x.Key.ToString().ToLower() == "j")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static List<string> GetIntessierendeKlassen(List<string> möglicheKlassen, List<string> aktSj)
         {
             var interessierendeKlassen = new List<string>();
 
@@ -199,6 +238,87 @@ namespace webuntisnoten2atlantis
             return interessierendeKlassen;
         }
 
+        private static List<int> GetIntessierendeSchüler(List<string> aktSj, List<int> möglicheSuS)
+        {
+            var interessierendeSuS = new List<int>();
+
+            try
+            {
+                do
+                {
+                    Console.Write("  Bitte die ID der interessierenden SuS kommasepariert angeben oder 'alle' eingeben [" + GetVorschlag(möglicheSuS) + "]: ");
+
+                    var x = Console.ReadLine();
+
+                    if (x == "")
+                    {
+                        if (Properties.Settings.Default.InteressierendeSuS.ToUpper().StartsWith("A"))
+                        {
+                            foreach (var item in möglicheSuS)
+                            {   
+                                interessierendeSuS.Add(Convert.ToInt32(item));
+                            }                            
+                        }
+                        else
+                        {
+                            foreach (var item in Properties.Settings.Default.InteressierendeSuS.Split(','))
+                            {
+                                if (item != null && item != "")
+                                {
+                                    interessierendeSuS.Add(Convert.ToInt32(item));
+                                }
+                            }
+                        }
+                                                
+                        x = Properties.Settings.Default.InteressierendeSuS;
+                    }
+                    else
+                    {
+                        var interessierendeSuSstring = "";
+
+                        foreach (var sch in möglicheSuS)
+                        {
+                            if (x.ToUpper().StartsWith("A"))
+                            {      
+                                interessierendeSuS.Add(sch);                                
+                                interessierendeSuSstring = "alle";
+                            }
+                            else
+                            {
+                                foreach (var item in x.ToUpper().Replace(" ", "").Split(','))
+                                {
+                                    if (sch.ToString() == item)
+                                    {
+                                        interessierendeSuS.Add(sch);
+                                        interessierendeSuSstring += sch + ",";
+                                    }
+                                }
+                            }
+                        }
+
+                        Properties.Settings.Default.InteressierendeSuS = interessierendeSuSstring.TrimEnd(',');
+                        Properties.Settings.Default.Save();
+                    }
+                } while (Properties.Settings.Default.InteressierendeSuS == "");
+            }
+            catch (Exception ex)
+            {
+                Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
+            }
+            if (Properties.Settings.Default.InteressierendeSuS.ToLower().StartsWith("a"))
+            {
+                Global.WriteLine("   Ihre Auswahl: alle");
+            }
+            else
+            {
+                Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeSuS, ','));
+            }
+            
+            Global.WriteLine(" ");
+
+            return interessierendeSuS;
+        }
+
         private static string GetVorschlag(List<string> möglicheKlassen)
         {
             string vorschlag = "";
@@ -226,6 +346,33 @@ namespace webuntisnoten2atlantis
             return vorschlag.TrimEnd(',');
         }
 
+        private static string GetVorschlag(List<int> möglicheSuS)
+        {
+            string vorschlag = "";
+
+            // Wenn in den Properties ein Eintrag existiert, ...
+
+            if (Properties.Settings.Default.InteressierendeSuS != null && Properties.Settings.Default.InteressierendeSuS != "")
+            {
+                // ... wird für alle kommaseparierten Einträge geprüft ...
+
+                foreach (var item in Properties.Settings.Default.InteressierendeSuS.Split(','))
+                {
+                    // ... ob es in den möglichen Klassen Kandidaten gibt.
+
+                    if ((from t in möglicheSuS select t).Any())
+                    {
+                        // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
+
+                        vorschlag += item + ",";
+                    }
+                }
+            }
+            Properties.Settings.Default.InteressierendeSuS = vorschlag;
+            Properties.Settings.Default.Save();
+            return vorschlag.TrimEnd(',');
+        }
+
         private static string MöglicheKlassenToString(List<string> möglicheKlassen)
         {
             var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei: ";
@@ -244,29 +391,6 @@ namespace webuntisnoten2atlantis
                 i++;
             }
             return möglicheKlassenString.TrimEnd(' ');
-        }
-
-        private static void BlaueBriefeErstellen()
-        {
-            ConsoleKeyInfo x;
-            do
-            {
-                Console.WriteLine(" ");
-                Global.WriteLine("Wollen Sie Blaue Briefe nach Atlantis übertragen?\n Wenn Sie j tippen, werden nur Leistungen der Prüfungsart 'Mahnung' berücksichtigt (j/N)");
-                x = Console.ReadKey();
-            } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
-
-            Global.WriteLine("  Ihre Auswahl: " + (x.Key.ToString() == "Enter" || x.Key.ToString().ToUpper() == "N" ? "N" : "J"));
-            Global.WriteLine(" ");
-
-            if (x.Key.ToString().ToLower() == "j")
-            {
-                Global.BlaueBriefe = true;
-            }
-            else
-            {
-                Global.BlaueBriefe = false;
-            }
         }
 
         private static string Zeichenkette(List<string> interessierendeKlassen)

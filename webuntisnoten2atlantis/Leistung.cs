@@ -138,14 +138,16 @@ namespace webuntisnoten2atlantis
             if (!nameAliases.Contains(Fach))
             {
                 nameAliases.Add(Fach);
-            }            
+            }
+
+            // Wenn das Fach einen Zähler hat, wird der Zähler entfernt.
+
+            if (Fach != null && Fach != "" && char.IsDigit(Fach[Fach.Length - 1]))
+            {
+                nameAliases.Add(Fach.Substring(0,Fach.Length - 1));
+            }
 
             FachAliases.AddRange(nameAliases);
-        }
-
-        internal void IstPrüfungsart(bool blaueBriefe)
-        {
-            string a = "";
         }
 
         internal string Gesamtnote2Gesamtpunkte(string gesamtnote)

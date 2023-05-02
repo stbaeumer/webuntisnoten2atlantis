@@ -190,5 +190,17 @@ namespace webuntisnoten2atlantis.Properties {
                 this["Zuordnungen"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string InteressierendeSuS {
+            get {
+                return ((string)(this["InteressierendeSuS"]));
+            }
+            set {
+                this["InteressierendeSuS"] = value;
+            }
+        }
     }
 }

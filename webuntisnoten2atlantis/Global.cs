@@ -17,8 +17,7 @@ namespace webuntisnoten2atlantis
         public static int PadRight { get; internal set; }
         public static Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum { get; internal set; }
         public static Leistungen Notenblatt { get; internal set; }
-        public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }
-        public static Abwesenheiten WebuntisAbwesenheiten { get; internal set; }
+        public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }        
         public static bool BlaueBriefe { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
@@ -89,6 +88,15 @@ namespace webuntisnoten2atlantis
             foreach (var item in interessierendeKlassen)
             {
                 s += item + delimiter;
+            }
+            return s.TrimEnd(delimiter);
+        }
+        internal static string List2String(List<int> interessierendeKlassen, Char delimiter)
+        {
+            var s = "";
+            foreach (var item in interessierendeKlassen)
+            {
+                s += item.ToString() + delimiter;
             }
             return s.TrimEnd(delimiter);
         }

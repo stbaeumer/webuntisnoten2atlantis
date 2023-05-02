@@ -11,7 +11,7 @@ namespace webuntisnoten2atlantis
 {
     public class Abwesenheiten : List<Abwesenheit>
     {
-        public Abwesenheiten(string inputAbwesenheitenCsv, List<string> interessierendeKlassen, Leistungen alleWebuntisleistungen)
+        public Abwesenheiten(string inputAbwesenheitenCsv, string interessierendeKlasse, Leistungen alleWebuntisleistungen)
         {
             using (StreamReader reader = new StreamReader(inputAbwesenheitenCsv))
             {
@@ -33,7 +33,7 @@ namespace webuntisnoten2atlantis
                             abwesenheit.StundenAbwesend = Convert.ToInt32(x[7]) / 45;
                             abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8]) / 45; // unenentschuldigt oder offen
 
-                            if (interessierendeKlassen.Contains(abwesenheit.Klasse))
+                            if (interessierendeKlasse == abwesenheit.Klasse)
                             {
                                 this.Add(abwesenheit);
                             }
@@ -71,7 +71,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Abwesenheiten(string connetionstringAtlantis, string aktSj, List<string> interessierendeKlassen)
+        public Abwesenheiten(string connetionstringAtlantis, string aktSj, string interessierendeKlasse)
         {
             try
             {
@@ -118,7 +118,7 @@ DBA.schueler.name_2 ASC ", connection);
                             abwesenheit.Zeugnisart = theRow["Zeugnisart"].ToString();
                             abwesenheit.HzJz = theRow["HzJz"].ToString();
 
-                            if (interessierendeKlassen.Contains(abwesenheit.Klasse))
+                            if (interessierendeKlasse == abwesenheit.Klasse)
                             {
                                 this.Add(abwesenheit);
                             }
