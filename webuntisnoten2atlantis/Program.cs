@@ -35,7 +35,7 @@ namespace webuntisnoten2atlantis
             Global.PadRight = 116;
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230502  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230507  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
             Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
@@ -54,13 +54,17 @@ namespace webuntisnoten2atlantis
                 string targetPath = SetTargetPath();
                 string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
+                string sourceExportLessons = CheckFile(User, "ExportLessons");
+                string sourceStudentgroupStudents = CheckFile(User, "StudentgroupStudents");
 
                 var alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
-                // Alle Webuntis-Leistungen, bereinigt um Leistungen mit leerem Fach, mit leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote 
+                // Alle Webuntis-Leistungen, ohne Leistungen mit leerem Fach, leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote, mit Leistungen ohne Gesamtnote 
 
+                var alleUnterrichte = new Unterrichte(sourceExportLessons);
+                var alleGruppen = new Gruppen(sourceStudentgroupStudents);
                 var alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
-
+                
                 if (BlaueBriefeErstellen())
                 {
                     alleWebuntisLeistungen = alleWebuntisLeistungen.GetBlaueBriefeLeistungen();
@@ -89,7 +93,7 @@ namespace webuntisnoten2atlantis
 
                     foreach (var interessierendeKlasse in interessierendeKlassen)
                     {
-                        var interessierendeSchülerDieserKlasse = (from m in alleWebuntisLeistungen where m.Klasse == interessierendeKlasse select m.SchlüsselExtern).Distinct().ToList();
+                        var interessierendeSchülerDieserKlasse = alleWebuntisLeistungen.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
                         if (Debug)
                         {
@@ -98,9 +102,9 @@ namespace webuntisnoten2atlantis
 
                         var interessierendeWebuntisLeistungen = alleWebuntisLeistungen.GetIntessierendeWebuntisLeistungen(interessierendeSchülerDieserKlasse, interessierendeKlasse);
 
-                        interessierendeWebuntisLeistungen.LinkZumTeamsChatErzeugen(alleAtlantisLehrer);
+                        interessierendeWebuntisLeistungen.LinkZumTeamsChatErzeugen(alleAtlantisLehrer, interessierendeKlasse);
 
-                        atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, interessierendeWebuntisLeistungen);
+                        atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, interessierendeWebuntisLeistungen, hzJz);
 
                         Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
                         
@@ -110,7 +114,7 @@ namespace webuntisnoten2atlantis
 
                         if (interessierendeWebuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen,webuntisAbwesenheiten,targetAbsenceTimesTotal))
                         {                            
-                            interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj));
+                            interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj, hzJz));
 
                             // Korrekturen durchführen
 
@@ -119,12 +123,12 @@ namespace webuntisnoten2atlantis
                             interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                             atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
 
-                            interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
+                            interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
                         }
 
                         // Add-Delete-Update
 
-                        string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen);
+                        string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen, Debug);
 
                         if (sourceAbsenceTimesTotal != null)
                         {
@@ -204,8 +208,8 @@ namespace webuntisnoten2atlantis
 
                     if (x == "")
                     {
-                        interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.Split(','));
-                        x = Properties.Settings.Default.InteressierendeKlassen;
+                        interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.TrimEnd(',').Split(','));
+                        x = Properties.Settings.Default.InteressierendeKlassen.TrimEnd(',');
                     }
                     else
                     {
@@ -360,12 +364,18 @@ namespace webuntisnoten2atlantis
                 {
                     // ... ob es in den möglichen Klassen Kandidaten gibt.
 
-                    if (item != "" && möglicheSuS.Contains(Convert.ToInt32(item)))
+                    try
                     {
-                        // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
+                        if (item != "" && möglicheSuS.Contains(Convert.ToInt32(item)))
+                        {
+                            // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
 
-                        vorschlag += item + ",";
-                    }                    
+                            vorschlag += item + ",";
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }                                        
                 }
                 if (vorschlag.TrimEnd(',') == "")
                 {
@@ -417,7 +427,7 @@ namespace webuntisnoten2atlantis
                 for (int i = 0; i < files.Count; i++)
                 {
                     notepadPlus.StartInfo.Arguments = files[i];
-                    notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
+                    //notepadPlus.StartInfo.Arguments = @"-multiInst -nosession " + files[i];
                     notepadPlus.Start();
                 }
             }
@@ -489,14 +499,30 @@ namespace webuntisnoten2atlantis
                     Console.ReadKey();
                     Environment.Exit(0);
                 }
-
-                if (kriterium.Contains("AbsenceTimesTotal"))
+                else
                 {
                     Global.WriteLine("   1. Administration > Export klicken");
                     Global.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
                     Global.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
-                    Global.WriteLine("   4. Die Datei \"AbsenceTimesTotal<...>.CSV\" im Download-Ordner zu speichern");
                 }
+
+                if (kriterium.Contains("AbsenceTimesTotal"))
+                {                    
+                    Global.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
+                }
+
+                if (kriterium.Contains("StudentgroupStudents"))
+                {
+                    Global.WriteLine("   4. Die Schülergruppen  (\"StudentgroupStudents<...>.CSV\") im Download-Ordner zu speichern");
+                }
+
+                if (kriterium.Contains("ExportLessons"))
+                {
+                    Global.WriteLine("   4. Die Unterrichte (\"ExportLessons<...>.CSV\") im Download-Ordner zu speichern");
+                }
+
+
+
                 Global.WriteLine(" ");
                 sourceFile = null;
             }

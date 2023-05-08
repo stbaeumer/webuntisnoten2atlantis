@@ -104,7 +104,7 @@ namespace webuntisnoten2atlantis
 
                     var leistungen = (from a in alleAktuellenLeistungenDesSchülers where a.Fach == fach.Name select a).ToList();
 
-                    leistungen.AddRange((from a in alleGeholtenLeistungenDesSchülers where a.Fach == fach.Name select a).ToList());
+                    leistungen.AddRange((from a in alleGeholtenLeistungenDesSchülers where a.Fach == fach.Name where a.Konferenzdatum == konferenzdatum select a).ToList());
                                         
                     f += (leistungen.Count == 0? "": leistungen.FirstOrDefault().Gesamtnote + leistungen.FirstOrDefault().Tendenz).PadRight(3).Substring(0, 3).PadRight(breite) + "|";
                 }

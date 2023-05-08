@@ -22,13 +22,13 @@ namespace webuntisnoten2atlantis
             using (StreamReader reader = new StreamReader(targetMarksPerLesson))
             {
                 var überschrift = reader.ReadLine();
-                int i = 0;
+                int i = 1;
 
                 while (true)
                 {
                     i++;
                     Leistung leistung = new Leistung();
-
+                    
                     string line = reader.ReadLine();
 
                     try
@@ -40,6 +40,7 @@ namespace webuntisnoten2atlantis
                             if (x.Length == 10)
                             {
                                 leistung = new Leistung();
+                                leistung.MarksPerLessonZeile = i;
                                 leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                                 leistung.Name = x[1];
                                 leistung.Klasse = x[2];
@@ -54,10 +55,10 @@ namespace webuntisnoten2atlantis
                                 leistung.Lehrkraft = x[7];
                                 leistung.LehrkraftAtlantisId = (from l in lehrers where l.Kuerzel == leistung.Lehrkraft select l.AtlantisId).FirstOrDefault();
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
-
+                                
 
                                 if (leistung.Fach != null && leistung.Fach != "")
-                                {
+                                {   
                                     leistung.GetFachAliases();
                                     leistungen.Add(leistung);
                                 }
@@ -68,6 +69,7 @@ namespace webuntisnoten2atlantis
                             if (x.Length == 7)
                             {
                                 leistung = new Leistung();
+                                leistung.MarksPerLessonZeile = i;
                                 leistung.Datum = DateTime.ParseExact(x[0], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                                 leistung.Name = x[1];
                                 leistung.Klasse = x[2];
@@ -146,10 +148,18 @@ namespace webuntisnoten2atlantis
                 }              
             }
             this.AddRange((from l in leistungenOhneWidersprüchlicheNoten select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
-            Global.WriteLine(("Alle Webuntis-Leistungen ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+
+            Global.WriteLine(("Alle Webuntis-Leistungen (mit & ohne Gesamtnote; ohne Dopplungen) ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
         }
 
-        internal void LinkZumTeamsChatErzeugen(Lehrers alleAtlantisLehrer)
+        internal List<int> GetMöglicheSchülerDerKlasse(string interessierendeKlasse)
+        {
+            var x = (from m in this where m.Klasse == interessierendeKlasse select m.SchlüsselExtern).Distinct().ToList();
+            Global.WriteLine(("Verschiedene SuS der Klasse " + interessierendeKlasse + " aus Webuntis ").PadRight(Global.PadRight - 2, '.') + x.Count.ToString().PadLeft(6));
+            return x;
+        }
+
+        internal void LinkZumTeamsChatErzeugen(Lehrers alleAtlantisLehrer, string interessierendeKlasse)
         {
             var url = "https://teams.microsoft.com/l/chat/0/0?users=";
 
@@ -162,28 +172,107 @@ namespace webuntisnoten2atlantis
                     url += mail + ",";
                 }                
             }
-            Global.WriteLine("Link zum Teams-Chat:");
+            Global.WriteLine("Link zum Teams-Chat mit den LuL der Klasse " + interessierendeKlasse +  ":");
             Global.WriteLine("  " + url.TrimEnd(','));
             Global.WriteLine("  ");
         }
 
-        internal Leistungen GetIntessierendeWebuntisLeistungen(List<int> interessierendeSchülerDieserKlasse,string klasse)
+        internal Leistungen GetIntessierendeWebuntisLeistungen(List<int> interessierendeSchülerDieserKlasse, string interessierendeKlasse)
         {
+            // Wenn ein Schüler im laufenden Schuljahr herabgestuft wurde, kann es sein, dass die MarksPerLesson
+            // fälschlicherweise Leistungen aus der anderen Klasse in die neue Klasse übernimmt. Es sieht dann so aus,
+            // als würde das Fach von dem Kollegen der höheren Klasse auch in dieser Klasse unterrichtet werden.
+
+            var zurückgestufteSuS = GetAndereZurückgestufteSuS(interessierendeSchülerDieserKlasse, interessierendeKlasse);
+            var verworfeneLeistungen = new List<Leistung>();
+
             var leistungen = new Leistungen();
 
-            foreach (var a in this)
+            foreach (var wl in (from t in this where interessierendeSchülerDieserKlasse.Contains(t.SchlüsselExtern) select t).ToList())
             {
-                if (interessierendeSchülerDieserKlasse.Contains(a.SchlüsselExtern))
+                // Die Leistung eines zurückgestuften Schülers wird verworfen, ...
+
+                if (zurückgestufteSuS.Contains(wl.SchlüsselExtern))
+                {
+                    // ... wenn kein anderer nicht zurückgestufter Schüler in diesem Fach bisher eine Leistung bekommen hat.
+
+                    if ((from t in this
+                         where t.Klasse == interessierendeKlasse
+                         where interessierendeSchülerDieserKlasse.Contains(t.SchlüsselExtern)
+                         where !zurückgestufteSuS.Contains(t.SchlüsselExtern)
+                         where t.Fach == wl.Fach
+                         where t.Gesamtnote != ""
+                         select t
+                         ).Any())
+                    {
+                        // Leistungen aus der Parallelklasse werden berücksichtigt.
+
+                        if (wl.Klasse.Substring(0, wl.Klasse.Length - 1) == interessierendeKlasse.Substring(0, interessierendeKlasse.Length - 1))
+                        {
+                            leistungen.Add(wl);
+                        }
+                    }
+                    else
+                    {
+                        verworfeneLeistungen.Add(wl);
+                    }
+                }
+                else
                 {
                     // Leistungen aus der Parallelklasse werden berücksichtigt.
 
-                    if (a.Klasse.Substring(0, a.Klasse.Length - 1) == klasse.Substring(0, klasse.Length - 1))
+                    if (wl.Klasse.Substring(0, wl.Klasse.Length - 1) == interessierendeKlasse.Substring(0, interessierendeKlasse.Length - 1))
                     {
-                        leistungen.Add(a);
+                        leistungen.Add(wl);
                     }
                 }
             }
+
+            if (verworfeneLeistungen.Any())
+            {
+                Global.WriteLine("Es scheint Schüler zu geben, die im laufenden SJ in die Klasse " + interessierendeKlasse + " gewechselt sind. In der MarksPerLesson kann");
+                Global.WriteLine(" es dann fälschlicherweise dazu kommen, dass Leistungen aus einer alten Klasse in die neue Klasse übernommen werden.");
+                Global.WriteLine(" Folgende Leistungen aus Webuntis werden also verworfen, weil niemand sonst bisher eine Gesamtote bekommen hat:");
+
+                foreach (var z in zurückgestufteSuS)
+                {
+                    var xx = (from f in verworfeneLeistungen where f.SchlüsselExtern == z select f).ToList();
+
+                    if (xx.Any())
+                    {
+                        var vorherigeKlasse = (from w in this where w.SchlüsselExtern == z where w.Klasse != interessierendeKlasse select w.Klasse).FirstOrDefault();
+                        var verworfenesFachString = Global.List2String((from f in verworfeneLeistungen where f.SchlüsselExtern == z select f.Fach + "(Zeile:" + f.MarksPerLessonZeile + ")").ToList(), ',');
+                        Global.WriteLine("  " + xx[0].Name + ", vorher:" + vorherigeKlasse.PadRight(7) + ": " + verworfenesFachString);
+                    }
+                }
+                Global.WriteLine("  ");
+            }
             return leistungen;
+        }
+
+        private List<int> GetAndereZurückgestufteSuS(List<int> interessierendeSuS, string interessierendeKlasse)
+        {
+            List<int> andere = new List<int>();
+
+            // Für jeden interessierenden S wird geprüft, ...
+
+            foreach (var i in interessierendeSuS)
+            {
+                // ... ob er mehr als einer Klasse zugeordnet werden kann ...
+
+                if ((from w in this where w.SchlüsselExtern == i select w.Klasse).Distinct().Count() > 1)
+                {
+                    // ... und ob es nicht die Parallelklassse ist, da Leistungen aus der Parallelklasse nicht verworfen werden ...
+
+                    var dieAndereKlasse = (from w in this where w.SchlüsselExtern == i where w.Klasse != interessierendeKlasse select w.Klasse).FirstOrDefault();
+
+                    if (dieAndereKlasse.Substring(0, dieAndereKlasse.Length - 1) != interessierendeKlasse.Substring(0, interessierendeKlasse.Length - 1))
+                    {
+                        andere.Add(i);
+                    }
+                }
+            }
+            return andere;
         }
 
         internal Leistungen GetBlaueBriefeLeistungen()
@@ -251,7 +340,8 @@ namespace webuntisnoten2atlantis
                     }
                 }
             }
-            Global.WriteLine((" ... davon Leistungsdaten aus abgeschlossenen Fächern alter Abschnitte ").PadRight(Global.PadRight, '.') + geholteLeistungen.Count().ToString().PadLeft(4));
+            Global.WriteLine((" davon Leistungsdaten aus abgeschlossenen Fächern alter Abschnitte ").PadRight(Global.PadRight, '.') + geholteLeistungen.Count().ToString().PadLeft(4));
+            Global.WriteLine("");
             return geholteLeistungen;
         }
 
@@ -277,15 +367,16 @@ namespace webuntisnoten2atlantis
             }
             Global.WriteLine("*------------------------------------------------".PadRight(Global.PadRight + 3, '-') + "*");
 
-            Global.WriteLine(" Prüfaufträge für KuK:");
+            Global.WriteLine("Prüfaufträge für KuK:");
 
             if ((from w in webuntisLeistungen where w.FachAliases.Contains("REL") select w).Any())
             {
-                Global.WriteLine("  * Haben SoS Reli abgewählt? Falls bewertbar, dann Relinote eintragen!");
+                Global.WriteLine("  * Haben SoS Reli abgewählt? Falls bewertbar, dann Relinote eintragen! BASS 12-05 Nr. 1, 7.2, VV 9.2.5 zu § 9 APO-BK");
             }
 
             Global.WriteLine("  * Gibt es Fremdsprachenprüfungen anstelle von Englisch?");
             Global.WriteLine("  * Teilen sich KuK ein Fach? Note untereinander abgestimmt?");
+            Global.WriteLine("");
 
         }
 
@@ -305,7 +396,7 @@ namespace webuntisnoten2atlantis
                 } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
 
                 Global.WriteLine(" Ihre Auswahl: " + (x.Key.ToString() == "Enter" || x.Key.ToString().ToUpper() == "N" ? "N": "J"));
-                Global.WriteLine(" ");
+                //Global.WriteLine(" ");
 
                 if (x.Key.ToString().ToLower() == "j")
                 {
@@ -381,12 +472,19 @@ namespace webuntisnoten2atlantis
 
                 // Wenn ein Lehrer sich selbst in der Gesamtnote im selben Fach widerspricht
 
-                if ((from t in this where t.Fach == wLeistung.Fach where t.SchlüsselExtern == wLeistung.SchlüsselExtern select t).Distinct().ToList().Count > 1)
+                var xxx = (from t in this where t.Fach == wLeistung.Fach 
+                           where t.SchlüsselExtern == wLeistung.SchlüsselExtern
+                           where t.Lehrkraft == wLeistung.Lehrkraft
+                           select t).Distinct().ToList();
+
+                if (xxx.Count > 1)
                 {
-                    Global.WriteLine("Achtung: " + wLeistung.Lehrkraft + " hat dem Schüler " + wLeistung.SchlüsselExtern + " in " + wLeistung.Fach + " unterschiedliche Noten gegeben!");
+                    var zeilen = (from t in xxx select t.MarksPerLessonZeile).ToList();
+                    var noten = (from t in xxx select t.Gesamtnote).Distinct().ToList();
+
+                    Global.WriteLine("Achtung: " + wLeistung.Lehrkraft + " hat dem Schüler " + wLeistung.SchlüsselExtern + " in " + wLeistung.Fach + " unterschiedliche Noten (" + Global.List2String(noten, ',') + ") gegeben! Siehe Zeilen " + Global.List2String(zeilen, ',') + ".");
                     Global.WriteLine("Nur die Leistung mit dem jüngsten Datum bleibt erhalten.");
 
-                    var xx = (from t in this.OrderByDescending(x => x.Datum) where t.Fach == wLeistung.Fach where t.SchlüsselExtern == wLeistung.SchlüsselExtern select t).Distinct().ToList();
                     Console.ReadKey();
                 }
 
@@ -606,7 +704,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void AtlantisLeistungenZuordnenUndQueryBauen(Leistungen atlantisLeistungen, string aktuellesSchuljahr, string interessierendeKlasse)
+        internal void AtlantisLeistungenZuordnenUndQueryBauen(Leistungen atlantisLeistungen, string aktuellesSchuljahr, string interessierendeKlasse, string hzJz)
         {
             var kombinationAusKlasseUndFachWirdNurEinmalAufgerufen = new List<string>();
 
@@ -615,14 +713,14 @@ namespace webuntisnoten2atlantis
             // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
 
             foreach (var webuntisLeistung in this.OrderBy(x => x.Klasse).ThenBy(x => x.Fach))
-            {
+            {                
                 // Zielleistungen dieses Schülers im aktuellen Abschnitt werden ermittelt.
 
                 var atlantisZielLeistungen = (from a in atlantisLeistungen
                                               where !a.IstGeholteNote // eine Leistung des aktuellen Abschnitts
                                               where a.SchlüsselExtern == webuntisLeistung.SchlüsselExtern
                                               where a.Schuljahr == aktuellesSchuljahr
-                                              where a.HzJz == Global.HzJz
+                                              where a.HzJz == hzJz
                                               orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
                                               select a).ToList();
 
@@ -640,7 +738,6 @@ namespace webuntisnoten2atlantis
 
                         if (aL.Count > 0)
                         {
-
                             // Wenn der Schüler Reli-Abwähler ist, dürfte es eigentlich diese Webuntis-Leistung nicht geben.
 
                             if (aL[0].ReligionAbgewählt && aL[0].FachAliases.Contains("REL"))
@@ -1023,14 +1120,14 @@ namespace webuntisnoten2atlantis
                         {
                             if (w.Gesamtnote == "-" && (a.Bemerkung == null || w.Bemerkung == null))
                             {
-                                fehlendeBemerkungen.Add(w.Name + "(" + w.Klasse + "," + w.Fach + "," + w.Lehrkraft + ")");
+                                fehlendeBemerkungen.Add(w.Name + "(" + w.Klasse + "," + w.Fach + "," + w.Lehrkraft + ",Zeile: " + w.MarksPerLessonZeile + ")");
                             }
                         }
                     }
                 }
                 if (fehlendeBemerkungen.Count > 0)
                 {
-                    AusgabeSchreiben("Es gibt " + fehlendeBemerkungen.Count + " Schüler*innen in Vollzeitklassen, die einen '-' in einem Nicht-Reli-Fach als Noten bekommen, ohne dass eine entsprechende Zeugnisbemerkung vorliegt:", fehlendeBemerkungen);
+                    AusgabeSchreiben("Es gibt " + fehlendeBemerkungen.Count + " Schüler*innen in der " + interessierendeKlasse + ", die einen '-' in einem Nicht-Reli-Fach als Noten bekommen, ohne dass eine entsprechende Zeugnisbemerkung vorliegt:", fehlendeBemerkungen);
                 }
                 Global.WriteLine(("Fehlende Zeugnisbemerkung bei Strich ").PadRight(Global.PadRight, '.') + fehlendeBemerkungen.Count.ToString().PadLeft(4));
             }
@@ -1040,7 +1137,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal Leistungen NotenVergangenerAbschnitteZiehen(List<Leistung> webuntisLeistungen, Leistungen geholteLeistungen, string klasse, List<string> aktSj)
+        internal Leistungen NotenVergangenerAbschnitteZiehen(List<Leistung> webuntisLeistungen, Leistungen geholteLeistungen, string klasse, List<string> aktSj, string hzJz)
         {   
             try
             {
@@ -1066,17 +1163,17 @@ namespace webuntisnoten2atlantis
 
                     if (x.Key.ToString().ToLower() == "j")
                     {
-                        Global.WriteLine("  Ihre Auswahl: J");
-
+                        Global.WriteLine(" Ihre Auswahl: J");
+                        Global.WriteLine("");
                         return geholteLeistungen;
                     }
                     else
                     {
-                        Global.WriteLine("  Ihre Auswahl: N");
+                        Global.WriteLine(" Ihre Auswahl: N");
 
                         // Beim Jahreszeugnis werden die Halbjahresnoten auf jeden Fall gezogen.
 
-                        if (Global.HzJz == "JZ")
+                        if (hzJz == "JZ")
                         {   
                             var l = new Leistungen();
                             l.AddRange((from g in geholteLeistungen 
@@ -1096,7 +1193,7 @@ namespace webuntisnoten2atlantis
                             }
 
                             Global.WriteLine("   Da es sich um Jahreszeugnisse handelt, werden die Noten in " + a.TrimEnd(',') + " dennoch aus dem Halbjahr gezogen.");
-
+                            Global.WriteLine("");
                             return l; 
                         }
                     }
@@ -1163,7 +1260,7 @@ namespace webuntisnoten2atlantis
             return "";
         }
 
-        public Leistungen(string connetionstringAtlantis, List<string> aktSj, string user, string interessierendeKlasse, Leistungen alleWebuntisLeistungen)
+        public Leistungen(string connetionstringAtlantis, List<string> aktSj, string user, string interessierendeKlasse, Leistungen alleWebuntisLeistungen, string hzJz)
         {
             Global.Defizitleistungen = new Leistungen();
 
@@ -1192,9 +1289,9 @@ namespace webuntisnoten2atlantis
             {
                 abfrage = abfrage.Substring(0, abfrage.Length - 4);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Global.WriteLine("Kann es sein, dass für die Auswahl keine Datensätze vorliegen?");
+                Global.WriteLine("Kann es sein, dass für die Auswahl keine Datensätze vorliegen?\n" + ex.Message);
             }
             try
             {
@@ -1346,7 +1443,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             var alleFächerDesAktuellenAbschnitts = (from l in this where (l.Konferenzdatum > DateTime.Now.AddDays(-20) || l.Konferenzdatum.Year == 1) select l.Fach).ToList();
 
-            Global.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + Global.HzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
+            Global.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + hzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
         }
 
         private Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum()
@@ -1779,7 +1876,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             return "";
         }
 
-        internal string Update(Leistungen atlantisLeistungen)
+        internal string Update(Leistungen atlantisLeistungen, bool debug)
         {
             if (atlantisLeistungen is null)
             {
@@ -1795,7 +1892,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             Global.WriteLine(("=============================== "));
             Global.WriteLine((" "));
 
-            foreach (var w in (from t in this.OrderBy(x=>x.Klasse).ThenBy(x => x.Fach).ThenBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
+            //foreach (var w in (from t in this.OrderBy(x=>x.Klasse).ThenBy(x => x.Fach).ThenBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
+            foreach (var w in (from t in this.OrderBy(x => x.Klasse).ThenBy(x => x.Name).ThenBy(x => x.Fach) where t.Beschreibung != null where t.Query != null select t).ToList())
             {
                 UpdateLeistung(w.Beschreibung, w.Query);
                 i++;

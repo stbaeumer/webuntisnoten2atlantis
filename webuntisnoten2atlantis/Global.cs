@@ -11,8 +11,7 @@ namespace webuntisnoten2atlantis
     {
         public static Leistungen Defizitleistungen { get; internal set; }
 
-        public static List<string> SqlZeilen { get; internal set; }
-        public static string HzJz { get; internal set; }
+        public static List<string> SqlZeilen { get; internal set; }        
         public static List<string> VerschiedeneKlassenAusMarkPerLesson { get; set; }
         public static int PadRight { get; internal set; }
         public static Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum { get; internal set; }

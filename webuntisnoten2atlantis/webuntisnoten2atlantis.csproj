@@ -65,6 +65,8 @@
     <Compile Include="Fach.cs" />
     <Compile Include="Fächer.cs" />
     <Compile Include="Global.cs" />
+    <Compile Include="Gruppe.cs" />
+    <Compile Include="Gruppen.cs" />
     <Compile Include="Lehrer.cs" />
     <Compile Include="Lehrers.cs" />
     <Compile Include="Leistung.cs" />
@@ -76,6 +78,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Unterricht.cs" />
+    <Compile Include="Unterrichte.cs" />
     <Compile Include="Zuordnung.cs" />
     <Compile Include="Zuordnungen.cs" />
   </ItemGroup>
