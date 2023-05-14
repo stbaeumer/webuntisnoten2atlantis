@@ -11,20 +11,7 @@ namespace webuntisnoten2atlantis
         public Fächer()
         {
         }
-
-        public Fächer(Leistungen webuntisLeistungen, string klasse)
-        {
-            var verschiedeneAktuelleFächer = (from s in webuntisLeistungen.OrderBy(x=>x.Klasse).ThenBy(x=>x.Fach) where s.Klasse == klasse select s.Fach).Distinct().ToList();
-
-            // Alle aktuellen Fächer werden gesammelt.
-
-            foreach (var aF in verschiedeneAktuelleFächer)
-            {
-                var x = (from s in webuntisLeistungen where s.Fach == aF where s.Klasse == klasse select s).FirstOrDefault();
-                Fach fach = new Fach(x.Klasse, x.Fach, x.Lehrkraft, x.Konferenzdatum);
-                this.Add(fach);
-            }
-        }
+                
 
         internal void KonferenzdatenZeileErzeugen()
         {
@@ -112,26 +99,26 @@ namespace webuntisnoten2atlantis
             Global.WriteLine(f.PadRight(8));
         }
 
-        internal void AddAktuelleFächer(Leistungen webuntisLeistungen, string interessierendeKlasse)
-        {
-            this.AddRange(new Fächer(webuntisLeistungen, interessierendeKlasse));
-        }
+        //internal void AddAktuelleFächer(Schülers schülers, string interessierendeKlasse)
+        //{
+        //    this.AddRange(new Fächer(schülers, interessierendeKlasse));
+        //}
 
-        internal void AddAlteFächer(Leistungen geholteLeistungen, string interessierendeKlasse)
-        {
-            foreach (var schülerId in (from t in geholteLeistungen where t.SchlüsselExtern != 0 select t.SchlüsselExtern).Distinct().ToList())
-            {
-                foreach (var atlantisleistung in (from a in geholteLeistungen                                                   
-                                                  where a.SchlüsselExtern == schülerId 
-                                                  where a.Klasse.Substring(0,2) == this[0].Klasse.Substring(0,2) // nur Leistungen des selben BG zählen. 
-                                                  select a).ToList())
-                {
-                    if (!(from f in this where f.Name == atlantisleistung.Fach select f).Any())
-                    {
-                        this.Add(new Fach(atlantisleistung.Klasse, atlantisleistung.Fach, "", atlantisleistung.Konferenzdatum));
-                    }
-                }
-            }
-        }
+        //internal void AddAlteFächer(Leistungen geholteLeistungen, string interessierendeKlasse)
+        //{
+        //    foreach (var schülerId in (from t in geholteLeistungen where t.SchlüsselExtern != 0 select t.SchlüsselExtern).Distinct().ToList())
+        //    {
+        //        foreach (var atlantisleistung in (from a in geholteLeistungen                                                   
+        //                                          where a.SchlüsselExtern == schülerId 
+        //                                          where a.Klasse.Substring(0,2) == this[0].Klasse.Substring(0,2) // nur Leistungen des selben BG zählen. 
+        //                                          select a).ToList())
+        //        {
+        //            if (!(from f in this where f.Name == atlantisleistung.Fach select f).Any())
+        //            {
+        //                this.Add(new Fach(atlantisleistung.Klasse, atlantisleistung.Fach, "", atlantisleistung.Konferenzdatum));
+        //            }
+        //        }
+        //    }
+        //}
     }
 }

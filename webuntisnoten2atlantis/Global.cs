@@ -18,10 +18,11 @@ namespace webuntisnoten2atlantis
         public static Leistungen Notenblatt { get; internal set; }
         public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }        
         public static bool BlaueBriefe { get; internal set; }
+        public static List<string> Reihenfolge { get; set; }
 
         internal static void PrintMessage(int index, string message)
         {
-            SqlZeilen.Insert(index, "/* " + message.PadRight(Global.PadRight + 27) + " */");
+            SqlZeilen.Insert(index, "/* " + message.PadRight(Global.PadRight + 61) + " */");
         }
 
         public static bool WaitForFile(string fullPath)
@@ -98,6 +99,19 @@ namespace webuntisnoten2atlantis
                 s += item.ToString() + delimiter;
             }
             return s.TrimEnd(delimiter);
+        }
+
+        internal static void SetzeReihenfolgeDerFächer(Leistungen aleistungen)
+        {
+            Reihenfolge = new List<string>();
+
+            foreach (var al in aleistungen.OrderBy(x=>x.Reihenfolge))
+            {
+                if (!Reihenfolge.Contains(al.Fach))
+                {
+                    Reihenfolge.Add(al.Fach);
+                }
+            }
         }
     }
 }

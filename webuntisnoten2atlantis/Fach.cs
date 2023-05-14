@@ -12,14 +12,15 @@ namespace webuntisnoten2atlantis
         public string Lehrkraft { get; private set; }
         public List<string> NameAliase { get; private set; }
         public DateTime Konferenzdatum { get; }
+        public string Gruppe { get; }
 
-        public Fach(string klasse, string fach, string lehrkraft, DateTime konferenzdatum)
+        public Fach(string klasse, string fach, string lehrkraft, DateTime konferenzdatum, string gruppe)
         {
             this.Klasse = klasse;
             this.Name = fach;
             this.Lehrkraft = lehrkraft;
             this.Konferenzdatum = konferenzdatum;
-            //this.NameAliase = GetFachAliases(fach);
+            this.Gruppe = gruppe;
         }
     }
 }

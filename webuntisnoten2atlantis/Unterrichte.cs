@@ -8,6 +8,10 @@ namespace webuntisnoten2atlantis
 {
     public class Unterrichte : List<Unterricht>
     {
+        public Unterrichte()
+        {
+        }
+
         public Unterrichte(string sourceExportLessons)
         {
             using (StreamReader reader = new StreamReader(sourceExportLessons))
@@ -39,7 +43,6 @@ namespace webuntisnoten2atlantis
                             unterricht.Periode = Convert.ToInt32(x[6]);
                             unterricht.Startdate = DateTime.ParseExact(x[7], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
                             unterricht.Enddate = DateTime.ParseExact(x[8], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
-
                             this.Add(unterricht);
                         }
                     }
@@ -56,6 +59,19 @@ namespace webuntisnoten2atlantis
 
                 Global.WriteLine(("Alle Unterrichte ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
             }
+        }
+
+        public Unterrichte(IEnumerable<Unterricht> collection, string interessierendeKlasse) : base(collection)
+        {
+            foreach (var item in collection)
+            {
+
+            }
+        }
+
+        internal object GetKlassenunterrichte(string interessierendeKlasse)
+        {
+            throw new NotImplementedException();
         }
     }
 }

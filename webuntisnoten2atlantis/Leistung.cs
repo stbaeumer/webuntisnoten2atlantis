@@ -8,6 +8,23 @@ namespace webuntisnoten2atlantis
 {
     public class Leistung
     {
+        public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, int schlüsselExtern)
+        {
+            Name = name;
+            Fach = fach;
+            FachAliases = fachAliases;
+            Gesamtnote = gesamtnote;
+            Gesamtpunkte = gesamtpunkte;
+            Tendenz = tendenz;
+            Datum = datum;
+            Nachname = nachname;
+            SchlüsselExtern = schlüsselExtern;
+        }
+
+        public Leistung()
+        {
+        }
+
         public DateTime Datum { get; internal set; }
         public string Name { get; internal set; }
         public string Klasse { get; internal set; }
@@ -69,6 +86,7 @@ namespace webuntisnoten2atlantis
         public List<string> FachAliases { get; internal set; }
         public bool IstGeholteNote { get; set; }
         public int MarksPerLessonZeile { get; internal set; }
+        public int Reihenfolge { get; internal set; }
 
         public bool IstAbschlussklasse()
         {

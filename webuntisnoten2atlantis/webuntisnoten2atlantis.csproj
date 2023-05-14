@@ -78,6 +78,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Schüler.cs" />
+    <Compile Include="Schülers.cs" />
     <Compile Include="Unterricht.cs" />
     <Compile Include="Unterrichte.cs" />
     <Compile Include="Zuordnung.cs" />

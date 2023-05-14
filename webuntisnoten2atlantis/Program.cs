@@ -11,7 +11,7 @@ namespace webuntisnoten2atlantis
 {
     class Program
     {
-        public const string ConnectionStringAtlantis = @"Dsn=Atlantis9;uid=";
+        public const string ConnectionStringAtlantis = @"Dsn=Atlantis17u;uid=";
         public static string Passwort = "";
         public static bool Debug = false;
         public static string User = System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().Split('\\')[1];
@@ -44,7 +44,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")
+                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")                
                 {
                     Settings();
                 }
@@ -52,15 +52,18 @@ namespace webuntisnoten2atlantis
                 var hzJz = (DateTime.Now.Month > 2 && DateTime.Now.Month <= 9) ? "JZ" : "HZ";
 
                 string targetPath = SetTargetPath();
-                string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal");
-                string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson");
-                string sourceExportLessons = CheckFile(User, "ExportLessons");
-                string sourceStudentgroupStudents = CheckFile(User, "StudentgroupStudents");
+                string sourceStudents = CheckFile(User, "Student_", DateTime.Now.Date.AddDays(-20));
+                string sourceAbsenceTimesTotal = CheckFile(User, "AbsenceTimesTotal", DateTime.Now.Date);
+                string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson", DateTime.Now.Date);
+                string sourceExportLessons = CheckFile(User, "ExportLessons", DateTime.Now.Date.AddDays(-20));
+                string sourceStudentgroupStudents = CheckFile(User, "StudentgroupStudents", DateTime.Now.Date.AddDays(-20));
+                
 
                 var alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
                 // Alle Webuntis-Leistungen, ohne Leistungen mit leerem Fach, leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote, mit Leistungen ohne Gesamtnote 
 
+                var alleSchüler = new Schülers(sourceStudents);
                 var alleUnterrichte = new Unterrichte(sourceExportLessons);
                 var alleGruppen = new Gruppen(sourceStudentgroupStudents);
                 var alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
@@ -93,64 +96,70 @@ namespace webuntisnoten2atlantis
 
                     foreach (var interessierendeKlasse in interessierendeKlassen)
                     {
-                        var interessierendeSchülerDieserKlasse = alleWebuntisLeistungen.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
+                        var interessierendeSchülerDieserKlasse = alleSchüler.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
-                        if (Debug)
-                        {
-                            interessierendeSchülerDieserKlasse = GetIntessierendeSchüler(AktSj, interessierendeSchülerDieserKlasse);
-                        }
+                        //if (Debug)
+                        //{
+                        //    interessierendeSchülerDieserKlasse = alleSchüler.GetIntessierendeSchüler(AktSj);
+                        //}
 
-                        var interessierendeWebuntisLeistungen = alleWebuntisLeistungen.GetIntessierendeWebuntisLeistungen(interessierendeSchülerDieserKlasse, interessierendeKlasse);
+                        interessierendeSchülerDieserKlasse.GetUnterrichteAktuell(alleUnterrichte, alleGruppen, interessierendeKlasse);
 
-                        interessierendeWebuntisLeistungen.LinkZumTeamsChatErzeugen(alleAtlantisLehrer, interessierendeKlasse);
+                        interessierendeSchülerDieserKlasse.GetIntessierendeWebuntisLeistungen(alleWebuntisLeistungen);
 
-                        atlantisLeistungen = new Leistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, interessierendeWebuntisLeistungen, hzJz);
+                        interessierendeSchülerDieserKlasse.LinkZumTeamsChatErzeugen(alleAtlantisLehrer, interessierendeKlasse);
 
-                        Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
-                        
-                        atlantisLeistungen.TabelleErzeugen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj);
+                        interessierendeSchülerDieserKlasse.GetAtlantisLeistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, hzJz);
 
-                        var webuntisAbwesenheiten = sourceAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, interessierendeWebuntisLeistungen);
+                        interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
 
-                        if (interessierendeWebuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen,webuntisAbwesenheiten,targetAbsenceTimesTotal))
-                        {                            
-                            interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj, hzJz));
+                        interessierendeSchülerDieserKlasse.WidersprechendeGesamtnotenImSelbenFachKorrigieren(interessierendeKlasse);
 
-                            // Korrekturen durchführen
+                        //Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
 
-                            interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
-                            //interessierendeWebuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                            interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                            atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
+                        //atlantisLeistungen.TabelleErzeugen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj);
 
-                            interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
-                        }
+                        //var webuntisAbwesenheiten = sourceAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, interessierendeWebuntisLeistungen);
+
+                        //if (interessierendeWebuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen,webuntisAbwesenheiten,targetAbsenceTimesTotal))
+                        //{                            
+                        //    interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj, hzJz));
+
+                        //    // Korrekturen durchführen
+
+                        //    interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
+                        //    //interessierendeWebuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
+                        //    interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
+                        //    atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
+
+                        //    interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
+                        //}
 
                         // Add-Delete-Update
 
-                        string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen, Debug);
+                        //string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen, Debug);
 
-                        if (sourceAbsenceTimesTotal != null)
-                        {
-                            Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
-                            atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
-                            atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
-                            atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
-                            atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
-                        }
-                        else
-                        {
-                            int outputIndex = Global.SqlZeilen.Count();
-                            Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
-                        }
+                        //if (sourceAbsenceTimesTotal != null)
+                        //{
+                        //    Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
+                        //    atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
+                        //    atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                        //    atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                        //    atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+                        //}
+                        //else
+                        //{
+                        //    int outputIndex = Global.SqlZeilen.Count();
+                        //    Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
+                        //}
 
-                        if (hinweis != "")
-                        {
-                            Global.WriteLine("");
-                            Global.WriteLine(hinweis);
-                        }
+                        //if (hinweis != "")
+                        //{
+                        //    Global.WriteLine("");
+                        //    Global.WriteLine(hinweis);
+                        //}
 
-                        Console.WriteLine("-".PadRight(Global.PadRight, '-') + "----");
+                        //Console.WriteLine("-".PadRight(Global.PadRight, '-') + "----");
                     }
 
                     string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
@@ -242,87 +251,6 @@ namespace webuntisnoten2atlantis
             return interessierendeKlassen;
         }
 
-        private static List<int> GetIntessierendeSchüler(List<string> aktSj, List<int> möglicheSuS)
-        {
-            var interessierendeSuS = new List<int>();
-
-            try
-            {
-                do
-                {
-                    Console.Write("  Bitte die ID der interessierenden SuS kommasepariert angeben oder 'alle' eingeben [" + GetVorschlag(möglicheSuS) + "]: ");
-
-                    var x = Console.ReadLine();
-
-                    if (x == "")
-                    {
-                        if (Properties.Settings.Default.InteressierendeSuS.ToUpper().StartsWith("A"))
-                        {
-                            foreach (var item in möglicheSuS)
-                            {   
-                                interessierendeSuS.Add(Convert.ToInt32(item));
-                            }                            
-                        }
-                        else
-                        {
-                            foreach (var item in Properties.Settings.Default.InteressierendeSuS.Split(','))
-                            {
-                                if (item != null && item != "")
-                                {
-                                    interessierendeSuS.Add(Convert.ToInt32(item));
-                                }
-                            }
-                        }
-                                                
-                        x = Properties.Settings.Default.InteressierendeSuS;
-                    }
-                    else
-                    {
-                        var interessierendeSuSstring = "";
-
-                        foreach (var sch in möglicheSuS)
-                        {
-                            if (x.ToUpper().StartsWith("A"))
-                            {      
-                                interessierendeSuS.Add(sch);                                
-                                interessierendeSuSstring = "alle";
-                            }
-                            else
-                            {
-                                foreach (var item in x.ToUpper().Replace(" ", "").Split(','))
-                                {
-                                    if (sch.ToString() == item)
-                                    {
-                                        interessierendeSuS.Add(sch);
-                                        interessierendeSuSstring += sch + ",";
-                                    }
-                                }
-                            }
-                        }
-
-                        Properties.Settings.Default.InteressierendeSuS = interessierendeSuSstring.TrimEnd(',');
-                        Properties.Settings.Default.Save();
-                    }
-                } while (Properties.Settings.Default.InteressierendeSuS == "");
-            }
-            catch (Exception ex)
-            {
-                Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
-            }
-            if (Properties.Settings.Default.InteressierendeSuS.ToLower().StartsWith("a"))
-            {
-                Global.WriteLine("   Ihre Auswahl: alle");
-            }
-            else
-            {
-                Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeSuS, ','));
-            }
-            
-            Global.WriteLine(" ");
-
-            return interessierendeSuS;
-        }
-
         private static string GetVorschlag(List<string> möglicheKlassen)
         {
             string vorschlag = "";
@@ -346,43 +274,6 @@ namespace webuntisnoten2atlantis
                 }
             }
             Properties.Settings.Default.InteressierendeKlassen = vorschlag;
-            Properties.Settings.Default.Save();
-            return vorschlag.TrimEnd(',');
-        }
-
-        private static string GetVorschlag(List<int> möglicheSuS)
-        {
-            string vorschlag = "";
-
-            // Wenn in den Properties ein Eintrag existiert, ...
-
-            if (Properties.Settings.Default.InteressierendeSuS != null && Properties.Settings.Default.InteressierendeSuS != "")
-            {
-                // ... wird für alle kommaseparierten Einträge geprüft ...
-
-                foreach (var item in Properties.Settings.Default.InteressierendeSuS.Split(','))
-                {
-                    // ... ob es in den möglichen Klassen Kandidaten gibt.
-
-                    try
-                    {
-                        if (item != "" && möglicheSuS.Contains(Convert.ToInt32(item)))
-                        {
-                            // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
-
-                            vorschlag += item + ",";
-                        }
-                    }
-                    catch (Exception)
-                    {
-                    }                                        
-                }
-                if (vorschlag.TrimEnd(',') == "")
-                {
-                    vorschlag = "alle";
-                }
-            }
-            Properties.Settings.Default.InteressierendeSuS = vorschlag;
             Properties.Settings.Default.Save();
             return vorschlag.TrimEnd(',');
         }
@@ -476,24 +367,22 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static string CheckFile(string user, string kriterium)
+        private static string CheckFile(string user, string kriterium, DateTime zeitpunkt)
         {
             var sourceFile = (from f in Directory.GetFiles(@"c:\users\" + user + @"\Downloads", "*.csv", SearchOption.AllDirectories) where f.Contains(kriterium) orderby File.GetLastWriteTime(f) select f).LastOrDefault();
 
-            if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date != DateTime.Now.Date))
+            if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date < DateTime.Now.Date))
             {
                 Global.WriteLine("");
                 Global.WriteLine(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
                 Global.WriteLine(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
-                if (kriterium.Contains("MarksPerLesson"))
+                if (kriterium.Contains("Student_"))
                 {
-                    Global.WriteLine("   1. Klassenbuch > Berichte klicken");
-                    Global.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
-                    Global.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-                    Global.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-                    Global.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-                    Global.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                    Global.WriteLine("   1. Stammdaten > Schülerinnen");
+                    Global.WriteLine("   2. \"Berichte\" auswählen");                    
+                    Global.WriteLine("   3. Bei \"Schüler\" auf CSV klicken");
+                    Global.WriteLine("   4. Die Datei \"Student_<...>.CSV\" im Download-Ordner zu speichern");
                     Global.WriteLine(" ");
                     Global.WriteLine(" ENTER beendet das Programm.");
                     Console.ReadKey();
@@ -501,27 +390,41 @@ namespace webuntisnoten2atlantis
                 }
                 else
                 {
-                    Global.WriteLine("   1. Administration > Export klicken");
-                    Global.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
-                    Global.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                    if (kriterium.Contains("MarksPerLesson"))
+                    {
+                        Global.WriteLine("   1. Klassenbuch > Berichte klicken");
+                        Global.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
+                        Global.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+                        Global.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+                        Global.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+                        Global.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                        Global.WriteLine(" ");
+                        Global.WriteLine(" ENTER beendet das Programm.");
+                        Console.ReadKey();
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        Global.WriteLine("   1. Administration > Export klicken");
+                        Global.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
+                        Global.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                    }
+
+                    if (kriterium.Contains("AbsenceTimesTotal"))
+                    {
+                        Global.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
+                    }
+
+                    if (kriterium.Contains("StudentgroupStudents"))
+                    {
+                        Global.WriteLine("   4. Die Schülergruppen  (\"StudentgroupStudents<...>.CSV\") im Download-Ordner zu speichern");
+                    }
+
+                    if (kriterium.Contains("ExportLessons"))
+                    {
+                        Global.WriteLine("   4. Die Unterrichte (\"ExportLessons<...>.CSV\") im Download-Ordner zu speichern");
+                    }
                 }
-
-                if (kriterium.Contains("AbsenceTimesTotal"))
-                {                    
-                    Global.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
-                }
-
-                if (kriterium.Contains("StudentgroupStudents"))
-                {
-                    Global.WriteLine("   4. Die Schülergruppen  (\"StudentgroupStudents<...>.CSV\") im Download-Ordner zu speichern");
-                }
-
-                if (kriterium.Contains("ExportLessons"))
-                {
-                    Global.WriteLine("   4. Die Unterrichte (\"ExportLessons<...>.CSV\") im Download-Ordner zu speichern");
-                }
-
-
 
                 Global.WriteLine(" ");
                 sourceFile = null;
