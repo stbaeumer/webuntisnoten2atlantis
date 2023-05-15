@@ -174,7 +174,7 @@ namespace webuntisnoten2atlantis
                     {
                         atlantisLeistungGeholt = atlantisLeistung;
 
-                        if (atlantisLeistung.FachAliases.Contains(u.Fach))
+                        if (atlantisLeistung.FachAliases.Contains(Regex.Replace(u.Fach, @"[\d-]", string.Empty)))
                         {
                             if (atlantisLeistung.Gesamtnote != "")
                             {
@@ -205,68 +205,53 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void WidersprechendeGesamtnotenImSelbenFachKorrigieren(string interessierendeKlasse)
+        internal bool WidersprechendeGesamtnotenImSelbenFachKorrigieren(string interessierendeKlasse)
         {
-            var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell select u.Fach + "|" + u.Lehrkraft).ToList();
-            var doppelteFächer = new List<string>();
+            var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell select u.Fach + "|" + u.Lehrkraft).Distinct().ToList();
 
             foreach (var af in aktuelleFächer)
             {
-                var sfOhneZiffer = Regex.Replace(af.Split(',')[0], @"[\d-]", string.Empty);
-
-                if (aktuelleFächer.Contains(sfOhneZiffer))
-                {
-                    if (!doppelteFächer.Contains(sfOhneZiffer))
-                    {
-                        doppelteFächer.Add(sfOhneZiffer);
-                    }
-                }
-            }
-
-            // Wenn es doppelte Fächer gibt, wird auf konkurrierende Noten geprüft
-
-            if (doppelteFächer.Count > 0)
-            {
-                foreach (var doppeltesFach in doppelteFächer)
+                if ((from aa in aktuelleFächer where Regex.Replace(aa.Split('|')[0], @"[\d-]", string.Empty) == Regex.Replace(af.Split('|')[0], @"[\d-]", string.Empty) select aa.Split('|')[0]).Count() > 1)
                 {
                     foreach (var schüler in this)
                     {
                         var doppelteNoten = new List<string>();
                         var doppelterLehrer = new List<string>();
 
-                        foreach (var unterricht in schüler.UnterrichteAktuell)
+                        foreach (var unterricht in (from u in schüler.UnterrichteAktuell where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(af.Split('|')[0], @"[\d-]", string.Empty) select u).ToList())
                         {
-                            if (Regex.Replace(unterricht.Fach, @"[\d-]", string.Empty) == doppeltesFach)
+                            if (unterricht.WebuntisLeistung.Gesamtnote != null && unterricht.WebuntisLeistung.Gesamtnote != "")
                             {
-                                if (unterricht.WebuntisLeistung.Gesamtnote != null && unterricht.WebuntisLeistung.Gesamtnote != "")
+                                if (!doppelteNoten.Contains(unterricht.WebuntisLeistung.Gesamtnote + unterricht.WebuntisLeistung.Tendenz))
                                 {
-                                    if (!doppelteNoten.Contains(unterricht.WebuntisLeistung.Gesamtnote + unterricht.WebuntisLeistung.Tendenz))
-                                    {
-                                        doppelteNoten.Add(unterricht.WebuntisLeistung.Gesamtnote + unterricht.WebuntisLeistung.Tendenz);
-                                        doppelterLehrer.Add(unterricht.WebuntisLeistung.Lehrkraft);
-                                    }
+                                    doppelteNoten.Add(unterricht.WebuntisLeistung.Gesamtnote + unterricht.WebuntisLeistung.Tendenz);
+                                    doppelterLehrer.Add(unterricht.Lehrkraft);
                                 }
                             }
                         }
 
                         if (doppelteNoten.Count > 1)
                         {
-                            Global.WriteLine("Im Fach " + doppeltesFach + "(" + Global.List2String(doppelterLehrer,',') + ") gibt es widersprechende Noten. Welche Welche Note soll gezoegen werden?");
+                            Global.WriteLine("Im Fach " + Regex.Replace(af.Split('|')[0], @"[\d-]", string.Empty) + "(" + Global.List2String(doppelterLehrer, ',') + ") gibt es widersprechende Noten (" + Global.List2String(doppelteNoten,',') + "). Welcher Lehrer soll gezogen werden?");
                             Console.ReadKey();
                         }
-                    }                    
+                    }
                 }
             }
+
+            return false;
         }
 
         internal void TabelleErzeugen(string interessierendeKlasse)
         {
+            do
+            {
 
             Global.WriteLine("*-----------------------------------------".PadRight(Global.PadRight + 3, '-') + "*");
             Global.WriteLine(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis:").PadRight(Global.PadRight + 3) + "|");
             Global.WriteLine("*------------+----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
 
-            var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell.OrderBy(x=>x.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe).Distinct().ToList();
+            var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell.OrderBy(x=>x.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
             var geholteFächer = (from s in this from u in s.UnterrichteGeholt select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe).Distinct().ToList();
 
             bool nichtMehrSchüler = false;
@@ -278,6 +263,7 @@ namespace webuntisnoten2atlantis
             string g = "|            |";
             string w = "|            |";
             string k = "|            |";
+            string n = "| Unterr.Nr.:|";
 
             foreach (var aF in aktuelleFächer)
             {
@@ -286,12 +272,14 @@ namespace webuntisnoten2atlantis
                 g += aF.Split('|')[3] == "" ? "Alle |" : "Kurs |";
                 w += "W  A |";
                 k += "      ";
+                n += aF.Split('|')[4].PadRight(4).Substring(0, 4) + " |";
             }
 
             Global.WriteLine(f);
             Global.WriteLine(l);
             Global.WriteLine(g);
-            Global.WriteLine(k.Substring(0,k.Length - 1) + "|");
+            Global.WriteLine(n);
+            //Global.WriteLine(k.Substring(0,k.Length - 1) + "|");
             
             Global.WriteLine(w);
             Global.WriteLine("*------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----".PadRight(Global.PadRight + 3, '-') + "*");
@@ -348,7 +336,7 @@ namespace webuntisnoten2atlantis
                         }
                         else
                         {
-                            s += "X  X |";
+                            s += "XXXXX|";
                             kursabwähler = true;
                         }                        
                     }
@@ -369,12 +357,14 @@ namespace webuntisnoten2atlantis
             }
             if (kursabwähler)
             {
-                Global.WriteLine("  * XX Der Schüler hat den Kurs nicht belegt.");
+                Global.WriteLine("  * X Der Schüler hat den Kurs nicht belegt.");
             }
             
             Global.WriteLine("  * Gibt es Fremdsprachenprüfungen anstelle von Englisch?");
             Global.WriteLine("  * Teilen sich KuK ein Fach? Note untereinander abgestimmt?");
             Global.WriteLine("");
+
+            } while (WidersprechendeGesamtnotenImSelbenFachKorrigieren(interessierendeKlasse));
         }
 
         internal void GetUnterrichteAktuell(Unterrichte alleUnterrichte, Gruppen alleGruppen, string interessierendeKlasse)

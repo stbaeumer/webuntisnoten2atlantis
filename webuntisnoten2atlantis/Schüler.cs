@@ -34,6 +34,7 @@ namespace webuntisnoten2atlantis
             {
                 UnterrichteAktuell.Add(new Unterricht(
                     u.AtlantisLeistung,
+                    u.LessonNumber,
                     u.Fach,
                     u.WebuntisLeistung,
                     u.Lehrkraft,
@@ -57,6 +58,7 @@ namespace webuntisnoten2atlantis
                 {
                     UnterrichteAktuell.Add(new Unterricht(
                     u.AtlantisLeistung,
+                    u.LessonNumber,
                     u.Fach,
                     u.WebuntisLeistung,
                     u.Lehrkraft,

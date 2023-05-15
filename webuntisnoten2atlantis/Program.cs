@@ -113,7 +113,7 @@ namespace webuntisnoten2atlantis
 
                         interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
 
-                        interessierendeSchülerDieserKlasse.WidersprechendeGesamtnotenImSelbenFachKorrigieren(interessierendeKlasse);
+                        
 
                         //Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
 
