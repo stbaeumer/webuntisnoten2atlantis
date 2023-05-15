@@ -10,7 +10,7 @@ using System.Linq;
 namespace webuntisnoten2atlantis
 {
     class Program
-    {
+    {        
         public const string ConnectionStringAtlantis = @"Dsn=Atlantis17u;uid=";
         public static string Passwort = "";
         public static bool Debug = false;
@@ -23,9 +23,10 @@ namespace webuntisnoten2atlantis
                 };
 
         static void Main(string[] args)
-        {   
-            #if DEBUG
-                Debug = true;
+        {
+            Console.SetWindowSize(120, 90);
+#if DEBUG
+            Debug = true;
             #endif
 
             var width = Console.WindowWidth;
@@ -98,11 +99,6 @@ namespace webuntisnoten2atlantis
                     {
                         var interessierendeSchülerDieserKlasse = alleSchüler.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
-                        //if (Debug)
-                        //{
-                        //    interessierendeSchülerDieserKlasse = alleSchüler.GetIntessierendeSchüler(AktSj);
-                        //}
-
                         interessierendeSchülerDieserKlasse.GetUnterrichteAktuell(alleUnterrichte, alleGruppen, interessierendeKlasse);
 
                         interessierendeSchülerDieserKlasse.GetIntessierendeWebuntisLeistungen(alleWebuntisLeistungen);
@@ -127,7 +123,7 @@ namespace webuntisnoten2atlantis
 
                         //    // Korrekturen durchführen
 
-                        //    interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
+                        //interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
                         //    //interessierendeWebuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
                         //    interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                         //    atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);

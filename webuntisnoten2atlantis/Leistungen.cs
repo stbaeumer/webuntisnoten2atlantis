@@ -18,7 +18,7 @@ namespace webuntisnoten2atlantis
         {
             var leistungen = new Leistungen();
             var leistungenOhneWidersprüchlicheNoten = new Leistungen();
-                        
+
             using (StreamReader reader = new StreamReader(targetMarksPerLesson))
             {
                 var überschrift = reader.ReadLine();
@@ -28,7 +28,7 @@ namespace webuntisnoten2atlantis
                 {
                     i++;
                     Leistung leistung = new Leistung();
-                    
+
                     string line = reader.ReadLine();
 
                     try
@@ -55,12 +55,11 @@ namespace webuntisnoten2atlantis
                                 leistung.Lehrkraft = x[7];
                                 leistung.LehrkraftAtlantisId = (from l in lehrers where l.Kuerzel == leistung.Lehrkraft select l.AtlantisId).FirstOrDefault();
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
-                                
 
                                 if (leistung.Fach != null && leistung.Fach != "")
-                                {   
+                                {
                                     leistung.GetFachAliases();
-                                    leistungen.Add(leistung);
+                                    this.Add(leistung);
                                 }
                             }
 
@@ -89,7 +88,7 @@ namespace webuntisnoten2atlantis
                                 if (leistung.Fach != null && leistung.Fach != "")
                                 {
                                     leistung.GetFachAliases();
-                                    leistungen.Add(leistung);
+                                    this.Add(leistung);
                                 }
                             }
 
@@ -112,42 +111,7 @@ namespace webuntisnoten2atlantis
                         break;
                     }
                 }
-                
-                // Für jede Leistung aus Webuntis wird geprüft, ...
-
-                foreach (var leistung in (from l in leistungen.OrderByDescending(x => x.Datum).ToList() where l.Klasse != null where l.Klasse != "" select l).ToList())
-                {
-                    // ... ob es bereits eine Leistung desselben Lehrers neueren Datums im selben Fach gibt, ...
-
-                    if ((from l in leistungenOhneWidersprüchlicheNoten
-                         where l.Datum > leistung.Datum
-                         where l.Lehrkraft == leistung.Lehrkraft
-                         where l.Klasse != null
-                         where l.Klasse != ""
-                         where l.Klasse.Substring(0, l.Klasse.Length - 1) != leistung.Klasse.Substring(0, leistung.Klasse.Length - 1) // in dieser oder der Parallelklasse
-                         where l.FachAliases.Contains(leistung.Fach)
-                         where l.Gesamtnote != leistung.Gesamtnote
-                         where l.SchlüsselExtern == leistung.SchlüsselExtern
-                         select l).Any())
-                    {
-                        Global.WriteLine("ACHTUNG: " + leistung.Name + "(" + leistung.Klasse + "|" + Regex.Match(leistung.Fach, @"^[^0-9]*").Value + "|" + leistung.Lehrkraft + ") hat widersprechende Noten bekommen. Die ältere (" + leistung.Klasse + "|" + leistung.Datum.ToShortDateString() + "|" + leistung.Gesamtnote + leistung.Tendenz + ") wird verworfen.");
-                    }
-                    else
-                    {
-                        // Identische Leistungen beim Schüler in Klasse, Lehrer, Fach und Gesamtnote werden nicht erneut angelegt
-
-                        if (!(from l in leistungenOhneWidersprüchlicheNoten where l.SchlüsselExtern == leistung.SchlüsselExtern where l.Lehrkraft == leistung.Lehrkraft where l.FachAliases.Contains(leistung.Fach) where l.Klasse == leistung.Klasse where l.Gesamtnote == l.Gesamtnote select l).Any())
-                        {
-                            leistungenOhneWidersprüchlicheNoten.Add(leistung);
-                        }
-                        else
-                        {
-                            var xxxx = (from l in leistungenOhneWidersprüchlicheNoten select l).LastOrDefault();
-                        }
-                    }
-                }              
-            }
-            this.AddRange((from l in leistungenOhneWidersprüchlicheNoten select l).OrderBy(x => x.Anlage).ThenBy(x => x.Klasse));
+            }               
 
             Global.WriteLine(("Alle Webuntis-Leistungen (mit & ohne Gesamtnote; ohne Dopplungen) ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
         }
