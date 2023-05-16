@@ -228,7 +228,7 @@ namespace webuntisnoten2atlantis
             {
                 do
                 {
-                    Console.Write("  Bitte die interessierenden Klassen kommasepariert angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
+                    Console.Write("  Bitte die interessierende Klasse angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
 
                     var x = Console.ReadLine();
 

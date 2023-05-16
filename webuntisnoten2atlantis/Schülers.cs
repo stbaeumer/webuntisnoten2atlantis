@@ -531,7 +531,7 @@ namespace webuntisnoten2atlantis
                 Global.WriteLine(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis:").PadRight(Global.PadRight + 3) + "|");
                 Global.WriteLine("*------------+----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
 
-                var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell.OrderBy(x => x.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
+                var aktuelleFächer = (from s in this from u in s.UnterrichteAktuell.OrderBy(xx => xx.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
                 
                 bool xxxx = false;
                 bool reliabwähler = false;
@@ -542,6 +542,7 @@ namespace webuntisnoten2atlantis
                 string w = "|            |";
                 string k = "|            |";
                 string n = "| Unterr.Nr.:|";
+                string x = "*------------+";
 
                 foreach (var aF in aktuelleFächer)
                 {
@@ -551,6 +552,7 @@ namespace webuntisnoten2atlantis
                     w += "W  A |";
                     k += "      ";
                     n += aF.Split('|')[4].PadRight(4).Substring(0, 4) + " |";
+                    x += "-----+";
                 }
 
                 Global.WriteLine(f);
@@ -560,7 +562,7 @@ namespace webuntisnoten2atlantis
                 //Global.WriteLine(k.Substring(0,k.Length - 1) + "|");
 
                 Global.WriteLine(w);
-                Global.WriteLine("*------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----".PadRight(Global.PadRight + 3, '-') + "*");
+                Global.WriteLine(x.PadRight(Global.PadRight + 3, '-') + "*");
 
                 foreach (var schüler in this)
                 {
@@ -630,7 +632,7 @@ namespace webuntisnoten2atlantis
                     Global.WriteLine(s);
                 }
 
-                Global.WriteLine("*-----+------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----".PadRight(Global.PadRight + 3, '-') + "*");
+                Global.WriteLine(x.PadRight(Global.PadRight + 3, '-') + "*");
 
                 if (reliabwähler)
                 {
