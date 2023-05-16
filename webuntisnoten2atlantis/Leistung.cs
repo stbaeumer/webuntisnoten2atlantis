@@ -8,6 +8,8 @@ namespace webuntisnoten2atlantis
 {
     public class Leistung
     {
+        private Leistung atlantisLeistung;
+
         public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, int schlüsselExtern)
         {
             Name = name;
@@ -23,6 +25,20 @@ namespace webuntisnoten2atlantis
 
         public Leistung()
         {
+        }
+
+        public Leistung(Leistung atlantisLeistung)
+        {
+            Klasse=atlantisLeistung.Klasse;
+            Fach = atlantisLeistung.Fach;
+            Gesamtnote = atlantisLeistung.Gesamtnote;
+            Gesamtpunkte = atlantisLeistung.Gesamtpunkte;
+            Tendenz = atlantisLeistung.Tendenz;
+            Konferenzdatum = atlantisLeistung.Konferenzdatum;
+            Beschreibung = atlantisLeistung.Beschreibung;
+            Bemerkung = atlantisLeistung.Bemerkung;
+            EinheitNP = atlantisLeistung.EinheitNP;
+            Query = "";
         }
 
         public DateTime Datum { get; internal set; }
@@ -380,6 +396,19 @@ namespace webuntisnoten2atlantis
             }
         }
 
+        internal void Update()
+        {
+            try
+            {
+                string o = this.Query.PadRight(103, ' ') + (this.Query.Contains("Keine Änderung") ? "   " : "/* ") + this.Beschreibung;
+                Global.SqlZeilen.Add((o.Substring(0, Math.Min(178, o.Length))).PadRight(180) + " */");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+                
         internal bool NoteDesAktuellenAbschnitts(List<string> interessierendeKlassen, List<string> aktSj)
         {
             if (Konferenzdatum >= DateTime.Now.Date || Konferenzdatum.Year == 1)

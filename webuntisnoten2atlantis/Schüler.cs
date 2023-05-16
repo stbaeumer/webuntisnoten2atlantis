@@ -24,7 +24,7 @@ namespace webuntisnoten2atlantis
 
             // Unterrichte der ganzen Klasse
 
-            var unterrichteDerKlasse = (from a in alleUnterrichte                                        
+            var unterrichteDerKlasse = (from a in alleUnterrichte
                                         where a.Startdate <= DateTime.Now
                                         where a.Enddate >= DateTime.Now.AddMonths(-2) // Unterrichte, die 2 Monat vor Konferenz beendet wurden, zählen
                                         where a.Gruppe == ""
@@ -44,7 +44,7 @@ namespace webuntisnoten2atlantis
                     u.Klassen,
                     u.Startdate,
                     u.Enddate));
-            }            
+            }
 
             // Kurse
 
@@ -68,7 +68,7 @@ namespace webuntisnoten2atlantis
                     u.Klassen,
                     u.Startdate,
                     u.Enddate));
-                }                
+                }
             }
         }
 
@@ -77,9 +77,9 @@ namespace webuntisnoten2atlantis
             foreach (var u in this.UnterrichteAktuell)
             {
                 if (
-                    atlantisLeistung.FachAliases.Contains(u.Fach) && 
+                    atlantisLeistung.FachAliases.Contains(u.Fach) &&
                     atlantisLeistung.SchlüsselExtern == this.SchlüsselExtern &&
-                    atlantisLeistung.Klasse.Substring(0,2) == this.Klasse.Substring(0,2)
+                    atlantisLeistung.Klasse.Substring(0, 2) == this.Klasse.Substring(0, 2)
                     )
                 {
                     u.AtlantisLeistung = atlantisLeistung;
@@ -87,6 +87,31 @@ namespace webuntisnoten2atlantis
                 }
             }
             return false;
+        }
+
+        internal void HoleLeistungen(List<string> dieseFächerHolen)
+        {
+            for (int i = this.UnterrichteGeholt.Count - 1; i >= 0; i--)
+            {
+                bool holen = false;
+
+                foreach (var dF in dieseFächerHolen)
+                {
+                    if (this.UnterrichteGeholt[i].Fach == dF.Split('|')[0] && 
+                        this.UnterrichteGeholt[i].AtlantisLeistung.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
+                    {
+                        holen = true; break;
+                    }
+                }
+                if (holen)
+                {
+                    this.UnterrichteGeholt[i].Bemerkung = "Note geholt.";
+                }
+                else
+                {
+                    this.UnterrichteGeholt.RemoveAt(i);
+                }
+            }
         }
     }
 }

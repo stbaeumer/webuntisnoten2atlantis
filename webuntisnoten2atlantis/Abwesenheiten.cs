@@ -71,7 +71,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        public Abwesenheiten(string connetionstringAtlantis, string aktSj, string interessierendeKlasse)
+        public Abwesenheiten(string connetionstringAtlantis, List<string> aktSj, string interessierendeKlasse)
         {
             try
             {
@@ -95,7 +95,7 @@ DBA.noten_kopf.fehlstunden_anzahl AS Fehlstunden,
 DBA.noten_kopf.fehlstunden_ents_unents AS FehlstundenUnentschuldigt
 FROM((DBA.schue_sj JOIN DBA.schueler ON DBA.schue_sj.pu_id = DBA.schueler.pu_id) JOIN DBA.klasse ON DBA.schue_sj.kl_id = DBA.klasse.kl_id) JOIN DBA.noten_kopf ON DBA.schueler.pu_id = DBA.noten_kopf.pu_id
 WHERE 
-schue_sj.vorgang_schuljahr = '" + aktSj + @"' AND schue_sj.pj_id = noten_kopf.pj_id AND schue_sj.s_typ_vorgang = 'A'
+schue_sj.vorgang_schuljahr = '" + aktSj[0] + "/" + aktSj[1] + @"' AND schue_sj.pj_id = noten_kopf.pj_id AND schue_sj.s_typ_vorgang = 'A'
 ORDER BY DBA.schue_sj.vorgang_schuljahr ASC ,
 DBA.klasse.klasse ASC ,
 DBA.schueler.name_1 ASC ,

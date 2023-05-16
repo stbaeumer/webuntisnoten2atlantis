@@ -1811,15 +1811,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             Global.WriteLine((" "));
 
 
-            //if (SortierungNachSuS())
-            //{
-
-            //}
-
-
-
-
-
             //foreach (var w in (from t in this.OrderBy(x=>x.Klasse).ThenBy(x => x.Fach).ThenBy(x=>x.Name) where t.Beschreibung != null where t.Query!= null select t).ToList())
             foreach (var w in (from t in this.OrderBy(x => x.Klasse).ThenBy(x => x.Name).ThenBy(x => x.Fach) where t.Beschreibung != null where t.Query != null select t).ToList())
             {
@@ -1829,7 +1820,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             if (i==0)
             {
-                return "A C H T U N G: Es wurde keine einzige Leistung angelegt oder verändert. Das kann daran liegen, dass das Notenblatt in Atlantis nicht richtig angelegt ist. Die Tabelle zum manuellen eintragen der Noten muss in der Notensammelerfassung sichtbar sein.";
+                return "A C H T U N G: Es wurde keine einzige Leistung angelegt oder verändert. Das kann daran liegen, dass das Notenblatt in Atlantis nicht richtig angelegt ist. Die Tabelle zum manuellen eintragen der Noten muss in der Notensammelerfassung sichtbar sein. Außerdem muss ein Zeugnisdatum angelegt sein, das nicht in der Vergangenheit liegen darf.";
             }
             return "";
         }

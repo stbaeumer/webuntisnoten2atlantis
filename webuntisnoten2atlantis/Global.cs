@@ -72,7 +72,7 @@ namespace webuntisnoten2atlantis
 
         internal static void WriteLine(string zeile)
         {
-            Console.WriteLine(zeile);
+            Console.WriteLine(zeile);            
             Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
         }
 

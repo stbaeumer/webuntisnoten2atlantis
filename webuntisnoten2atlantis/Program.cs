@@ -36,7 +36,7 @@ namespace webuntisnoten2atlantis
             Global.PadRight = 116;
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230507  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230520  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
             Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
@@ -68,7 +68,7 @@ namespace webuntisnoten2atlantis
                 var alleUnterrichte = new Unterrichte(sourceExportLessons);
                 var alleGruppen = new Gruppen(sourceStudentgroupStudents);
                 var alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
-                
+                                
                 if (BlaueBriefeErstellen())
                 {
                     alleWebuntisLeistungen = alleWebuntisLeistungen.GetBlaueBriefeLeistungen();
@@ -109,7 +109,36 @@ namespace webuntisnoten2atlantis
 
                         interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
 
-                        
+                        interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);
+
+                        // Add-Delete-Update
+
+                        interessierendeSchülerDieserKlasse.Update(interessierendeKlasse);
+
+                        // Abwesenheiten 
+
+                        if (sourceAbsenceTimesTotal != null)
+                        {
+                            Global.WriteLine(" ");
+                            Global.WriteLine("Abwesenheiten in der Klasse " + interessierendeKlasse + ":");
+                            Global.WriteLine("===============================".PadRight(interessierendeKlasse.Length,'='));
+                            Global.WriteLine(" ");
+
+                            var webuntisAbwesenheiten = new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, atlantisLeistungen);
+                            
+                            var atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, interessierendeKlasse);
+                            atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
+                            atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
+                            atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+                        }
+                        else
+                        {
+                            int outputIndex = Global.SqlZeilen.Count();
+                            Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
+                        }
+
+
+
 
                         //Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
 
@@ -128,26 +157,18 @@ namespace webuntisnoten2atlantis
                         //    interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
                         //    atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
 
-                        //    interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
+                        //var interessierendeWebuntisLeistungen = new Leistungen();
+                        //interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
                         //}
 
-                        // Add-Delete-Update
+
 
                         //string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen, Debug);
 
-                        //if (sourceAbsenceTimesTotal != null)
-                        //{
-                        //    Abwesenheiten atlantisAbwesenheiten = new Abwesenheiten();
-                        //    atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj[0] + "/" + AktSj[1], interessierendeKlasse);
-                        //    atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
-                        //    atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
-                        //    atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
-                        //}
-                        //else
-                        //{
-                        //    int outputIndex = Global.SqlZeilen.Count();
-                        //    Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
-                        //}
+
+
+
+
 
                         //if (hinweis != "")
                         //{
