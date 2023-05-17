@@ -185,7 +185,7 @@ namespace webuntisnoten2atlantis
                     if (xx.Any())
                     {
                         var vorherigeKlasse = (from w in this where w.SchlüsselExtern == z where w.Klasse != interessierendeKlasse select w.Klasse).FirstOrDefault();
-                        var verworfenesFachString = Global.List2String((from f in verworfeneLeistungen where f.SchlüsselExtern == z select f.Fach + "(Zeile:" + f.MarksPerLessonZeile + ")").ToList(), ',');
+                        var verworfenesFachString = Global.List2String((from f in verworfeneLeistungen where f.SchlüsselExtern == z select f.Fach + "(Zeile:" + f.MarksPerLessonZeile + ")").ToList(), ",");
                         Global.WriteLine("  " + xx[0].Name + ", vorher:" + vorherigeKlasse.PadRight(7) + ": " + verworfenesFachString);
                     }
                 }
@@ -393,7 +393,7 @@ namespace webuntisnoten2atlantis
                     var zeilen = (from t in xxx select t.MarksPerLessonZeile).ToList();
                     var noten = (from t in xxx select t.Gesamtnote).Distinct().ToList();
 
-                    Global.WriteLine("Achtung: " + wLeistung.Lehrkraft + " hat dem Schüler " + wLeistung.SchlüsselExtern + " in " + wLeistung.Fach + " unterschiedliche Noten (" + Global.List2String(noten, ',') + ") gegeben! Siehe Zeilen " + Global.List2String(zeilen, ',') + ".");
+                    Global.WriteLine("Achtung: " + wLeistung.Lehrkraft + " hat dem Schüler " + wLeistung.SchlüsselExtern + " in " + wLeistung.Fach + " unterschiedliche Noten (" + Global.List2String(noten, ",") + ") gegeben! Siehe Zeilen " + Global.List2String(zeilen, ',') + ".");
                     Global.WriteLine("Nur die Leistung mit dem jüngsten Datum bleibt erhalten.");
 
                     Console.ReadKey();

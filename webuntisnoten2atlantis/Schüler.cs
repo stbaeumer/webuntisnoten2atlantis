@@ -17,6 +17,10 @@ namespace webuntisnoten2atlantis
         public Unterrichte UnterrichteAktuell { get; set; }
         public Unterrichte UnterrichteGeholt { get; set; }
         public int SchlüsselExtern { get; internal set; }
+        /// <summary>
+        /// Das sind die Unterrichte, die aktuell in Webuntis nicht unterricht werden, aber in Atlantis existieren. Die werden gezogen, damit dort geholte Noten aus der Vergangenheit hineingeschrieben werden können.
+        /// </summary>
+        public Unterrichte UnterrichteAktuellAusAtlantis { get; internal set; }
 
         internal void GetUnterrichte(List<Unterricht> alleUnterrichte, List<Gruppe> alleGruppen)
         {
@@ -105,7 +109,14 @@ namespace webuntisnoten2atlantis
                 }
                 if (holen)
                 {
+                    var x = (from uuu in UnterrichteAktuellAusAtlantis where uuu.Fach == this.UnterrichteGeholt[i].Fach select uuu.AtlantisLeistung).FirstOrDefault();
+
                     this.UnterrichteGeholt[i].Bemerkung = "Note geholt.";
+
+                    // Die Atlantis-LeistungsID wird mit der ID des aktuellen Atlantis-Unterrichts überschrieben.
+
+                    this.UnterrichteGeholt[i].AtlantisLeistung.Bemerkung = "|" + this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId + ">" + x.LeistungId;
+                    this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId = x.LeistungId;                    
                 }
                 else
                 {

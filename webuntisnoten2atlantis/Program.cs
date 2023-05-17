@@ -33,6 +33,7 @@ namespace webuntisnoten2atlantis
             var height = Console.WindowHeight;
             Console.SetWindowSize(width, height * 2);
             Global.SqlZeilen = new List<string>();
+            Global.Rückmeldung = new List<string>();
             Global.PadRight = 116;
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
@@ -83,12 +84,12 @@ namespace webuntisnoten2atlantis
                 {
                     Global.SqlZeilen = new List<string>();
                     
-                    Console.WriteLine(Global.List2String(alleMöglicheKlassen,','));
+                    Console.WriteLine(Global.List2String(alleMöglicheKlassen,","));
 
                     var interessierendeKlassen = GetIntessierendeKlassen(alleMöglicheKlassen, AktSj);
 
-                    var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
-                    var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "_MarksPerLesson_" + Global.List2String(interessierendeKlassen, '_') + "_" + User + ".CSV");
+                    var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + Global.List2String(interessierendeKlassen, "_") + "_" + User + ".CSV");
+                    var targetMarksPerLesson = Path.Combine(targetPath, Zeitstempel + "_MarksPerLesson_" + Global.List2String(interessierendeKlassen, "_") + "_" + User + ".CSV");
 
                     RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceAbsenceTimesTotal, targetAbsenceTimesTotal, interessierendeKlassen);
                     RelevanteDatensätzeAusCsvFilternUndProtokollErstellen(sourceMarksPerLesson, targetMarksPerLesson, interessierendeKlassen);
@@ -103,13 +104,13 @@ namespace webuntisnoten2atlantis
 
                         interessierendeSchülerDieserKlasse.GetIntessierendeWebuntisLeistungen(alleWebuntisLeistungen);
 
-                        interessierendeSchülerDieserKlasse.LinkZumTeamsChatErzeugen(alleAtlantisLehrer, interessierendeKlasse);
-
                         interessierendeSchülerDieserKlasse.GetAtlantisLeistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, hzJz);
 
                         interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
 
                         interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);
+
+                        interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz);
 
                         // Add-Delete-Update
 
@@ -228,7 +229,7 @@ namespace webuntisnoten2atlantis
             {
                 do
                 {
-                    Console.Write("  Bitte die interessierende Klasse angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
+                    Console.Write(" Bitte die interessierende Klasse angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
 
                     var x = Console.ReadLine();
 
@@ -262,7 +263,7 @@ namespace webuntisnoten2atlantis
             {
                 Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
             }
-            Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeKlassen, ','));
+            Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeKlassen, ","));
             Global.WriteLine(" ");
 
             return interessierendeKlassen;
@@ -430,6 +431,7 @@ namespace webuntisnoten2atlantis
                     if (kriterium.Contains("AbsenceTimesTotal"))
                     {
                         Global.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
+                        Global.WriteLine("WICHTIG: Es kann Sinn machen nur Abwesenheiten bis zur letzten Woche in Webuntis auszuwählen.");
                     }
 
                     if (kriterium.Contains("StudentgroupStudents"))

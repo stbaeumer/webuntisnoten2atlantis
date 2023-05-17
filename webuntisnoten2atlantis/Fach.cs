@@ -7,6 +7,8 @@ namespace webuntisnoten2atlantis
 {
     public class Fach
     {
+        private string fach;
+
         public string Klasse { get; private set; }
         public string Name { get; private set; }
         public string Lehrkraft { get; private set; }
@@ -21,6 +23,12 @@ namespace webuntisnoten2atlantis
             this.Lehrkraft = lehrkraft;
             this.Konferenzdatum = konferenzdatum;
             this.Gruppe = gruppe;
+        }
+
+        public Fach(string name, string lehrkraft)
+        {
+            this.Name = name;
+            Lehrkraft = lehrkraft;
         }
     }
 }

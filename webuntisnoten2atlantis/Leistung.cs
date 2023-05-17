@@ -10,7 +10,7 @@ namespace webuntisnoten2atlantis
     {
         private Leistung atlantisLeistung;
 
-        public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, int schlüsselExtern)
+        public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, string lehrkraft, int schlüsselExtern)
         {
             Name = name;
             Fach = fach;
@@ -20,6 +20,7 @@ namespace webuntisnoten2atlantis
             Tendenz = tendenz;
             Datum = datum;
             Nachname = nachname;
+            Lehrkraft = lehrkraft;
             SchlüsselExtern = schlüsselExtern;
         }
 
@@ -129,6 +130,16 @@ namespace webuntisnoten2atlantis
             FachAliases = new List<string>();
 
             var nameAliases = new List<string>();
+
+            if (Fach.StartsWith("CAD"))
+            {
+                nameAliases.Add("CAD1");
+                nameAliases.Add("CAD2");
+                nameAliases.Add("CAD3");
+                nameAliases.Add("CAD/CAM");
+                nameAliases.Add("CAD/ CAM");
+                nameAliases.Add("CAD");
+            }
 
             if (Fach == "PKG" || Fach == "PK")
             {

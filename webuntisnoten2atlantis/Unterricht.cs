@@ -63,7 +63,12 @@ namespace webuntisnoten2atlantis
             WebuntisLeistung.Query = "";
 
             WebuntisLeistung.EinheitNP = AtlantisLeistung.EinheitNP;
-            WebuntisLeistung.Beschreibung = AtlantisLeistung.SchlüsselExtern + "|" + (AtlantisLeistung.Nachname.PadRight(10)).Substring(0, 3) + " " + (AtlantisLeistung.Vorname.PadRight(10)).Substring(0, 2) + "|" + AtlantisLeistung.Klasse.PadRight(5) + "|" + (Lehrkraft == null ? "" : Lehrkraft).PadRight(3) + "|" + AtlantisLeistung.Fach.PadRight(5) + "|Zeile:" + (MarksPerLessonZeile == 0 ? "    " : MarksPerLessonZeile.ToString().PadLeft(4)) + "|" + AtlantisLeistung.Konferenzdatum.ToShortDateString() + "|";
+            WebuntisLeistung.Beschreibung = AtlantisLeistung.SchlüsselExtern + "|" + (AtlantisLeistung.Nachname.PadRight(10)).Substring(0, 3) + " " + (AtlantisLeistung.Vorname.PadRight(10)).Substring(0, 2) + "|" 
+                + AtlantisLeistung.Klasse.PadRight(5) + "|" 
+                + (Lehrkraft == null ? "|" : Lehrkraft + "|").PadLeft(3) 
+                + AtlantisLeistung.Fach.PadRight(5) 
+                + (MarksPerLessonZeile == 0 ? "" : "|Zeile:" + MarksPerLessonZeile.ToString().PadLeft(4)) + "|" + AtlantisLeistung.Konferenzdatum.ToShortDateString() + "|" 
+                + AtlantisLeistung.Bemerkung;
 
             // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
@@ -127,11 +132,11 @@ namespace webuntisnoten2atlantis
                         if (AtlantisLeistung.Gesamtnote != gesamtnote)
                         {
                             WebuntisLeistung.Beschreibung = WebuntisLeistung.Beschreibung + "N:[" + (AtlantisLeistung.Gesamtnote == null ? " " : AtlantisLeistung.Gesamtnote.PadLeft(1)) + "]->[" + WebuntisLeistung.Gesamtnote.PadLeft(1) + "]";
-                            WebuntisLeistung.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
+                            WebuntisLeistung.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(10);
                         }
                         else
                         {
-                            WebuntisLeistung.Query += (" ").PadRight(10) + "  ";
+                            WebuntisLeistung.Query += (" ").PadRight(11) + "  ";
                         }
                         if (AtlantisLeistung.Tendenz != tendenz && AtlantisLeistung.EinheitNP == "P")
                         {
@@ -140,7 +145,7 @@ namespace webuntisnoten2atlantis
                         }
                         else
                         {
-                            WebuntisLeistung.Query += (" ").PadRight(14) + "  ";
+                            WebuntisLeistung.Query += (" ").PadRight(15);
                         }
                     }
                 }

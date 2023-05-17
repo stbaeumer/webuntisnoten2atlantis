@@ -19,6 +19,7 @@ namespace webuntisnoten2atlantis
         public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }        
         public static bool BlaueBriefe { get; internal set; }
         public static List<string> Reihenfolge { get; set; }
+        public static List<string> Rückmeldung { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {
@@ -82,14 +83,20 @@ namespace webuntisnoten2atlantis
             Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
         }
 
-        internal static string List2String(List<string> interessierendeKlassen, Char delimiter)
+        internal static string List2String(List<string> interessierendeKlassen, string delimiter)
         {
             var s = "";
+
             foreach (var item in interessierendeKlassen)
             {
                 s += item + delimiter;
+
+                if (s.Length > Global.PadRight - 5 && s.Length <= Global.PadRight || s.Length > Global.PadRight * 2 - 5 && s.Length <= Global.PadRight * 2 || s.Length > Global.PadRight * 3 - 5 && s.Length <= Global.PadRight * 3 || s.Length > Global.PadRight * 4 - 5 && s.Length <= Global.PadRight * 4)
+                {
+                    s += "\n";
+                }
             }
-            return s.TrimEnd(delimiter);
+            return s.Substring(0,s.Length-delimiter.Length);
         }
         internal static string List2String(List<int> interessierendeKlassen, Char delimiter)
         {
