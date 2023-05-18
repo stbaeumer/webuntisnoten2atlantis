@@ -84,4 +84,5 @@ GNU General Public License v3.0
 This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain conditions.
 
+Stefan Bäumer
 stefan.baeumer@berufskolleg-borken.de 27.12.2020
