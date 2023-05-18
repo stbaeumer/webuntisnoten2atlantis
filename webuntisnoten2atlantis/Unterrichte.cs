@@ -33,7 +33,7 @@ namespace webuntisnoten2atlantis
                             var x = line.Split('\t');
 
                             unterricht = new Unterricht();
-                            unterricht.MarksPerLessonZeile = i;
+                            unterricht.Zeile = i;
                             unterricht.LessonId = Convert.ToInt32(x[0]);
                             unterricht.LessonNumber = Convert.ToInt32(x[1]) / 100;
                             unterricht.Fach = x[2];

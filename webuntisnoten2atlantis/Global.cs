@@ -19,6 +19,9 @@ namespace webuntisnoten2atlantis
         public static Abwesenheiten AtlantisAbwesenheiten { get; internal set; }        
         public static bool BlaueBriefe { get; internal set; }
         public static List<string> Reihenfolge { get; set; }
+        /// <summary>
+        /// Die Rückmeldung ist gedacht, um an Ende Hinweise (über Teams) an die Lehrer zu geben.
+        /// </summary>
         public static List<string> Rückmeldung { get; internal set; }
 
         internal static void PrintMessage(int index, string message)

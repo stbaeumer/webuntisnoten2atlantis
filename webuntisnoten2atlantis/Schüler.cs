@@ -14,7 +14,7 @@ namespace webuntisnoten2atlantis
         public DateTime AustrittAusKlasse { get; internal set; }
         public string Vorname { get; internal set; }
         public string Nachname { get; internal set; }
-        public Unterrichte UnterrichteAktuell { get; set; }
+        public Unterrichte UnterrichteAusWebuntis { get; set; }
         public Unterrichte UnterrichteGeholt { get; set; }
         public int SchlüsselExtern { get; internal set; }
         /// <summary>
@@ -24,7 +24,7 @@ namespace webuntisnoten2atlantis
 
         internal void GetUnterrichte(List<Unterricht> alleUnterrichte, List<Gruppe> alleGruppen)
         {
-            this.UnterrichteAktuell = new Unterrichte();
+            this.UnterrichteAusWebuntis = new Unterrichte();
 
             // Unterrichte der ganzen Klasse
 
@@ -36,13 +36,13 @@ namespace webuntisnoten2atlantis
 
             foreach (var u in unterrichteDerKlasse)
             {
-                UnterrichteAktuell.Add(new Unterricht(
-                    u.AtlantisLeistung,
+                UnterrichteAusWebuntis.Add(new Unterricht(
+                    u.AL,
                     u.LessonNumber,
                     u.Fach,
-                    u.WebuntisLeistung,
+                    u.WL,
                     u.Lehrkraft,
-                    u.MarksPerLessonZeile,
+                    u.Zeile,
                     u.Periode,
                     u.Gruppe,
                     u.Klassen,
@@ -60,13 +60,13 @@ namespace webuntisnoten2atlantis
 
                 if (u != null)
                 {
-                    UnterrichteAktuell.Add(new Unterricht(
-                    u.AtlantisLeistung,
+                    UnterrichteAusWebuntis.Add(new Unterricht(
+                    u.AL,
                     u.LessonNumber,
                     u.Fach,
-                    u.WebuntisLeistung,
+                    u.WL,
                     u.Lehrkraft,
-                    u.MarksPerLessonZeile,
+                    u.Zeile,
                     u.Periode,
                     u.Gruppe,
                     u.Klassen,
@@ -85,21 +85,21 @@ namespace webuntisnoten2atlantis
                 foreach (var dF in dieseFächerHolen)
                 {
                     if (this.UnterrichteGeholt[i].Fach == dF.Split('|')[0] &&
-                        this.UnterrichteGeholt[i].AtlantisLeistung.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
+                        this.UnterrichteGeholt[i].AL.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
                     {
                         holen = true; break;
                     }
                 }
                 if (holen)
                 {
-                    var x = (from uuu in UnterrichteAktuellAusAtlantis where uuu.Fach == this.UnterrichteGeholt[i].Fach select uuu.AtlantisLeistung).FirstOrDefault();
+                    var x = (from uuu in UnterrichteAktuellAusAtlantis where uuu.Fach == this.UnterrichteGeholt[i].Fach select uuu.AL).FirstOrDefault();
 
                     this.UnterrichteGeholt[i].Bemerkung = "Note geholt.";
 
                     // Die Atlantis-LeistungsID wird mit der ID des aktuellen Atlantis-Unterrichts überschrieben.
 
-                    this.UnterrichteGeholt[i].AtlantisLeistung.Bemerkung = "|" + this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId + ">" + x.LeistungId;
-                    this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId = x.LeistungId;
+                    this.UnterrichteGeholt[i].AL.Bemerkung = "|" + this.UnterrichteGeholt[i].AL.LeistungId + ">" + x.LeistungId;
+                    this.UnterrichteGeholt[i].AL.LeistungId = x.LeistungId;
                 }
                 else
                 {

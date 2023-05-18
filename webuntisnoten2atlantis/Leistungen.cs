@@ -116,6 +116,19 @@ namespace webuntisnoten2atlantis
             Global.WriteLine(("Alle Webuntis-Leistungen (mit & ohne Gesamtnote; ohne Dopplungen) ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
         }
 
+        internal List<string> GetMöglicheKlassen()
+        {
+            var x = (from m in this
+                     where m.Klasse != ""
+                     where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
+                     select m.Klasse).Distinct().ToList();
+            Global.WriteLine(("Webuntis-Klassen mit eingetragenen Gesamtnoten").PadRight(Global.PadRight - 2, '.') + x.Count.ToString().PadLeft(6));
+
+            Console.WriteLine(Global.List2String(x, ","));
+
+            return x;
+        }
+
         internal void Hinzufügen(Leistungen webuntisLeistungen)
         {
             this.Add(webuntisLeistungen);
@@ -491,7 +504,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     this.AddRange(leistungenUnsortiert.OrderBy(x => x.Klasse).ThenBy(x => x.Fach).ThenBy(x => x.Name));
 
                     Global.SetzeReihenfolgeDerFächer(this);
-
                 }
             }
             catch (Exception ex)
