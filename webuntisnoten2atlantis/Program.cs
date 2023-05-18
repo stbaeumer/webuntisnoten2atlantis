@@ -60,7 +60,6 @@ namespace webuntisnoten2atlantis
                 string sourceExportLessons = CheckFile(User, "ExportLessons", DateTime.Now.Date.AddDays(-20));
                 string sourceStudentgroupStudents = CheckFile(User, "StudentgroupStudents", DateTime.Now.Date.AddDays(-20));
                 
-
                 var alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
                 // Alle Webuntis-Leistungen, ohne Leistungen mit leerem Fach, leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote, mit Leistungen ohne Gesamtnote 
@@ -250,26 +249,6 @@ namespace webuntisnoten2atlantis
             return vorschlag.TrimEnd(',');
         }
 
-        private static string MöglicheKlassenToString(List<string> möglicheKlassen)
-        {
-            var möglicheKlassenString = "\nMögliche Klassen aus der Webuntis-Datei: ";
-            int i = 0;
-
-            foreach (var ik in möglicheKlassen)
-            {
-                if (ik.Length > 3)
-                {
-                    if (i % 17 == 0)
-                    {
-                        möglicheKlassenString += "\n ";
-                    }
-                    möglicheKlassenString += ik + " ";
-                }
-                i++;
-            }
-            return möglicheKlassenString.TrimEnd(' ');
-        }
-
         private static string Zeichenkette(List<string> interessierendeKlassen)
         {
             var x = "";
@@ -454,33 +433,6 @@ namespace webuntisnoten2atlantis
             catch (Exception ex)
             {
                 throw ex;
-            }
-        }
-
-        private static bool RedirectionUrlValidationCallback(string redirectionUrl)
-        {
-            // The default for the validation callback is to reject the URL.
-            bool result = false;
-            Uri redirectionUri = new Uri(redirectionUrl);
-            // Validate the contents of the redirection URL. In this simple validation
-            // callback, the redirection URL is considered valid if it is using HTTPS
-            // to encrypt the authentication credentials. 
-            if (redirectionUri.Scheme == "https")
-            {
-                result = true;
-            }
-            return result;
-        }
-
-        private static DateTime GetZeit(DateTime uhrzeit, dynamic datum, dynamic dynamic)
-        {
-            try
-            {
-                return DateTime.FromOADate(double.Parse(datum) + double.Parse(dynamic));
-            }
-            catch (Exception)
-            {
-                return dynamic ?? uhrzeit.AddMinutes(10);
             }
         }
 
