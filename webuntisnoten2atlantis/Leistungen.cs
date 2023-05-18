@@ -1320,7 +1320,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             {
                 Console.WriteLine(" ");
                 Global.WriteLine(("Es gibt Atlantisleistungen mit dem Konferenzdatum " + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.FirstOrDefault().Konferenzdatum.ToShortDateString()).PadRight(Global.PadRight,'.') + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.Count.ToString().PadLeft(4));
-                Global.WriteLine(" Aus Sicherheitsgründen werden zurückliegende Atlantisleistungen nicht ungefragt überschrieben. ");
+                Global.WriteLine(" Aus Sicherheitsgründen werden Atlantisleistungen mit zuückliegendem Konferenzdatum nicht ungefragt überschrieben. ");
                 ConsoleKeyInfo x;
 
                 do
