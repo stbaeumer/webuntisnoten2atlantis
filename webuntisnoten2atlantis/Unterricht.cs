@@ -66,8 +66,9 @@ namespace webuntisnoten2atlantis
             WebuntisLeistung.Beschreibung = AtlantisLeistung.SchlüsselExtern + "|" + (AtlantisLeistung.Nachname.PadRight(10)).Substring(0, 3) + " " + (AtlantisLeistung.Vorname.PadRight(10)).Substring(0, 2) + "|" 
                 + AtlantisLeistung.Klasse.PadRight(5) + "|" 
                 + (Lehrkraft == null ? "|" : Lehrkraft + "|").PadLeft(3) 
-                + AtlantisLeistung.Fach.PadRight(5) 
-                + (MarksPerLessonZeile == 0 ? "" : "|Zeile:" + MarksPerLessonZeile.ToString().PadLeft(4)) + "|" + AtlantisLeistung.Konferenzdatum.ToShortDateString() + "|" 
+                + AtlantisLeistung.Fach.PadRight(5).Substring(0,5) 
+                + (MarksPerLessonZeile == 0 ? "" : "|Zeile:" + MarksPerLessonZeile.ToString().PadLeft(4)) + "|" + 
+                AtlantisLeistung.Konferenzdatum.ToShortDateString() + "|" 
                 + AtlantisLeistung.Bemerkung;
 
             // Falls Neu oder Update oder zuvor geholte Noten wieder nullen

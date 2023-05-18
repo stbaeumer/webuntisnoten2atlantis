@@ -1,5 +1,8 @@
 ﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using PdfSharp.Pdf.Security;
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
@@ -46,7 +49,7 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")                
+                if (Properties.Settings.Default.DBUser == "" || Properties.Settings.Default.Klassenart == null || Properties.Settings.Default.Klassenart == "")
                 {
                     Settings();
                 }
@@ -59,7 +62,7 @@ namespace webuntisnoten2atlantis
                 string sourceMarksPerLesson = CheckFile(User, "MarksPerLesson", DateTime.Now.Date);
                 string sourceExportLessons = CheckFile(User, "ExportLessons", DateTime.Now.Date.AddDays(-20));
                 string sourceStudentgroupStudents = CheckFile(User, "StudentgroupStudents", DateTime.Now.Date.AddDays(-20));
-                
+
                 var alleAtlantisLehrer = new Lehrers(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj);
 
                 // Alle Webuntis-Leistungen, ohne Leistungen mit leerem Fach, leerer Klasse, Dopplungen bei Fach, Lehrer & Gesamtnote, mit Leistungen ohne Gesamtnote 
@@ -68,7 +71,7 @@ namespace webuntisnoten2atlantis
                 var alleUnterrichte = new Unterrichte(sourceExportLessons);
                 var alleGruppen = new Gruppen(sourceStudentgroupStudents);
                 var alleWebuntisLeistungen = new Leistungen(sourceMarksPerLesson, alleAtlantisLehrer);
-                                
+
                 if (BlaueBriefeErstellen())
                 {
                     alleWebuntisLeistungen = alleWebuntisLeistungen.GetBlaueBriefeLeistungen();
@@ -79,11 +82,13 @@ namespace webuntisnoten2atlantis
                                            where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
                                            select m.Klasse).Distinct().ToList();
 
+                var interessierendeK = "";
+
                 do
                 {
                     Global.SqlZeilen = new List<string>();
-                    
-                    Console.WriteLine(Global.List2String(alleMöglicheKlassen,","));
+
+                    Console.WriteLine(Global.List2String(alleMöglicheKlassen, ","));
 
                     var interessierendeKlassen = GetIntessierendeKlassen(alleMöglicheKlassen, AktSj);
 
@@ -97,6 +102,8 @@ namespace webuntisnoten2atlantis
 
                     foreach (var interessierendeKlasse in interessierendeKlassen)
                     {
+                        interessierendeK = interessierendeKlasse;
+
                         var interessierendeSchülerDieserKlasse = alleSchüler.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
                         interessierendeSchülerDieserKlasse.GetUnterrichteAktuell(alleUnterrichte, alleGruppen, interessierendeKlasse);
@@ -121,11 +128,11 @@ namespace webuntisnoten2atlantis
                         {
                             Global.WriteLine(" ");
                             Global.WriteLine("Abwesenheiten in der Klasse " + interessierendeKlasse + ":");
-                            Global.WriteLine("==================================".PadRight(interessierendeKlasse.Length,'='));
+                            Global.WriteLine("==================================".PadRight(interessierendeKlasse.Length, '='));
                             Global.WriteLine(" ");
 
                             var webuntisAbwesenheiten = new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, atlantisLeistungen);
-                            
+
                             var atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, interessierendeKlasse);
                             atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                             atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
@@ -142,6 +149,23 @@ namespace webuntisnoten2atlantis
                     atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
                     OpenFiles(new List<string> { targetSql });
 
+                    Console.WriteLine("\nSie können einen Screenshot der Notensammelerfassung in Atlantis erstellen und auf dem Desktop ablegen.\n" +
+                        "Nachdem Sie die Datei gespeichert haben, können Sie hier wählen, " +
+                        "ob eine verschlüsselte PDF-Datei erstellt werden soll, die dann z.B. per Teams verschickt werden kann.\n" +
+                        "Wenn Sie keine PNG-Datei gespeichert haben und trotzdem Ja klicken, passiert nichts.");
+
+                    ConsoleKeyInfo x;
+
+                    Console.WriteLine(" ");
+                    Console.Write("Ihre Auswahl(J,n):");
+                    x = Console.ReadKey();
+                    
+                    if (x.Key.ToString().ToLower() != "n")
+                    {
+                        PdfKennwort(interessierendeK);
+                    }
+                    Console.WriteLine(" ");
+
                 } while (true);
             }
             catch (Exception ex)
@@ -152,6 +176,58 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+        }
+
+        private static void PdfKennwort(string interessierendeK)
+        {
+            var directory = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
+            try
+            {
+                var fileName = (from f in directory.GetFiles()
+                                where f.FullName.ToLower().EndsWith(".png")
+                                where f.LastWriteTime > DateTime.Now.AddMinutes(-5)
+                                orderby f.LastWriteTime descending
+                                select f.FullName).First();
+
+                Document document = new Document(new Rectangle(288f, 144f), 10, 10, 10, 10);
+                document.SetPageSize(iTextSharp.text.PageSize.A4.Rotate());
+
+                using (var stream = new FileStream(fileName + ".pdf", FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    PdfWriter.GetInstance(document, stream);
+                    document.Open();
+                    using (var imageStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        var image = Image.GetInstance(imageStream);
+                        image.SetAbsolutePosition(0, 0); // set the position to bottom left corner of pdf
+                        image.ScaleAbsolute(iTextSharp.text.PageSize.A4.Height, iTextSharp.text.PageSize.A4.Width); // set the height and width of image to PDF page size
+                        document.Add(image);
+                    }
+                    document.Close();
+                }
+
+                PdfSharp.Pdf.PdfDocument pdocument = PdfSharp.Pdf.IO.PdfReader.Open(fileName + ".pdf");
+                PdfSecuritySettings securitySettings = pdocument.SecuritySettings;
+                securitySettings.UserPassword = "!7765Neun";
+                securitySettings.OwnerPassword = "!7765Neun";
+                securitySettings.PermitAccessibilityExtractContent = false;
+                securitySettings.PermitAnnotations = false;
+                securitySettings.PermitAssembleDocument = false;
+                securitySettings.PermitExtractContent = false;
+                securitySettings.PermitFormsFill = true;
+                securitySettings.PermitFullQualityPrint = false;
+                securitySettings.PermitModifyDocument = true;
+                securitySettings.PermitPrint = false;
+                pdocument.Save(directory + "\\" + interessierendeK + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-Kennwort.pdf");
+                File.Delete(fileName + ".pdf");
+                
+                Console.WriteLine("Schauen Sie auf dem Desktop nach einer Datei namens " + interessierendeK + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-Kennwort.pdf");
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Es gibt keine PNG-Datei, die in den letzten 5 Minuten auf dem Desktop abgelegt wurde. Also wurde nichts verändert.");
+            }
+            Console.WriteLine("");
         }
 
         private static bool BlaueBriefeErstellen()
@@ -389,53 +465,7 @@ namespace webuntisnoten2atlantis
 
             return sourceFile;
         }
-
-        static void CheckPassword(string EnterText)
-        {
-            try
-            {
-                Console.Write(EnterText);
-                Passwort = "";
-                do
-                {
-                    ConsoleKeyInfo key = Console.ReadKey(true);
-                    // Backspace Should Not Work  
-                    if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
-                    {
-                        Passwort += key.KeyChar;
-                        Console.Write("*");
-                    }
-                    else
-                    {
-                        if (key.Key == ConsoleKey.Backspace && Passwort.Length > 0)
-                        {
-                            Passwort = Passwort.Substring(0, (Passwort.Length - 1));
-                            Console.Write("\b \b");
-                        }
-                        else if (key.Key == ConsoleKey.Enter)
-                        {
-                            if (string.IsNullOrWhiteSpace(Passwort))
-                            {
-                                Global.WriteLine("");
-                                Global.WriteLine("Empty value not allowed.");
-                                CheckPassword(EnterText);
-                                break;
-                            }
-                            else
-                            {
-                                Global.WriteLine("");
-                                break;
-                            }
-                        }
-                    }
-                } while (true);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
+                
         private static void Settings()
         {
             do

@@ -320,7 +320,7 @@ namespace webuntisnoten2atlantis
 
             if (Global.Rückmeldung.Count > 0)
             {
-                rückmeldung += "\n\nIch bitte um Beachtung der folgenden Prüfaufträge:\n\n";
+                rückmeldung += "\n\nIch bitte um Beachtung:\n\n";
                                 
                 rückmeldung += Global.List2String(Global.Rückmeldung, "\n");                
             }

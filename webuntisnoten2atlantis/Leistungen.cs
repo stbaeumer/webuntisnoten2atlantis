@@ -234,198 +234,7 @@ namespace webuntisnoten2atlantis
             }
             return leistungen;
         }
-
-        internal Leistungen FilterNeuesteGeholteLeistungen(List<int> alleVerschiedenenInteressierendenSchüler, List<Leistung> webuntisLeistungen, string interessierendeKlasse, List<string> aktSj, string hzJz)
-        {
-            var geholteLeistungen = new Leistungen();
-
-            var schuelerLeistungExistiertSchon = new List<string>();
-
-            var nichtAbgeschlosseneFächerDieserKlasse = (from w in webuntisLeistungen
-                                                           from f in w.FachAliases
-                                                           where (w.Datum > (hzJz == "JZ" ? new DateTime(Convert.ToInt32("20" + aktSj[1]), 02, 01) : new DateTime(Convert.ToInt32("20" + aktSj[0]), 08, 01)))
-                                                           select f).Distinct().ToList();
-
-            foreach (var schülerId in alleVerschiedenenInteressierendenSchüler)
-            {
-                var nichtAbgeschlosseneFächerDiesesSchülers = (from w in webuntisLeistungen
-                                                               from f in w.FachAliases
-                                                               where w.SchlüsselExtern == schülerId
-                                                               where (w.Datum > (hzJz == "JZ" ? new DateTime(Convert.ToInt32("20" + aktSj[1]), 02, 01) : new DateTime(Convert.ToInt32("20" + aktSj[0]), 08, 01)))
-                                                               select f).Distinct().ToList();
-
-                var abgeschlosseneFächerDiesesSchülers = (from w in this
-                                                          where w.Fach != null
-                                                          where w.Fach != ""
-                                                          where w.Fach != "leer"
-                                                          where w.Gesamtnote != null
-                                                          where w.Gesamtnote != ""
-                                                          where w.SchlüsselExtern == schülerId
-                                                          where !nichtAbgeschlosseneFächerDiesesSchülers.Contains(w.Fach)
-                                                          where (w.Datum < (hzJz == "JZ" ? new DateTime(Convert.ToInt32("20" + aktSj[1]), 02, 01) : new DateTime(Convert.ToInt32("20" + aktSj[0]), 08, 01)))
-                                                          select w.Fach).Distinct().ToList();
-
-                // Für jedes abgeschlossene Fach wird die neueste Leistung geholt
-
-                foreach (var aFach in abgeschlosseneFächerDiesesSchülers)
-                {
-                    var geholtLeistung = (from t in this.OrderByDescending(x => x.Konferenzdatum)
-                                          where t.IstGeholteNote
-                                          where t.Klasse.Substring(0, 2) == interessierendeKlasse.Substring(0, 2)
-                                          where t.SchlüsselExtern == schülerId
-                                          where t.Fach == aFach
-                                          select t).FirstOrDefault();
-
-                    // Religion wird nicht geholt
-
-                    if (geholtLeistung != null && !geholtLeistung.FachAliases.Contains("REL"))
-                    {
-                        geholteLeistungen.Add(geholtLeistung);
-                    }
-                }
-            }
-            Global.WriteLine((" davon Leistungsdaten aus abgeschlossenen Fächern alter Abschnitte ").PadRight(Global.PadRight, '.') + geholteLeistungen.Count().ToString().PadLeft(4));
-            Global.WriteLine("");
-            return geholteLeistungen;
-        }
         
-        public bool NotenblattNichtLeeren(Leistungen atlantisLeistungen, Abwesenheiten webuntisAbwesenheiten, string targetAbsenceTimesTotal)
-        {   
-            // Soll das Notenblatt mit allen Eintragungen erst gelöscht werden?
-
-            if ((from t in atlantisLeistungen where !t.IstGeholteNote select t).ToList().Count > 1)
-            {
-                ConsoleKeyInfo x;
-
-                do
-                {
-                    Console.WriteLine(" ");
-                    Global.WriteLine("Soll das Atlantis-Notenblatt (Noten & Abwesenheiten) zuerst einmal komplett geleert werden? (j/N)");
-                    x = Console.ReadKey();
-                } while (x.Key.ToString().ToLower() != "j" && x.Key.ToString().ToLower() != "n" && x.Key.ToString() != "Enter");
-
-                Global.WriteLine(" Ihre Auswahl: " + (x.Key.ToString() == "Enter" || x.Key.ToString().ToUpper() == "N" ? "N": "J"));
-                //Global.WriteLine(" ");
-
-                if (x.Key.ToString().ToLower() == "j")
-                {
-                    for (int i = 0; i < this.Count; i++)
-                    {
-                        this.Remove(this[i]);
-                            i--;
-                    }
-                    
-
-                    foreach (var leistung in (from t in atlantisLeistungen where !t.IstGeholteNote select t).ToList())
-                    {
-                        var l = new Leistung();
-                        l.EinheitNP = leistung.EinheitNP;
-                        l.Fach = leistung.Fach;
-                        l.Gesamtnote = "";
-                        l.Gesamtpunkte = "";
-                        l.Tendenz = "";
-                        l.HzJz = leistung.HzJz;
-                        l.Konferenzdatum = leistung.Konferenzdatum;
-                        l.Vorname = leistung.Vorname;
-                        l.Nachname = leistung.Nachname;
-                        l.Fach = leistung.Fach;
-                        l.Klasse = leistung.Klasse;
-                        l.AtlantisLeistungZuordnenUndQueryBauen(new List<Leistung>() { leistung }, "Notenblatt wird gelöscht.");
-                        this.Add(l);
-                    }
-
-                    if (targetAbsenceTimesTotal != null)
-                    {
-                        foreach (var abwesenheit in webuntisAbwesenheiten)
-                        {
-                            abwesenheit.StundenAbwesend = 0;
-                            abwesenheit.StundenAbwesendUnentschuldigt = 0;
-                        }
-                    }
-                    
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        internal Leistungen WidersprechendeGesamtnotenKorrigieren(Leistungen atlantisleistungen)
-        {
-            var leistungen = new Leistungen();
-
-            var liste = new List<string>(); // enthält Klasse|Fachstamm|Lehrkraft
-
-            var entfernteLeistungen = ""; // Klasse|Fach|Lehrkraft
-
-            foreach (var wLeistung in this)
-            {
-                bool entferneLeistung = true;
-
-                // Wenn ein Lehrer sich selbst in der Gesamtnote im selben Fach widerspricht
-
-                var xxx = (from t in this where t.Fach == wLeistung.Fach 
-                           where t.SchlüsselExtern == wLeistung.SchlüsselExtern
-                           where t.Lehrkraft == wLeistung.Lehrkraft
-                           select t).Distinct().ToList();
-
-                if (xxx.Count > 1)
-                {
-                    var zeilen = (from t in xxx select t.MarksPerLessonZeile).ToList();
-                    var noten = (from t in xxx select t.Gesamtnote).Distinct().ToList();
-
-                    Global.WriteLine("Achtung: " + wLeistung.Lehrkraft + " hat dem Schüler " + wLeistung.SchlüsselExtern + " in " + wLeistung.Fach + " unterschiedliche Noten (" + Global.List2String(noten, ",") + ") gegeben! Siehe Zeilen " + Global.List2String(zeilen, ',') + ".");
-                    Global.WriteLine("Nur die Leistung mit dem jüngsten Datum bleibt erhalten.");
-
-                    Console.ReadKey();
-                }
-
-                if (EsGibtDoppelteFächerZuDieser(wLeistung)) // Z.B. GPF1 und GPF2
-                {
-                    if (EsGibtWidersprechendeNoten(wLeistung)) // Z.B. Note 7.0 in GPF1 und Note 10.0 in GPF
-                    {
-                        // Es wird nur dann nachgefragt, wenn für diese Klasse und dieses Fach noch kein Eintrag existiert
-
-                        if (!(from l in liste where l.StartsWith(wLeistung.Klasse + "|" + Regex.Match(wLeistung.Fach, @"^[^0-9]*").Value) select l).Any())
-                        {
-                            liste.Add(NachfragenWelchesFachZuWählenIst(wLeistung));
-                        }
-
-                        // Nur wenn diese wLeistung dem Muster der liste entspricht, wird sie hinzugefügt
-
-                        if (liste.Contains(wLeistung.Klasse + "|" + Regex.Match(wLeistung.Fach, @"^[^0-9]*").Value + "|" + wLeistung.Lehrkraft))
-                        {
-                            leistungen.Add(wLeistung); entferneLeistung = false; 
-                        }
-                    }
-                    else
-                    {
-                        leistungen.Add(wLeistung); entferneLeistung = false;  // ohne Notenwiderspruch verbleibt die Leistung in den Webuntisleistungen
-                    }
-                }
-                else
-                {   
-                    leistungen.Add(wLeistung); entferneLeistung = false; // ohne Dopplungen verbleibt die Leistung in den Webuntisleistungen
-                }
-
-                // Wenn die Leistung nicht hinzugefügt wurde, wird sie protokolliert
-
-                if (entferneLeistung)
-                {
-                    if (!entfernteLeistungen.Contains(wLeistung.Klasse + "|" + wLeistung.Fach + "|" + wLeistung.Lehrkraft)) 
-                    {
-                        entfernteLeistungen += wLeistung.Klasse + "|" + wLeistung.Fach + "|" + wLeistung.Lehrkraft + ",";
-                    }
-                }
-            }
-
-            if (this.Count > leistungen.Count)
-            {
-                Global.WriteLine("Aufgrund von widersprechenden Noten sind " + (this.Count - leistungen.Count) + " Leistungen ("+ entfernteLeistungen.TrimEnd(',') +") entfernt worden.");
-            }
-
-            return leistungen;
-        }
-
         private string NachfragenWelchesFachZuWählenIst(Leistung wLeistung)
         {
             var ähnlicheFächer = (from w in this
@@ -521,380 +330,380 @@ namespace webuntisnoten2atlantis
             return false;
         }
 
-        internal void ErzeugeSerienbriefquelleFehlendeTeilleistungen(Leistungen webuntisLeistungen)
-        {
-            List<Leistung> fehlendeTeilleistungen = new List<Leistung>();
+        //internal void ErzeugeSerienbriefquelleFehlendeTeilleistungen(Leistungen webuntisLeistungen)
+        //{
+        //    List<Leistung> fehlendeTeilleistungen = new List<Leistung>();
 
-            foreach (var atlantisLeistung in (from t in this where t.Fach != "" where !(t.Zeugnistext.StartsWith("Abschluss")) select t).ToList())
-            {
-                // Wenn es für eine Atlantisleistung keine Entsprechung in Untis gibt, wird der Datensatz hinzugefügt.
+        //    foreach (var atlantisLeistung in (from t in this where t.Fach != "" where !(t.Zeugnistext.StartsWith("Abschluss")) select t).ToList())
+        //    {
+        //        // Wenn es für eine Atlantisleistung keine Entsprechung in Untis gibt, wird der Datensatz hinzugefügt.
 
-                if (!(from w in webuntisLeistungen where w.Klasse == atlantisLeistung.Klasse where w.Fach == atlantisLeistung.Fach select w).Any())
-                {
-                    fehlendeTeilleistungen.Add(atlantisLeistung);
-                }
-            }
-        }
+        //        if (!(from w in webuntisLeistungen where w.Klasse == atlantisLeistung.Klasse where w.Fach == atlantisLeistung.Fach select w).Any())
+        //        {
+        //            fehlendeTeilleistungen.Add(atlantisLeistung);
+        //        }
+        //    }
+        //}
 
-        internal void Gym12NotenInDasGostNotenblattKopieren(List<string> interessierendeKlassen, List<string> aktSj)
-        {
-            foreach (var item in this)
-            {
-                // Wenn es sich um die Leistung einer Gym 12 oder 13 handelt ...
+        //internal void Gym12NotenInDasGostNotenblattKopieren(List<string> interessierendeKlassen, List<string> aktSj)
+        //{
+        //    foreach (var item in this)
+        //    {
+        //        // Wenn es sich um die Leistung einer Gym 12 oder 13 handelt ...
 
-                if (item.Klasse.StartsWith("G") && (item.Klasse.Contains((Convert.ToInt32(aktSj[1]) - 2).ToString()) || item.Klasse.Contains((Convert.ToInt32(aktSj[1]) - 3).ToString())))
-                {
-                    // ... wird die Leistung in das Notenblatt der GO geschrieben.
+        //        if (item.Klasse.StartsWith("G") && (item.Klasse.Contains((Convert.ToInt32(aktSj[1]) - 2).ToString()) || item.Klasse.Contains((Convert.ToInt32(aktSj[1]) - 3).ToString())))
+        //        {
+        //            // ... wird die Leistung in das Notenblatt der GO geschrieben.
 
-                    throw new NotImplementedException();
+        //            throw new NotImplementedException();
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
 
-        internal void ErzeugeSerienbriefquelleNichtversetzer()
-        {
-            var l = new Leistungen();
+        //internal void ErzeugeSerienbriefquelleNichtversetzer()
+        //{
+        //    var l = new Leistungen();
 
-            foreach (var leistung in this)
-            {
-                if (leistung.SchlüsselExtern == 153203)
-                {
-                    l.Add(leistung);
-                }
-            }
-        }
+        //    foreach (var leistung in this)
+        //    {
+        //        if (leistung.SchlüsselExtern == 153203)
+        //        {
+        //            l.Add(leistung);
+        //        }
+        //    }
+        //}
 
-        internal void AtlantisLeistungenZuordnenUndQueryBauen(Leistungen atlantisLeistungen, string aktuellesSchuljahr, string interessierendeKlasse, string hzJz)
-        {
-            var kombinationAusKlasseUndFachWirdNurEinmalAufgerufen = new List<string>();
+        //internal void AtlantisLeistungenZuordnenUndQueryBauen(Leistungen atlantisLeistungen, string aktuellesSchuljahr, string interessierendeKlasse, string hzJz)
+        //{
+        //    var kombinationAusKlasseUndFachWirdNurEinmalAufgerufen = new List<string>();
 
-            Zuordnungen gespeicherteZuordnungen = new Zuordnungen();
+        //    Zuordnungen gespeicherteZuordnungen = new Zuordnungen();
 
-            // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
+        //    // Es wird versucht jedes Webuntis-Fach einem Atlantis-Fach zuzuordnen
 
-            foreach (var webuntisLeistung in this.OrderBy(x => x.Klasse).ThenBy(x => x.Fach))
-            {                
-                // Zielleistungen dieses Schülers im aktuellen Abschnitt werden ermittelt.
+        //    foreach (var webuntisLeistung in this.OrderBy(x => x.Klasse).ThenBy(x => x.Fach))
+        //    {                
+        //        // Zielleistungen dieses Schülers im aktuellen Abschnitt werden ermittelt.
 
-                var atlantisZielLeistungen = (from a in atlantisLeistungen
-                                              where !a.IstGeholteNote // eine Leistung des aktuellen Abschnitts
-                                              where a.SchlüsselExtern == webuntisLeistung.SchlüsselExtern
-                                              where a.Schuljahr == aktuellesSchuljahr
-                                              where a.HzJz == hzJz
-                                              orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
-                                              select a).ToList();
+        //        var atlantisZielLeistungen = (from a in atlantisLeistungen
+        //                                      where !a.IstGeholteNote // eine Leistung des aktuellen Abschnitts
+        //                                      where a.SchlüsselExtern == webuntisLeistung.SchlüsselExtern
+        //                                      where a.Schuljahr == aktuellesSchuljahr
+        //                                      where a.HzJz == hzJz
+        //                                      orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
+        //                                      select a).ToList();
 
-                // Wenn es den Schüler überhaupt nicht in Atlantis gibt, dann wird die Verarbeitung abgebrochen
+        //        // Wenn es den Schüler überhaupt nicht in Atlantis gibt, dann wird die Verarbeitung abgebrochen
 
-                if (atlantisZielLeistungen.Count > 0 && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(webuntisLeistung.Klasse + webuntisLeistung.Fach))
-                {
-                    // Im Idealfall stimmen die Fachnamen überein.
+        //        if (atlantisZielLeistungen.Count > 0 && !kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Contains(webuntisLeistung.Klasse + webuntisLeistung.Fach))
+        //        {
+        //            // Im Idealfall stimmen die Fachnamen überein.
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        var aL = (from a in atlantisZielLeistungen.OrderBy(x => x.Bereich)
-                                  where a.Fach == webuntisLeistung.Fach // Prüfung auf Fachnamensgleichheit
-                                  select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                var aL = (from a in atlantisZielLeistungen.OrderBy(x => x.Bereich)
+        //                          where a.Fach == webuntisLeistung.Fach // Prüfung auf Fachnamensgleichheit
+        //                          select a).ToList();
 
-                        if (aL.Count > 0)
-                        {
-                            // Wenn der Schüler Reli-Abwähler ist, dürfte es eigentlich diese Webuntis-Leistung nicht geben.
+        //                if (aL.Count > 0)
+        //                {
+        //                    // Wenn der Schüler Reli-Abwähler ist, dürfte es eigentlich diese Webuntis-Leistung nicht geben.
 
-                            if (aL[0].ReligionAbgewählt && aL[0].FachAliases.Contains("REL"))
-                            {
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "Abwähler!");
-                            }
-                            else
-                            {
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "");
-                            }
-                        }
-                    }
-                    // Suffix entfernen
+        //                    if (aL[0].ReligionAbgewählt && aL[0].FachAliases.Contains("REL"))
+        //                    {
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "Abwähler!");
+        //                    }
+        //                    else
+        //                    {
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "");
+        //                    }
+        //                }
+        //            }
+        //            // Suffix entfernen
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (char.IsDigit(webuntisLeistung.Fach.Last()))
-                        {
-                            var aL = (from a in atlantisZielLeistungen
-                                      where a.Fach == Regex.Match(webuntisLeistung.Fach, @"^[^0-9]*").Value
-                                      select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (char.IsDigit(webuntisLeistung.Fach.Last()))
+        //                {
+        //                    var aL = (from a in atlantisZielLeistungen
+        //                              where a.Fach == Regex.Match(webuntisLeistung.Fach, @"^[^0-9]*").Value
+        //                              select a).ToList();
 
-                            webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + Regex.Match(webuntisLeistung.Fach, @"^[^0-9]*").Value + "|");
-                        }
-                    }
+        //                    webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + Regex.Match(webuntisLeistung.Fach, @"^[^0-9]*").Value + "|");
+        //                }
+        //            }
 
-                    // Religion wird immer zu REL
+        //            // Religion wird immer zu REL
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (webuntisLeistung.Fach == "KR" || webuntisLeistung.Fach == "ER" || webuntisLeistung.Fach.StartsWith("KR ") || webuntisLeistung.Fach.StartsWith("ER "))
-                        {
-                            var aL = (from a in atlantisZielLeistungen
-                                      where a.Fach == "REL"
-                                      select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (webuntisLeistung.Fach == "KR" || webuntisLeistung.Fach == "ER" || webuntisLeistung.Fach.StartsWith("KR ") || webuntisLeistung.Fach.StartsWith("ER "))
+        //                {
+        //                    var aL = (from a in atlantisZielLeistungen
+        //                              where a.Fach == "REL"
+        //                              select a).ToList();
 
-                            // Wenn der Schüler Reli-Abwähler ist, dürfte es eigentlich diese Webuntis-Leistung nicht geben.
+        //                    // Wenn der Schüler Reli-Abwähler ist, dürfte es eigentlich diese Webuntis-Leistung nicht geben.
 
-                            if (aL[0].ReligionAbgewählt)
-                            {
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->REL|Abwähler!");
-                            }
-                            else
-                            {
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->REL|");
-                            }                            
-                        }
-                    }
+        //                    if (aL[0].ReligionAbgewählt)
+        //                    {
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->REL|Abwähler!");
+        //                    }
+        //                    else
+        //                    {
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->REL|");
+        //                    }                            
+        //                }
+        //            }
 
-                    // EK -> E
+        //            // EK -> E
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (webuntisLeistung.Fach.StartsWith("EK") && webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
-                        {
-                            var aL = (from a in atlantisZielLeistungen
-                                      where a.Fach == "E"
-                                      select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (webuntisLeistung.Fach.StartsWith("EK") && webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
+        //                {
+        //                    var aL = (from a in atlantisZielLeistungen
+        //                              where a.Fach == "E"
+        //                              select a).ToList();
 
-                            webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->E|");
-                        }
-                        if (webuntisLeistung.Fach.StartsWith("EB1"))
-                        {
-                            var aL = (from a in atlantisZielLeistungen
-                                      where a.Fach.StartsWith("E")
-                                      where a.Fach.Contains("B1")
-                                      select a).ToList();
+        //                    webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->E|");
+        //                }
+        //                if (webuntisLeistung.Fach.StartsWith("EB1"))
+        //                {
+        //                    var aL = (from a in atlantisZielLeistungen
+        //                              where a.Fach.StartsWith("E")
+        //                              where a.Fach.Contains("B1")
+        //                              select a).ToList();
 
-                            webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->EB1|");
-                        }
-                    }
+        //                    webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->EB1|");
+        //                }
+        //            }
 
-                    // N -> NKA1
+        //            // N -> NKA1
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (webuntisLeistung.Fach.StartsWith("N"))
-                        {
-                            if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "NK")
-                            {
-                                var aL = (from a in atlantisZielLeistungen
-                                          where a.Fach == "N"
-                                          select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (webuntisLeistung.Fach.StartsWith("N"))
+        //                {
+        //                    if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "NK")
+        //                    {
+        //                        var aL = (from a in atlantisZielLeistungen
+        //                                  where a.Fach == "N"
+        //                                  select a).ToList();
 
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->N|");
-                            }
-                        }
-                    }
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->N|");
+        //                    }
+        //                }
+        //            }
 
-                    // NB1 -> N
+        //            // NB1 -> N
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (webuntisLeistung.Fach.StartsWith("NB1"))
-                        {
-                            if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "N")
-                            {
-                                var aL = (from a in atlantisZielLeistungen
-                                          where a.Fach == "N"
-                                          select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (webuntisLeistung.Fach.StartsWith("NB1"))
+        //                {
+        //                    if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "N")
+        //                    {
+        //                        var aL = (from a in atlantisZielLeistungen
+        //                                  where a.Fach == "N"
+        //                                  select a).ToList();
 
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->N|");
-                            }
-                        }
-                    }
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->N|");
+        //                    }
+        //                }
+        //            }
 
-                    // EB2 -> N
+        //            // EB2 -> N
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        if (webuntisLeistung.Fach.StartsWith("EB1") || webuntisLeistung.Fach.StartsWith("EB2"))
-                        {
-                            if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
-                            {
-                                var aL = (from a in atlantisZielLeistungen
-                                          where a.Fach == "E"
-                                          select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                if (webuntisLeistung.Fach.StartsWith("EB1") || webuntisLeistung.Fach.StartsWith("EB2"))
+        //                {
+        //                    if (webuntisLeistung.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "") == "E")
+        //                    {
+        //                        var aL = (from a in atlantisZielLeistungen
+        //                                  where a.Fach == "E"
+        //                                  select a).ToList();
 
-                                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->E|");
-                            }
-                        }
-                    }
+        //                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->E|");
+        //                    }
+        //                }
+        //            }
 
-                    // Kurse mit Leerzeichen
+        //            // Kurse mit Leerzeichen
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        var aL = (from a in atlantisZielLeistungen
-                                  where (webuntisLeistung.Fach.Contains(" ") && a.Fach.Contains(" ")) // Wenn beide Leerzeichen enthalten
-                                  where (webuntisLeistung.Fach.Split(' ')[0] == a.Fach.Split(' ')[0]) // Wenn der erste Teil identisch ist
-                                  where (webuntisLeistung.Fach.Substring(webuntisLeistung.Fach.LastIndexOf(' ') + 1).Substring(0, 1) == a.Fach.Substring(a.Fach.LastIndexOf(' ') + 1).Substring(0, 1)) // Wenn der zweite Teil identisch anfängt
-                                  select a).ToList();
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                var aL = (from a in atlantisZielLeistungen
+        //                          where (webuntisLeistung.Fach.Contains(" ") && a.Fach.Contains(" ")) // Wenn beide Leerzeichen enthalten
+        //                          where (webuntisLeistung.Fach.Split(' ')[0] == a.Fach.Split(' ')[0]) // Wenn der erste Teil identisch ist
+        //                          where (webuntisLeistung.Fach.Substring(webuntisLeistung.Fach.LastIndexOf(' ') + 1).Substring(0, 1) == a.Fach.Substring(a.Fach.LastIndexOf(' ') + 1).Substring(0, 1)) // Wenn der zweite Teil identisch anfängt
+        //                          select a).ToList();
 
-                        webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|");
+        //                webuntisLeistung.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|");
 
-                        // Kurse mit Leerzeichen
+        //                // Kurse mit Leerzeichen
 
-                        // Wenn in Atlantis die Anzahl der Zielfächer größer als 1 ist, dann wird eine weitere Leistung hinzugefügt 
+        //                // Wenn in Atlantis die Anzahl der Zielfächer größer als 1 ist, dann wird eine weitere Leistung hinzugefügt 
 
-                        if (aL.Count > 1)
-                        {
-                            Leistung neueLeistung = new Leistung();
+        //                if (aL.Count > 1)
+        //                {
+        //                    Leistung neueLeistung = new Leistung();
 
-                            neueLeistung.Abschlussklasse = webuntisLeistung.Abschlussklasse;
-                            neueLeistung.Anlage = webuntisLeistung.Anlage;
-                            neueLeistung.Bemerkung = webuntisLeistung.Bemerkung;
-                            neueLeistung.Beschreibung = webuntisLeistung.Fach + "->" + aL[1] + ",";
-                            neueLeistung.Datum = webuntisLeistung.Datum;
-                            neueLeistung.EinheitNP = webuntisLeistung.EinheitNP;
-                            neueLeistung.Fach = aL[1].Fach;
-                            neueLeistung.Zielfach = aL[1].Fach;
-                            neueLeistung.IstGeholteNote = webuntisLeistung.IstGeholteNote;
-                            neueLeistung.Gesamtnote = webuntisLeistung.Gesamtnote;
-                            neueLeistung.Gesamtpunkte = webuntisLeistung.Gesamtpunkte;
-                            neueLeistung.Gliederung = webuntisLeistung.Gliederung;
-                            neueLeistung.HatBemerkung = webuntisLeistung.HatBemerkung;
-                            neueLeistung.HzJz = webuntisLeistung.HzJz;
-                            neueLeistung.Jahrgang = webuntisLeistung.Jahrgang;
-                            neueLeistung.Klasse = webuntisLeistung.Klasse;
-                            neueLeistung.Konferenzdatum = webuntisLeistung.Konferenzdatum;
-                            neueLeistung.Lehrkraft = webuntisLeistung.Lehrkraft;
-                            neueLeistung.LeistungId = webuntisLeistung.LeistungId;
-                            neueLeistung.Name = webuntisLeistung.Name;
-                            neueLeistung.ReligionAbgewählt = webuntisLeistung.ReligionAbgewählt;
-                            neueLeistung.SchlüsselExtern = webuntisLeistung.SchlüsselExtern;
-                            neueLeistung.SchuelerAktivInDieserKlasse = webuntisLeistung.SchuelerAktivInDieserKlasse;
-                            neueLeistung.Schuljahr = webuntisLeistung.Schuljahr;
-                            neueLeistung.Tendenz = webuntisLeistung.Tendenz;
-                            neueLeistung.Zeugnisart = webuntisLeistung.Zeugnisart;
-                            neueLeistung.Zeugnistext = webuntisLeistung.Zeugnistext;
-                            this.Add(neueLeistung);
-                        }
-                    }
+        //                    neueLeistung.Abschlussklasse = webuntisLeistung.Abschlussklasse;
+        //                    neueLeistung.Anlage = webuntisLeistung.Anlage;
+        //                    neueLeistung.Bemerkung = webuntisLeistung.Bemerkung;
+        //                    neueLeistung.Beschreibung = webuntisLeistung.Fach + "->" + aL[1] + ",";
+        //                    neueLeistung.Datum = webuntisLeistung.Datum;
+        //                    neueLeistung.EinheitNP = webuntisLeistung.EinheitNP;
+        //                    neueLeistung.Fach = aL[1].Fach;
+        //                    neueLeistung.Zielfach = aL[1].Fach;
+        //                    neueLeistung.IstGeholteNote = webuntisLeistung.IstGeholteNote;
+        //                    neueLeistung.Gesamtnote = webuntisLeistung.Gesamtnote;
+        //                    neueLeistung.Gesamtpunkte = webuntisLeistung.Gesamtpunkte;
+        //                    neueLeistung.Gliederung = webuntisLeistung.Gliederung;
+        //                    neueLeistung.HatBemerkung = webuntisLeistung.HatBemerkung;
+        //                    neueLeistung.HzJz = webuntisLeistung.HzJz;
+        //                    neueLeistung.Jahrgang = webuntisLeistung.Jahrgang;
+        //                    neueLeistung.Klasse = webuntisLeistung.Klasse;
+        //                    neueLeistung.Konferenzdatum = webuntisLeistung.Konferenzdatum;
+        //                    neueLeistung.Lehrkraft = webuntisLeistung.Lehrkraft;
+        //                    neueLeistung.LeistungId = webuntisLeistung.LeistungId;
+        //                    neueLeistung.Name = webuntisLeistung.Name;
+        //                    neueLeistung.ReligionAbgewählt = webuntisLeistung.ReligionAbgewählt;
+        //                    neueLeistung.SchlüsselExtern = webuntisLeistung.SchlüsselExtern;
+        //                    neueLeistung.SchuelerAktivInDieserKlasse = webuntisLeistung.SchuelerAktivInDieserKlasse;
+        //                    neueLeistung.Schuljahr = webuntisLeistung.Schuljahr;
+        //                    neueLeistung.Tendenz = webuntisLeistung.Tendenz;
+        //                    neueLeistung.Zeugnisart = webuntisLeistung.Zeugnisart;
+        //                    neueLeistung.Zeugnistext = webuntisLeistung.Zeugnistext;
+        //                    this.Add(neueLeistung);
+        //                }
+        //            }
 
-                    // Wenn keine automatische Zuordnung vorgenommen wurde:
+        //            // Wenn keine automatische Zuordnung vorgenommen wurde:
 
-                    if (webuntisLeistung.Query == null)
-                    {
-                        Global.WriteLine("Das Webuntis-Fach **" + webuntisLeistung.Fach + "** (" +  webuntisLeistung.Klasse + "|" + webuntisLeistung.Lehrkraft + ") kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell zuordnen:");
+        //            if (webuntisLeistung.Query == null)
+        //            {
+        //                Global.WriteLine("Das Webuntis-Fach **" + webuntisLeistung.Fach + "** (" +  webuntisLeistung.Klasse + "|" + webuntisLeistung.Lehrkraft + ") kann keinem Atlantis-Fach zugeordnet werden. Bitte manuell zuordnen:");
 
-                        var alleZulässigenAtlantisZielfächer = gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(webuntisLeistung, atlantisLeistungen, aktuellesSchuljahr, interessierendeKlasse);
+        //                var alleZulässigenAtlantisZielfächer = gespeicherteZuordnungen.AlleZulässigenAtlantisZielFächerAuflisten(webuntisLeistung, atlantisLeistungen, aktuellesSchuljahr, interessierendeKlasse);
 
-                        //Global.AufConsoleSchreiben("Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell vornehmen?");
+        //                //Global.AufConsoleSchreiben("Wollen Sie die Zuordnung für **" + webuntisLeistung.Fach + "** manuell vornehmen?");
 
-                        bool wiederholen = true;
+        //                bool wiederholen = true;
 
-                        int index = 0;
+        //                int index = 0;
 
-                        string eingabe;
+        //                string eingabe;
 
-                        do
-                        {
-                            Console.Write(" Bitte Zahl (0 = keine Zuordnung) 1 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben: ");
+        //                do
+        //                {
+        //                    Console.Write(" Bitte Zahl (0 = keine Zuordnung) 1 bis " + alleZulässigenAtlantisZielfächer.Count + " eingeben: ");
 
-                            try
-                            {
-                                eingabe = Console.ReadLine();
-                                index = int.Parse(eingabe);
+        //                    try
+        //                    {
+        //                        eingabe = Console.ReadLine();
+        //                        index = int.Parse(eingabe);
 
-                                if (index >= 0 && index <= alleZulässigenAtlantisZielfächer.Count)
-                                {
-                                    wiederholen = false;
-                                }
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        } while (wiederholen);
+        //                        if (index >= 0 && index <= alleZulässigenAtlantisZielfächer.Count)
+        //                        {
+        //                            wiederholen = false;
+        //                        }
+        //                    }
+        //                    catch (Exception)
+        //                    {
+        //                    }
+        //                } while (wiederholen);
 
-                        if (index == 0)
-                        {
-                            Global.WriteLine("Das Fach " + webuntisLeistung.Fach + " wird nicht zugeordnet und verworfen.");
-                        }
-                        else
-                        {
-                            Global.WriteLine("Ihre Auswahl: " + webuntisLeistung.Fach + " wird " + alleZulässigenAtlantisZielfächer[index - 1] + " zugeordnet.");
+        //                if (index == 0)
+        //                {
+        //                    Global.WriteLine("Das Fach " + webuntisLeistung.Fach + " wird nicht zugeordnet und verworfen.");
+        //                }
+        //                else
+        //                {
+        //                    Global.WriteLine("Ihre Auswahl: " + webuntisLeistung.Fach + " wird " + alleZulässigenAtlantisZielfächer[index - 1] + " zugeordnet.");
 
-                            DieZuordnungFürAlleSchülerVornehmen(webuntisLeistung, atlantisLeistungen, alleZulässigenAtlantisZielfächer, index, aktuellesSchuljahr);
+        //                    DieZuordnungFürAlleSchülerVornehmen(webuntisLeistung, atlantisLeistungen, alleZulässigenAtlantisZielfächer, index, aktuellesSchuljahr);
 
-                        }
-                        kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Add(webuntisLeistung.Klasse + webuntisLeistung.Fach);
-                    }
-                }
-            }
+        //                }
+        //                kombinationAusKlasseUndFachWirdNurEinmalAufgerufen.Add(webuntisLeistung.Klasse + webuntisLeistung.Fach);
+        //            }
+        //        }
+        //    }
                                     
-            Global.WriteLine("Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ".PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
-        }
+        //    Global.WriteLine("Schülerleistungen aus Webuntis Atlantisleistungen erfolgreich zugeordnet ".PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
+        //}
 
-        private void DieZuordnungFürAlleSchülerVornehmen(Leistung webuntisLeistung, Leistungen atlantisLeistungen, List<string> alleZulässigenAtlantisZielfächer, int index, string aktuellesSchuljahr)
-        {
-            // Für diese Schüler wird die Zuordnung vorgenommen:
+        //private void DieZuordnungFürAlleSchülerVornehmen(Leistung webuntisLeistung, Leistungen atlantisLeistungen, List<string> alleZulässigenAtlantisZielfächer, int index, string aktuellesSchuljahr)
+        //{
+        //    // Für diese Schüler wird die Zuordnung vorgenommen:
 
-            var interessierendeSchüler = (from w in this
-                                          where w.Klasse == webuntisLeistung.Klasse
-                                          where w.Fach == w.Fach
-                                          select w.SchlüsselExtern).Distinct().ToList();
+        //    var interessierendeSchüler = (from w in this
+        //                                  where w.Klasse == webuntisLeistung.Klasse
+        //                                  where w.Fach == w.Fach
+        //                                  select w.SchlüsselExtern).Distinct().ToList();
 
-            var ww = (from w in this
-                      where w.Fach == webuntisLeistung.Fach
-                      where interessierendeSchüler.Contains(w.SchlüsselExtern)
-                      select w).ToList();
+        //    var ww = (from w in this
+        //              where w.Fach == webuntisLeistung.Fach
+        //              where interessierendeSchüler.Contains(w.SchlüsselExtern)
+        //              select w).ToList();
 
-            foreach (var w in ww)
-            {
-                var aL = (from a in atlantisLeistungen
-                          where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
-                          where a.Schuljahr == aktuellesSchuljahr
-                          where a.Fach == alleZulässigenAtlantisZielfächer[index - 1]
-                          where a.SchlüsselExtern == w.SchlüsselExtern
-                          orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
-                          select a).ToList();
+        //    foreach (var w in ww)
+        //    {
+        //        var aL = (from a in atlantisLeistungen
+        //                  where (a.Konferenzdatum >= DateTime.Now || a.Konferenzdatum.Year == 1) // eine Leistung des aktuellen Abschnitts
+        //                  where a.Schuljahr == aktuellesSchuljahr
+        //                  where a.Fach == alleZulässigenAtlantisZielfächer[index - 1]
+        //                  where a.SchlüsselExtern == w.SchlüsselExtern
+        //                  orderby a.LeistungId descending // Die höchste ID ist die ID des aktuellen Abschnitts
+        //                  select a).ToList();
 
-                if (aL.Count > 0)
-                {
-                    if (index > 0)
-                    {
-                        w.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|manuell zugeordnet|");
-                    }
-                }
-                else
-                {
-                    if (index > 0)
-                    {
-                        w.Query = "/* " + w.Name + ": Das Fach " + webuntisLeistung.Fach + " wurde keinem Atlantisfach zugeordnet. Das kann passieren, wenn die Belegung in Atlantis von der in Webuntis abweicht.";
-                        w.Beschreibung = "";
-                    }
-                    else
-                    {
-                        w.Query = null;
-                        w.Beschreibung = null;
-                    }
-                }
-            }
-        }
+        //        if (aL.Count > 0)
+        //        {
+        //            if (index > 0)
+        //            {
+        //                w.AtlantisLeistungZuordnenUndQueryBauen(aL, webuntisLeistung.Fach + "->" + (aL.Count > 0 ? aL[0].Fach : "") + "|manuell zugeordnet|");
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (index > 0)
+        //            {
+        //                w.Query = "/* " + w.Name + ": Das Fach " + webuntisLeistung.Fach + " wurde keinem Atlantisfach zugeordnet. Das kann passieren, wenn die Belegung in Atlantis von der in Webuntis abweicht.";
+        //                w.Beschreibung = "";
+        //            }
+        //            else
+        //            {
+        //                w.Query = null;
+        //                w.Beschreibung = null;
+        //            }
+        //        }
+        //    }
+        //}
 
-        internal void FehlendeSchülerInAtlantis(Leistungen atlantisLeistungen)
-        {
-            List<string> keinSchülerInAtlantis = new List<string>();
+        //internal void FehlendeSchülerInAtlantis(Leistungen atlantisLeistungen)
+        //{
+        //    List<string> keinSchülerInAtlantis = new List<string>();
 
-            foreach (var we in this)
-            {
-                var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen
-                                                     where a.Klasse == we.Klasse
-                                                     where a.SchlüsselExtern == we.SchlüsselExtern
-                                                     select a).ToList();
+        //    foreach (var we in this)
+        //    {
+        //        var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen
+        //                                             where a.Klasse == we.Klasse
+        //                                             where a.SchlüsselExtern == we.SchlüsselExtern
+        //                                             select a).ToList();
 
-                if (atlantisFächerDiesesSchuelers.Count == 0 && !keinSchülerInAtlantis.Contains(we.Name + "|" + we.Klasse))
-                {
-                    keinSchülerInAtlantis.Add(we.Name + "|" + we.Klasse);
-                }
-            }
-            if (keinSchülerInAtlantis.Count > 0)
-            {
-                AusgabeSchreiben("Achtung: Es gibt Leistungsdatensätze in Webuntis, die keinem Schüler in Atlantis zugeordnet werden können:", keinSchülerInAtlantis);
-            }
-        }
+        //        if (atlantisFächerDiesesSchuelers.Count == 0 && !keinSchülerInAtlantis.Contains(we.Name + "|" + we.Klasse))
+        //        {
+        //            keinSchülerInAtlantis.Add(we.Name + "|" + we.Klasse);
+        //        }
+        //    }
+        //    if (keinSchülerInAtlantis.Count > 0)
+        //    {
+        //        AusgabeSchreiben("Achtung: Es gibt Leistungsdatensätze in Webuntis, die keinem Schüler in Atlantis zugeordnet werden können:", keinSchülerInAtlantis);
+        //    }
+        //}
 
         private string Gesamtpunkte2Tendenz(string gesamtpunkte)
         {
@@ -1341,240 +1150,9 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             return new Leistungen();
         }
 
-        internal void SprachenZuordnen(Leistungen atlantisLeistungen)
-        {
-            Console.Write(("Sprachen zuordnen ").PadRight(71, '.'));
-            int i = 0;
-
-            // Bei Sprachen-Fächern ...
-
-            foreach (var we in (from t in this
-                                where (
-                                    t.Fach.Split(' ')[0] == "EK" ||
-                                    t.Fach.Split(' ')[0] == "E" ||
-                                    t.Fach.Split(' ')[0] == "N" ||
-                                    t.Fach.Split(' ')[0] == "NL" ||
-                                    t.Fach.Split(' ')[0] == "LA" ||
-                                    t.Fach.Split(' ')[0] == "S" ||
-                                    t.Fach.EndsWith("B1") ||
-                                    t.Fach.EndsWith("B2") ||
-                                    t.Fach.EndsWith("A1") ||
-                                    t.Fach.EndsWith("A2")
-                                )
-                                select t).ToList())
-            {
-                var atlantisFächerDiesesSchuelers = (from a in atlantisLeistungen where a.Klasse == we.Klasse where a.SchlüsselExtern == we.SchlüsselExtern select a).ToList();
-                int j = i;
-
-                foreach (var a in atlantisFächerDiesesSchuelers)
-                {
-                    // Bei einer 1-zu-1-Zuordnung ist alles tutti.
-
-                    if (a.Fach == we.Fach)
-                    {
-                        i++;
-                        break;
-                    }
-
-                    // Bei Kursen (erkennbar am Leerzeichen) muss der Teil vor dem Leerzeichen übereinstimmen.
-
-                    if (a.Fach.Contains(" ") && we.Fach.Contains(" ") && a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
-                    {
-                        we.Beschreibung += we.Fach + "->" + a.Fach + ",";
-                        i++;
-                        break;
-                    }
-
-                    // Evtl. hängt die Niveaustufe in Untis am Namen 
-
-                    if (we.Fach.EndsWith("A1") || we.Fach.EndsWith("A2") || we.Fach.EndsWith("B1") || we.Fach.EndsWith("B2"))
-                    {
-
-                    }
-                }
-
-                // Wenn keine Zuordnung vorgenommen werden konnte
-
-                if (i == j)
-                {
-                    AusgabeSchreiben("Achtung: In der " + we.Klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { we.Fach });
-                }
-            }
-            Global.WriteLine((" " + i).PadLeft(30, '.'));
-        }
-
-        internal void BindestrichfächerZuordnen(Leistungen atlantisLeistungen)
-        {   
-            int i = 0;
-
-            // Bei Webuntis-Bindestrich-Fächern (z.B. VEF-GUP) 
-
-            foreach (var we in (from t in this where t.Fach.Contains("-") select t).ToList())
-            {
-                // ... wenn keine 1:1-Zuordnung möglich ist ...
-
-                if (!(from a in atlantisLeistungen where a.Fach == we.Fach select a).Any())
-                {
-                    // ... wird versucht das Fach aufzutrennen und dann zuzuordnen.
-
-                    foreach (var fach in we.Fach.Split('-'))
-                    {
-                        var atlantisLeistung = (from a in atlantisLeistungen
-                                                where a.Klasse == we.Klasse
-                                                where a.Fach == fach
-                                                where a.SchlüsselExtern == we.SchlüsselExtern
-                                                select a).FirstOrDefault();
-
-                        if (atlantisLeistung != null)
-                        {
-                            var x = (from wee in this where wee.Fach == we.Fach where wee.SchlüsselExtern == atlantisLeistung.SchlüsselExtern select wee).FirstOrDefault();
-                            x.Beschreibung += we.Fach + "->" + fach + ",";
-                            x.Fach = fach;
-                            i++;
-                        }
-                    }
-                }
-            }
-            Global.WriteLine("Bindestrichfächer zuordnen ".PadRight(Global.PadRight, '.') + i.ToString().PadLeft(4));
-        }
-
-        internal void ReligionsabwählerBehandeln(Leistungen atlantisLeistungen)
-        {   
-            int i = 0;
-
-            // Für die verschiednenen Klassen ...
-
-            foreach (var klasse in (from k in this select k.Klasse).Distinct().ToList())
-            {
-                // ... wenn Religion in der Klasse unterrichtet wird ...
-
-                if (
-                    (from t in this
-                     where (t.Fach == "KR" || t.Fach == "ER" || t.Fach == "REL" || t.Fach.StartsWith("KR ") || t.Fach.StartsWith("ER "))
-                     where t.Klasse == klasse
-                     select t).Any())
-                {
-                    // ... wird bei allen Atlantis-Reli-Abwählern ...
-
-                    foreach (var aLeistung in (from a in atlantisLeistungen
-                                               where a.Klasse == klasse
-                                               where (a.Fach == "KR" || a.Fach == "ER" || a.Fach == "REL" || a.Fach.StartsWith("KR ") || a.Fach.StartsWith("ER "))
-                                               where a.ReligionAbgewählt
-                                               select a).ToList())
-                    {
-                        var wf = ((from w in this
-                                   where w.Klasse == klasse
-                                   where w.SchlüsselExtern == aLeistung.SchlüsselExtern
-                                   where (w.Fach == "KR" || w.Fach == "ER" || w.Fach == "REL" || w.Fach.StartsWith("KR ") || w.Fach.StartsWith("ER "))
-                                   select w).FirstOrDefault());
-                        if (wf == null)
-                        {
-                            // ... ein neuer Webuntis-Datensatz hinzugefügt und ein '-' gesetzt.
-
-                            Leistung leistung = new Leistung();
-                            leistung.Datum = new DateTime();
-                            leistung.Name = aLeistung.Name;
-                            leistung.Klasse = aLeistung.Klasse;
-                            leistung.Fach = aLeistung.Fach;
-                            leistung.Gesamtnote = "-";
-                            leistung.Gesamtpunkte = "99";
-                            leistung.Bemerkung = "";
-                            leistung.Lehrkraft = "";
-                            leistung.DatumReligionAbmeldung = aLeistung.DatumReligionAbmeldung;
-                            leistung.Beschreibung = "abgewählt,";
-                            leistung.SchlüsselExtern = aLeistung.SchlüsselExtern;
-                            this.Add(leistung);
-                            i++;
-                        }
-                        else
-                        {
-                            wf.Gesamtnote = "-";
-                        }
-                    }
-                }
-            }
-            Global.WriteLine("Religionsabwähler mit '-' versehen ".PadRight(Global.PadRight, '.') + i.ToString().PadLeft(4));
-        }
-
-        internal void ReligionZuordnen()
-        {
-            Console.Write(("Religion zuordnen").PadRight(71, '.'));
-            int i = 0;
-            foreach (var leistung in this)
-            {
-                if (leistung.Fach == "KR" || leistung.Fach == "ER" || leistung.Fach.StartsWith("KR ") || leistung.Fach.StartsWith("ER "))
-                {
-                    leistung.Beschreibung += leistung.Fach + "->REL,";
-                    leistung.Fach = "REL";
-                    i++;
-                }
-            }
-            Global.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-        }
-
-        internal void WeitereFächerZuordnen(Leistungen atlantisLeistungen)
-        {
-            Console.Write(("Weitere Fächer zuordnen").PadRight(71, '.'));
-            int i = 0;
-
-            // Für die verschiednenen Klassen ...
-
-            foreach (var klasse in (from k in this select k.Klasse).Distinct())
-            {
-                // ... und deren verschiedene Fächer aus Webuntis, in denen auch Noten gegeben wurden (also kein FU) ... 
-
-                foreach (var webuntisFach in (from t in this
-                                              where t.Klasse == klasse
-                                              where t.Gesamtnote != null
-                                              where t.Fach != "KR" && t.Fach != "ER" && !t.Fach.StartsWith("KR ") && !t.Fach.StartsWith("ER ") && !t.Fach.Contains("-")
-                                              select t.Fach).Distinct())
-                {
-                    // ... wenn es in Atlantis kein entsprechendes Fach gibt ...
-
-                    if (!(from a in atlantisLeistungen where a.Fach == webuntisFach select a).Any())
-                    {
-                        // ... wird geprüft, ob es ein Fach in Atlantis gibt, dass den Anfangsbuchstaben teilt und gleichzeitig keine Entsprechung in Webuntis hat.
-
-                        var afa = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a.Fach).Distinct().ToList();
-
-                        var af = (from a in atlantisLeistungen where a.Klasse == klasse where a.Fach.Substring(0, 1) == webuntisFach.Substring(0, 1) select a).FirstOrDefault();
-
-                        // ... und dass seinerseits in Webuntis nicht vorkommt ...
-
-                        if (afa.Count == 1 && !(from w in this where w.Fach == af.Fach select w).Any())
-                        {
-                            AusgabeSchreiben("Klasse: " + klasse + ". Das Webuntisfach " + webuntisFach + " wird dem Atlantisfach " + af.Fach + " zugeordnet. Wenn das nicht gewünscht ist, dann hier mit Suchen & Ersetzen der gewünschte Name gesetzt werden.", new List<string>());
-
-                            foreach (var leistung in this)
-                            {
-                                if (leistung.Fach == webuntisFach && leistung.Klasse == klasse)
-                                {
-                                    leistung.Fach = af.Fach;
-                                    leistung.Beschreibung += leistung.Fach + "->" + af.Fach + ",";
-                                    i++;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            AusgabeSchreiben("Achtung: In der " + klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { webuntisFach });
-                        }
-                    }
-                }
-            }
-            Global.WriteLine((" " + i.ToString()).PadLeft(30, '.'));
-        }
-
+        
         public Leistungen()
         {
-        }
-
-        public Leistungen(IEnumerable<Leistung> collection) : base(collection)
-        {
-            foreach (var item in (from a in collection where a.Gesamtnote == "5" || a.Gesamtnote == "6" select a).ToList())
-            {
-                this.Add(item);
-            }
         }
 
         internal void Add(Leistungen atlantisLeistungen)

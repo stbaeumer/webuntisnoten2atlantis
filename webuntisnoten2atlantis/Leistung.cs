@@ -290,120 +290,120 @@ namespace webuntisnoten2atlantis
             return null;
         }
 
-        internal void AtlantisLeistungZuordnenUndQueryBauen(List<Leistung> aL, string beschreibung)
-        {
-            // Für eine einfachere Vergleichbarkeit wird eine leere Gesamtnote genullt
+        //internal void AtlantisLeistungZuordnenUndQueryBauen(List<Leistung> aL, string beschreibung)
+        //{
+        //    // Für eine einfachere Vergleichbarkeit wird eine leere Gesamtnote genullt
 
-            string gesamtnote = Gesamtnote != "" ? Gesamtnote : null;
-            string gesamtpunkte = Gesamtpunkte != "" ? Gesamtpunkte : null;
-            string tendenz = Tendenz != "" ? Tendenz : null;
-            Query = "";
+        //    string gesamtnote = Gesamtnote != "" ? Gesamtnote : null;
+        //    string gesamtpunkte = Gesamtpunkte != "" ? Gesamtpunkte : null;
+        //    string tendenz = Tendenz != "" ? Tendenz : null;
+        //    Query = "";
 
-            // Nur, wenn es ein korrespondierendes Atlantis-Fach gibt
+        //    // Nur, wenn es ein korrespondierendes Atlantis-Fach gibt
 
-            if (aL.Count > 0)
-            {
-                this.EinheitNP = aL[0].EinheitNP;
-                this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 3) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Klasse.PadRight(5) + "|" + (Lehrkraft==null? "": Lehrkraft).PadRight(3) + "|" + aL[0].Fach.PadRight(5) + "|Zeile:" + (MarksPerLessonZeile == 0 ? "" : MarksPerLessonZeile.ToString().PadLeft(4))+"|";
+        //    if (aL.Count > 0)
+        //    {
+        //        this.EinheitNP = aL[0].EinheitNP;
+        //        this.Beschreibung = aL[0].SchlüsselExtern + "|" + (aL[0].Nachname.PadRight(10)).Substring(0, 3) + " " + (aL[0].Vorname.PadRight(10)).Substring(0, 2) + "|" + aL[0].Klasse.PadRight(5) + "|" + (Lehrkraft == null ? "" : Lehrkraft).PadRight(3) + "|" + aL[0].Fach.PadRight(5).Substring(5) + "|Zeile:" + (MarksPerLessonZeile == 0 ? "" : MarksPerLessonZeile.ToString().PadLeft(4)) + "|";
 
-                // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
+        //        // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
-                if (
-                    (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null && (gesamtnote != null || gesamtpunkte != null || tendenz != null))                                  // Neu
-                    || (aL[0].Gesamtnote != gesamtnote                                                                                 // UPD 
-                    || (aL[0].Gesamtpunkte != gesamtpunkte && aL[0].EinheitNP == "P") || (aL[0].Tendenz != tendenz && aL[0].EinheitNP == "P"))     // UPD Gym
-                   )
-                {
-                    Query = "UPDATE noten_einzel SET ";
+        //        if (
+        //            (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null && (gesamtnote != null || gesamtpunkte != null || tendenz != null))                                  // Neu
+        //            || (aL[0].Gesamtnote != gesamtnote                                                                                 // UPD 
+        //            || (aL[0].Gesamtpunkte != gesamtpunkte && aL[0].EinheitNP == "P") || (aL[0].Tendenz != tendenz && aL[0].EinheitNP == "P"))     // UPD Gym
+        //           )
+        //        {
+        //            Query = "UPDATE noten_einzel SET ";
 
-                    // Falls Neu
+        //            // Falls Neu
 
-                    if (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)
-                    {
-                        this.Beschreibung = "NEU|" + this.Beschreibung;
+        //            if (aL[0].Gesamtnote == null && aL[0].Gesamtpunkte == null && aL[0].Tendenz == null)
+        //            {
+        //                this.Beschreibung = "NEU|" + this.Beschreibung;
 
-                        if (gesamtpunkte != null && aL[0].EinheitNP == "P")
-                        {
-                            this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + gesamtpunkte.PadLeft(2) + "]";
-                            this.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
-                        }
-                        else
-                        {
-                            this.Query += (" ").PadRight(11) + "  ";
-                        }
-                        if (gesamtnote != null)
-                        {
-                            this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadRight(1)) + "]->[" + gesamtnote.PadRight(1) + "]";
-                            this.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
-                        }
-                        else
-                        {
-                            this.Query += (" ").PadRight(10) + "  ";
-                        }
-                        if (Tendenz != null && aL[0].EinheitNP == "P")
-                        {
-                            this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (Tendenz == null ? " " : Tendenz) + "]";
-                            this.Query += ("s_tendenz='" + tendenz + "'").PadRight(12) + ",  ";
-                        }
-                        else
-                        {
-                            this.Query += (" ").PadRight(13) + "  ";
-                        }
-                    }
-                    else // Falls Update
-                    {
-                        if (aL[0].Gesamtnote != gesamtnote || (aL[0].Gesamtpunkte != gesamtpunkte && EinheitNP == "P") || (aL[0].Tendenz != Tendenz && EinheitNP == "P"))
-                        {
-                            this.Beschreibung = "UPD|" + this.Beschreibung;
+        //                if (gesamtpunkte != null && aL[0].EinheitNP == "P")
+        //                {
+        //                    this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + gesamtpunkte.PadLeft(2) + "]";
+        //                    this.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
+        //                }
+        //                else
+        //                {
+        //                    this.Query += (" ").PadRight(11) + "  ";
+        //                }
+        //                if (gesamtnote != null)
+        //                {
+        //                    this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadRight(1)) + "]->[" + gesamtnote.PadRight(1) + "]";
+        //                    this.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
+        //                }
+        //                else
+        //                {
+        //                    this.Query += (" ").PadRight(10) + "  ";
+        //                }
+        //                if (Tendenz != null && aL[0].EinheitNP == "P")
+        //                {
+        //                    this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (Tendenz == null ? " " : Tendenz) + "]";
+        //                    this.Query += ("s_tendenz='" + tendenz + "'").PadRight(12) + ",  ";
+        //                }
+        //                else
+        //                {
+        //                    this.Query += (" ").PadRight(13) + "  ";
+        //                }
+        //            }
+        //            else // Falls Update
+        //            {
+        //                if (aL[0].Gesamtnote != gesamtnote || (aL[0].Gesamtpunkte != gesamtpunkte && EinheitNP == "P") || (aL[0].Tendenz != Tendenz && EinheitNP == "P"))
+        //                {
+        //                    this.Beschreibung = "UPD|" + this.Beschreibung;
 
-                            if (aL[0].Gesamtpunkte != gesamtpunkte && aL[0].EinheitNP == "P")
-                            {
-                                this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) + "]";
-                                this.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
-                            }
-                            else
-                            {
-                                this.Query += (" ").PadRight(11) + "  ";
-                            }
-                            if (aL[0].Gesamtnote != gesamtnote)
-                            {
-                                this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadLeft(1)) + "]->[" + Gesamtnote.PadLeft(1) + "]";
-                                this.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
-                            }
-                            else
-                            {
-                                this.Query += (" ").PadRight(10) + "  ";
-                            }
-                            if (aL[0].Tendenz != tendenz && aL[0].EinheitNP == "P")
-                            {
-                                this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (tendenz == null ? " " : tendenz) + "]";
-                                this.Query += ("s_tendenz='" + tendenz + "',").PadRight(16);
-                            }
-                            else
-                            {
-                                this.Query += (" ").PadRight(14) + "  ";
-                            }
-                        }
-                    }
+        //                    if (aL[0].Gesamtpunkte != gesamtpunkte && aL[0].EinheitNP == "P")
+        //                    {
+        //                        this.Beschreibung = this.Beschreibung + "P:[" + (aL[0].Gesamtpunkte == null ? "  " : aL[0].Gesamtpunkte.PadLeft(2)) + "]->[" + Gesamtpunkte.PadLeft(2) + "]";
+        //                        this.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
+        //                    }
+        //                    else
+        //                    {
+        //                        this.Query += (" ").PadRight(11) + "  ";
+        //                    }
+        //                    if (aL[0].Gesamtnote != gesamtnote)
+        //                    {
+        //                        this.Beschreibung = this.Beschreibung + "N:[" + (aL[0].Gesamtnote == null ? " " : aL[0].Gesamtnote.PadLeft(1)) + "]->[" + Gesamtnote.PadLeft(1) + "]";
+        //                        this.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
+        //                    }
+        //                    else
+        //                    {
+        //                        this.Query += (" ").PadRight(10) + "  ";
+        //                    }
+        //                    if (aL[0].Tendenz != tendenz && aL[0].EinheitNP == "P")
+        //                    {
+        //                        this.Beschreibung = this.Beschreibung + "T:[" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "]->[" + (tendenz == null ? " " : tendenz) + "]";
+        //                        this.Query += ("s_tendenz='" + tendenz + "',").PadRight(16);
+        //                    }
+        //                    else
+        //                    {
+        //                        this.Query += (" ").PadRight(14) + "  ";
+        //                    }
+        //                }
+        //            }
 
-                    this.Zielfach = aL[0].Fach;
-                    this.ZielLeistungId = aL[0].LeistungId;
-                    this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
+        //            this.Zielfach = aL[0].Fach;
+        //            this.ZielLeistungId = aL[0].LeistungId;
+        //            this.Beschreibung += beschreibung + (aL[0].Fach != "REL" && gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
 
-                    if (this.ReligionAbgewählt && this.FachAliases.Contains("REL"))
-                    {
-                        this.Beschreibung += beschreibung + "Reli abgewählt.";
-                    }
-                    this.Query += "ls_id_1=1337 "; // letzter Bearbeiter
-                    this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
-                }
-                else
-                {
-                    this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)" : "");
-                    this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + (gesamtpunkte == null ? "  " : gesamtpunkte.PadLeft(2)) + "',".PadRight(2) + " s_note='" + (aL[0].Gesamtnote == null ? "" : aL[0].Gesamtnote.PadRight(1)) + "', s_tendenz='" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + "*/";
-                }
-            }
-        }
+        //            if (this.ReligionAbgewählt && this.FachAliases.Contains("REL"))
+        //            {
+        //                this.Beschreibung += beschreibung + "Reli abgewählt.";
+        //            }
+        //            this.Query += "ls_id_1=1337 "; // letzter Bearbeiter
+        //            this.Query += "WHERE noe_id=" + aL[0].LeistungId + ";";
+        //        }
+        //        else
+        //        {
+        //            this.Beschreibung = "   |" + this.Beschreibung + "Note bleibt: " + (aL[0].Gesamtnote + (aL[0].Tendenz == null ? " " : aL[0].Tendenz)).PadLeft(2) + (aL[0].EinheitNP == "P" ? "(" + aL[0].Gesamtpunkte.PadLeft(2) + " P)" : "");
+        //            this.Query += "/* KEINE ÄNDERUNG   SET punkte='" + (gesamtpunkte == null ? "  " : gesamtpunkte.PadLeft(2)) + "',".PadRight(2) + " s_note='" + (aL[0].Gesamtnote == null ? "" : aL[0].Gesamtnote.PadRight(1)) + "', s_tendenz='" + (aL[0].Tendenz == null ? " " : aL[0].Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + aL[0].LeistungId + "*/";
+        //        }
+        //    }
+        //}
 
         internal void Update()
         {
