@@ -76,23 +76,6 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal bool ZuordnungZuAktuellemUnterrichtMöglich(Leistung atlantisLeistung)
-        {
-            foreach (var u in this.UnterrichteAktuell)
-            {
-                if (
-                    atlantisLeistung.FachAliases.Contains(u.Fach) &&
-                    atlantisLeistung.SchlüsselExtern == this.SchlüsselExtern &&
-                    atlantisLeistung.Klasse.Substring(0, 2) == this.Klasse.Substring(0, 2)
-                    )
-                {
-                    u.AtlantisLeistung = atlantisLeistung;
-                    return true;
-                }
-            }
-            return false;
-        }
-
         internal void HoleLeistungen(List<string> dieseFächerHolen)
         {
             for (int i = this.UnterrichteGeholt.Count - 1; i >= 0; i--)
@@ -101,7 +84,7 @@ namespace webuntisnoten2atlantis
 
                 foreach (var dF in dieseFächerHolen)
                 {
-                    if (this.UnterrichteGeholt[i].Fach == dF.Split('|')[0] && 
+                    if (this.UnterrichteGeholt[i].Fach == dF.Split('|')[0] &&
                         this.UnterrichteGeholt[i].AtlantisLeistung.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
                     {
                         holen = true; break;
@@ -116,7 +99,7 @@ namespace webuntisnoten2atlantis
                     // Die Atlantis-LeistungsID wird mit der ID des aktuellen Atlantis-Unterrichts überschrieben.
 
                     this.UnterrichteGeholt[i].AtlantisLeistung.Bemerkung = "|" + this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId + ">" + x.LeistungId;
-                    this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId = x.LeistungId;                    
+                    this.UnterrichteGeholt[i].AtlantisLeistung.LeistungId = x.LeistungId;
                 }
                 else
                 {

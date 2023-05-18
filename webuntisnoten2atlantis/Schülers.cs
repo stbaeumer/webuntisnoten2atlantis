@@ -127,9 +127,9 @@ namespace webuntisnoten2atlantis
 
                             w = (from ww in w.OrderByDescending(x => x.Datum) select ww).ToList();
 
-                            if (!Global.Rückmeldung.Contains(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Die Noten in Webuntis (" + w[0].Name + ") sind nicht eindeutig. Ist Note " + w[0].Gesamtnote + w[0].Tendenz + " korrekt?"))
+                            if (!Global.Rückmeldung.Contains(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Die Noten in Webuntis (" + w[0].Name + ") sind nicht eindeutig. Ist Note (" + w[0].Gesamtnote + w[0].Tendenz + ") korrekt?"))
                             {
-                                Global.Rückmeldung.Add(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Die Noten in Webuntis (" + w[0].Name + ") sind nicht eindeutig. Ist Note " + w[0].Gesamtnote + w[0].Tendenz + " korrekt?");
+                                Global.Rückmeldung.Add(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Die Noten in Webuntis (" + w[0].Name + ") sind nicht eindeutig. Ist Note (" + w[0].Gesamtnote + w[0].Tendenz + ") korrekt?");
                             }
                     
                             if ((from ww in w select ww.Datum).Distinct().ToList().Count() == 1)
@@ -152,6 +152,11 @@ namespace webuntisnoten2atlantis
                             w[0].Nachname,
                             w[0].Lehrkraft,
                             w[0].SchlüsselExtern);
+
+                        if (w[0].Gesamtnote == "-" && !Global.Rückmeldung.Contains(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Bei einem Strich (" + w[0].Name + ") muss rechtzeitig vor der Konferenz eine Bemerkung mit Ulla vereinbart werden."))
+                        {
+                            Global.Rückmeldung.Add(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Bei einem Strich (" + w[0].Name + ") muss rechtzeitig vor der Konferenz eine Bemerkung mit Ulla vereinbart werden.");
+                        }
                     }
                 }
             }
@@ -582,6 +587,7 @@ namespace webuntisnoten2atlantis
                                         }
                                     }
                                     gehtNichtWeiter = false;
+                                    Global.Rückmeldung.Add(" * " + lehrkraft.PadRight(3) + "," + Regex.Replace(af.Split('|')[0], @"[\d-]", string.Empty).PadRight(4) + ": Die Noten wurden konkurrierend" + (doppelteNoten.Distinct().Count() > 1 ? " und widersprüchlich" : "") + " von mehr als einer Lehrkraft eingetragen. Es werden nur die Noten von " + lehrkraft +" berücksichtigt.");
                                 }
                                 catch (Exception)
                                 {
@@ -639,7 +645,7 @@ namespace webuntisnoten2atlantis
                 string k = "|            |";
                 string n = "| Unterr.Nr.:|";
                 string x = "*------------+";
-                string y = "*------------*";
+                string y = "*-----*------*";
 
                 foreach (var aF in aktuelleFächer)
                 {
@@ -651,7 +657,7 @@ namespace webuntisnoten2atlantis
                     k += "      ";
                     n += aF.Split('|')[4].PadRight(4).Substring(0, 4) + "|";
                     x += "-----";
-                    y += "-----";
+                    y += "----*";
                 }
 
                 Global.WriteLine(x.PadRight(Global.PadRight + 3, '-') + "*");
@@ -739,9 +745,9 @@ namespace webuntisnoten2atlantis
                               where (new List<string> { "KR", "ER", "REL", "KR G1", "KR G2" }).Contains(u.Fach)
                               select u.Lehrkraft).FirstOrDefault();
 
-                    if (!Global.Rückmeldung.Contains(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evt. Note in Konferenz ergänzen."))
+                    if (!Global.Rückmeldung.Contains(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evt. Note in Konferenz ergänzen. Bei Abgang/Abschluss Strich."))
                     {
-                        Global.Rückmeldung.Add(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evt. Note in Konferenz ergänzen.");
+                        Global.Rückmeldung.Add(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evt. Note in Konferenz ergänzen. Bei Abgang/Abschluss Strich.");
                     }                    
                 }
                 if (xxxx)
@@ -765,70 +771,6 @@ namespace webuntisnoten2atlantis
             {
                 schüler.GetUnterrichte(unterrichteDerKlasse, alleGruppen);
             }
-        }
-
-        private static string GetVorschlag(List<string> möglicheKlassen)
-        {
-            string vorschlag = "";
-
-            // Wenn in den Properties ein Eintrag existiert, ...
-
-            if (Properties.Settings.Default.InteressierendeKlassen != null && Properties.Settings.Default.InteressierendeKlassen != "")
-            {
-                // ... wird für alle kommaseparierten Einträge geprüft ...
-
-                foreach (var item in Properties.Settings.Default.InteressierendeKlassen.Split(','))
-                {
-                    // ... ob es in den möglichen Klassen Kandidaten gibt.
-
-                    if ((from t in möglicheKlassen where t.StartsWith(item) select t).Any())
-                    {
-                        // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
-
-                        vorschlag += item + ",";
-                    }
-                }
-            }
-            Properties.Settings.Default.InteressierendeKlassen = vorschlag;
-            Properties.Settings.Default.Save();
-            return vorschlag.TrimEnd(',');
-        }
-
-        private static string GetVorschlag(List<int> möglicheSuS)
-        {
-            string vorschlag = "";
-
-            // Wenn in den Properties ein Eintrag existiert, ...
-
-            if (Properties.Settings.Default.InteressierendeSuS != null && Properties.Settings.Default.InteressierendeSuS != "")
-            {
-                // ... wird für alle kommaseparierten Einträge geprüft ...
-
-                foreach (var item in Properties.Settings.Default.InteressierendeSuS.Split(','))
-                {
-                    // ... ob es in den möglichen Klassen Kandidaten gibt.
-
-                    try
-                    {
-                        if (item != "" && möglicheSuS.Contains(Convert.ToInt32(item)))
-                        {
-                            // Falls ja, dann wird der Vorschlag aus den Properties übernommen.
-
-                            vorschlag += item + ",";
-                        }
-                    }
-                    catch (Exception)
-                    {
-                    }
-                }
-                if (vorschlag.TrimEnd(',') == "")
-                {
-                    vorschlag = "alle";
-                }
-            }
-            Properties.Settings.Default.InteressierendeSuS = vorschlag;
-            Properties.Settings.Default.Save();
-            return vorschlag.TrimEnd(',');
         }
     }
 }

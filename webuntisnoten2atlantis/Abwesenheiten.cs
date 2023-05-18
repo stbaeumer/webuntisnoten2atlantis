@@ -141,7 +141,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Add(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.SqlZeilen.Count();
-            
+
             int i = 0;
 
             try
@@ -186,7 +186,7 @@ DBA.schueler.name_2 ASC ", connection);
         internal void Update(List<Abwesenheit> webuntisAbwesenheiten)
         {
             int outputIndex = Global.SqlZeilen.Count();
-            
+
             int i = 0;
 
             try
@@ -230,7 +230,7 @@ DBA.schueler.name_2 ASC ", connection);
 
         internal void Delete(List<Abwesenheit> webuntisAbwesenheiten)
         {
-            int outputIndex = Global.SqlZeilen.Count();            
+            int outputIndex = Global.SqlZeilen.Count();
             int i = 0;
 
             try

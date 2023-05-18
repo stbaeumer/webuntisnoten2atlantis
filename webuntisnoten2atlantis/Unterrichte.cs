@@ -60,18 +60,5 @@ namespace webuntisnoten2atlantis
                 Global.WriteLine(("Alle Unterrichte ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
             }
         }
-
-        public Unterrichte(IEnumerable<Unterricht> collection, string interessierendeKlasse) : base(collection)
-        {
-            foreach (var item in collection)
-            {
-
-            }
-        }
-
-        internal object GetKlassenunterrichte(string interessierendeKlasse)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

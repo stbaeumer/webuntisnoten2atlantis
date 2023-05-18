@@ -8,8 +8,6 @@ namespace webuntisnoten2atlantis
 {
     public class Leistung
     {
-        private Leistung atlantisLeistung;
-
         public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, string lehrkraft, int schlüsselExtern)
         {
             Name = name;
@@ -419,21 +417,6 @@ namespace webuntisnoten2atlantis
                 throw ex;
             }
         }
-                
-        internal bool NoteDesAktuellenAbschnitts(List<string> interessierendeKlassen, List<string> aktSj)
-        {
-            if (Konferenzdatum >= DateTime.Now.Date || Konferenzdatum.Year == 1)
-            {
-                if (interessierendeKlassen.Contains(Klasse))
-                {
-                    if (Schuljahr == aktSj[0] + "/" + aktSj[1])
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
 
         internal bool leistungDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum(List<string> aktSj)
         {
@@ -459,41 +442,6 @@ namespace webuntisnoten2atlantis
             // Wenn eine Abmeldung mit neuerem Datum vorliegt, ist der Schüler abgemeldet.
 
             return this.DatumReligionAbmeldung.Year > 1 ? true : false;
-        }
-
-        internal void GeholteNote(Leistungen bisherigeAtlantisLeistungen, Leistungen alleWebuntisLeistungen)
-        {
-            // Wenn die Leistung ein min. 50 Tage zurückliegendes Konferenzdatum hat ...
-
-            if (Konferenzdatum.AddDays(50) <= DateTime.Now.Date && Konferenzdatum.Year > 1 && Gesamtnote != null)
-            {
-                // und keine Leistung in diesem Fach in Webuntis vorliegt ...
-
-                if (!(from w in alleWebuntisLeistungen
-                      where w.Klasse == Klasse
-                      where w.FachAliases.Contains(Fach)
-                      where w.SchlüsselExtern == SchlüsselExtern
-                      where w.Gesamtnote != null
-                      where w.Gesamtnote != ""
-                      select w).Any())
-                {
-                    // ... und auch keine geholte Atlantisleistung neueren Datums vorliegt ... 
-
-                    if (!(from t in (from tt in bisherigeAtlantisLeistungen
-                                     where (tt.Konferenzdatum.Year > 1 && tt.Konferenzdatum < DateTime.Now) // es werden nur vergangene Leistungen
-                                     select tt).ToList()                                                    // miteinander verglichen.
-                          where t.Konferenzdatum > Konferenzdatum
-                          where t.FachAliases.Contains(Fach)
-                          where t.SchlüsselExtern == SchlüsselExtern
-                          where t.Gesamtnote != null && t.Gesamtnote != ""
-                          select t).Any() || (Konferenzdatum.Year == 1 || Konferenzdatum > DateTime.Now))
-                    {
-                        IstGeholteNote = true;
-                        return;
-                    }
-                }
-            }
-            IstGeholteNote = false;
         }
     }
 }

@@ -122,7 +122,7 @@ namespace webuntisnoten2atlantis
                         {
                             Global.WriteLine(" ");
                             Global.WriteLine("Abwesenheiten in der Klasse " + interessierendeKlasse + ":");
-                            Global.WriteLine("===============================".PadRight(interessierendeKlasse.Length,'='));
+                            Global.WriteLine("==================================".PadRight(interessierendeKlasse.Length,'='));
                             Global.WriteLine(" ");
 
                             var webuntisAbwesenheiten = new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, atlantisLeistungen);
@@ -137,47 +137,6 @@ namespace webuntisnoten2atlantis
                             int outputIndex = Global.SqlZeilen.Count();
                             Global.PrintMessage(outputIndex, ("Es werden keine Abwesenheiten importiert, da die Importdatei nicht von heute ist."));
                         }
-
-
-
-
-                        //Leistungen geholteLeistungen = atlantisLeistungen.FilterNeuesteGeholteLeistungen(interessierendeSchülerDieserKlasse, interessierendeWebuntisLeistungen, interessierendeKlasse, AktSj, hzJz);
-
-                        //atlantisLeistungen.TabelleErzeugen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj);
-
-                        //var webuntisAbwesenheiten = sourceAbsenceTimesTotal == null ? null : new Abwesenheiten(sourceAbsenceTimesTotal, interessierendeKlasse, interessierendeWebuntisLeistungen);
-
-                        //if (interessierendeWebuntisLeistungen.NotenblattNichtLeeren(atlantisLeistungen,webuntisAbwesenheiten,targetAbsenceTimesTotal))
-                        //{                            
-                        //    interessierendeWebuntisLeistungen.AddRange(atlantisLeistungen.NotenVergangenerAbschnitteZiehen(interessierendeWebuntisLeistungen, geholteLeistungen, interessierendeKlasse, AktSj, hzJz));
-
-                        //    // Korrekturen durchführen
-
-                        //interessierendeWebuntisLeistungen = interessierendeWebuntisLeistungen.WidersprechendeGesamtnotenKorrigieren(atlantisLeistungen);
-                        //    //interessierendeWebuntisLeistungen.ReligionsabwählerBehandeln(atlantisLeistungen);
-                        //    interessierendeWebuntisLeistungen.BindestrichfächerZuordnen(atlantisLeistungen);
-                        //    atlantisLeistungen.FehlendeZeugnisbemerkungBeiStrich(interessierendeWebuntisLeistungen, interessierendeKlasse);
-
-                        //var interessierendeWebuntisLeistungen = new Leistungen();
-                        //interessierendeWebuntisLeistungen.AtlantisLeistungenZuordnenUndQueryBauen(atlantisLeistungen, AktSj[0] + "/" + AktSj[1], interessierendeKlasse, hzJz);
-                        //}
-
-
-
-                        //string hinweis = interessierendeWebuntisLeistungen.Update(atlantisLeistungen, Debug);
-
-
-
-
-
-
-                        //if (hinweis != "")
-                        //{
-                        //    Global.WriteLine("");
-                        //    Global.WriteLine(hinweis);
-                        //}
-
-                        //Console.WriteLine("-".PadRight(Global.PadRight, '-') + "----");
                     }
 
                     string targetSql = Path.Combine(targetPath, Zeitstempel + "_webuntisnoten2atlantis_" + Zeichenkette(interessierendeKlassen) + "_" + User + ".SQL");
@@ -194,11 +153,6 @@ namespace webuntisnoten2atlantis
                 Console.ReadKey();
                 Environment.Exit(0);
             }
-        }
-
-        private static Leistungen GetBlaueBriefeLeistungen()
-        {
-            throw new NotImplementedException();
         }
 
         private static bool BlaueBriefeErstellen()

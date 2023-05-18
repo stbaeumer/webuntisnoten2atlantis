@@ -288,9 +288,7 @@ namespace webuntisnoten2atlantis
             Global.WriteLine("");
             return geholteLeistungen;
         }
-
         
-
         public bool NotenblattNichtLeeren(Leistungen atlantisLeistungen, Abwesenheiten webuntisAbwesenheiten, string targetAbsenceTimesTotal)
         {   
             // Soll das Notenblatt mit allen Eintragungen erst gelöscht werden?
@@ -351,24 +349,6 @@ namespace webuntisnoten2atlantis
             return true;
         }
 
-        private bool LeistungHinzufügen(Leistung leistung)
-        {
-            foreach (var wl in this)
-            {
-                if (leistung.SchlüsselExtern == wl.SchlüsselExtern)
-                {
-                    if (leistung.Fach == wl.Fach)
-                    {
-                        if (leistung.Gesamtnote == wl.Gesamtnote)
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
         internal Leistungen WidersprechendeGesamtnotenKorrigieren(Leistungen atlantisleistungen)
         {
             var leistungen = new Leistungen();
@@ -399,9 +379,9 @@ namespace webuntisnoten2atlantis
                     Console.ReadKey();
                 }
 
-                if (esGibtDoppelteFächerZuDieser(wLeistung)) // Z.B. GPF1 und GPF2
+                if (EsGibtDoppelteFächerZuDieser(wLeistung)) // Z.B. GPF1 und GPF2
                 {
-                    if (esGibtWidersprechendeNoten(wLeistung)) // Z.B. Note 7.0 in GPF1 und Note 10.0 in GPF
+                    if (EsGibtWidersprechendeNoten(wLeistung)) // Z.B. Note 7.0 in GPF1 und Note 10.0 in GPF
                     {
                         // Es wird nur dann nachgefragt, wenn für diese Klasse und dieses Fach noch kein Eintrag existiert
 
@@ -495,7 +475,7 @@ namespace webuntisnoten2atlantis
             return wLeistung.Klasse + "|" + Regex.Match(wLeistung.Fach, @"^[^0-9]*").Value + "|" + leistungenÄhnlicheFächerMitUnterschiedlichenNoten[index-1].Lehrkraft;
         }
 
-        private bool esGibtWidersprechendeNoten(Leistung wLeistung)
+        private bool EsGibtWidersprechendeNoten(Leistung wLeistung)
         {
             var ähnlicheFächer = (from w in this
                                   where w.Klasse == wLeistung.Klasse
@@ -519,7 +499,7 @@ namespace webuntisnoten2atlantis
             return false;
         }
 
-        private bool esGibtDoppelteFächerZuDieser(Leistung wLeistung)
+        private bool EsGibtDoppelteFächerZuDieser(Leistung wLeistung)
         {
             var ähnlicheFächer = (from w in this
                                   where w.Klasse == wLeistung.Klasse
@@ -539,36 +519,6 @@ namespace webuntisnoten2atlantis
                 return true;
             }
             return false;
-        }
-
-        private List<string> GetDoppelteFächerOhneZählerMitWidersprechendenNoten(Leistung wLeistung)
-        {
-            var fächerOhneZähler = (from w in this where w.Klasse == wLeistung.Klasse select Regex.Match(w.Fach, @"^[^0-9]*").Value).Distinct().ToList();
-
-            var fächer = (from w in this where w.Klasse == wLeistung.Klasse select w.Fach).Distinct().ToList();
-
-            var doppelteFächer = new List<string>();
-
-            foreach (var fach in fächerOhneZähler)
-            {
-                var anz = 0;
-
-                foreach (var item in fächer)
-                {
-                    if (Regex.Match(item, @"^[^0-9]*").Value == fach)
-                    {
-                        anz++;
-                    }
-                }
-                if (anz>1)
-                {
-                    if (!doppelteFächer.Contains(fach))
-                    {
-                        doppelteFächer.Add(fach);
-                    }                    
-                }
-            }
-            return doppelteFächer;
         }
 
         internal void ErzeugeSerienbriefquelleFehlendeTeilleistungen(Leistungen webuntisLeistungen)
@@ -1449,72 +1399,6 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 {
                     AusgabeSchreiben("Achtung: In der " + we.Klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { we.Fach });
                 }
-
-                // ... wenn keine 1:1-Zuordnung möglich ist ...
-
-                //if (!(from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a).Any())
-                //{
-                //    // wird versucht die Niveaustufe abzuschneiden
-
-                //    if (!(from a in atlantisLeistungen where a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a).Any())
-                //    {
-                //        // wird versucht den Kurs abzuschneiden
-
-                //        if ((we.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
-                //        {
-                //            foreach (var a in atlantisLeistungen)
-                //            {
-                //                if (a.Klasse == we.Klasse)
-                //                {
-                //                    if (a.Fach.Split(' ')[0] == we.Fach.Split(' ')[0])
-                //                    {
-                //                        if ((a.Fach.Replace("  ", " ").Split(' ')).Count() > 1)
-                //                        {
-                //                            // Ziffer am Ende entfernen z.B. bei Kursen G1, G2 usw.
-
-                //                            string wFachOhneZifferAmEnde = Regex.Replace(we.Fach, @"\d+$", "");
-                //                            string aFachOhneZifferAmEnde = Regex.Replace(we.Fach, @"\d+$", "");
-
-                //                            // alle Leerzeichen entfernen
-
-                //                            string wFachOhneLeerzeichen = Regex.Replace(wFachOhneZifferAmEnde, @"\s+", "");
-                //                            string aFachOhneLeerzeichen = Regex.Replace(aFachOhneZifferAmEnde, @"\s+", "");
-
-                //                            if (wFachOhneLeerzeichen == aFachOhneLeerzeichen && we.Fach.Contains(" "))
-                //                            {
-                //                                we.Beschreibung += we.Fach + "->" + a.Fach + ",";
-                //                                we.Fach = a.Fach;
-                //                                i++;
-                //                            }
-                //                            else
-                //                            {
-                //                                AusgabeSchreiben("Achtung: In der " + we.Klasse + " kann ein Fach in Webuntis keinem Atlantisfach im Notenblatt der Klasse zugeordnet werden:", new List<string>() { we.Fach });
-                //                            }
-                //                        }
-                //                    }
-                //                }
-                //            }
-                //        }
-                //    }
-                //    else
-                //    {
-                //        var f = (from a in atlantisLeistungen where a.Fach.Replace("A1", "").Replace("A2", "").Replace("B1", "").Replace("B2", "").Replace("KA2", "") == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
-                //        if (we.Fach != f)
-                //        {
-                //            we.Beschreibung += "|" + we.Fach + "->" + f;
-                //            we.Fach = f;
-                //        }
-                //    }
-                //}
-                //else
-                //{
-                //    var f = (from a in atlantisLeistungen where a.Fach == we.Fach where a.Klasse == we.Klasse select a.Fach).FirstOrDefault();
-                //    if (we.Fach != f)
-                //    {
-                //        we.Beschreibung += "|" + we.Fach + "->" + f;
-                //        we.Fach = f;
-                //    }
-                //}
             }
             Global.WriteLine((" " + i).PadLeft(30, '.'));
         }
@@ -1824,109 +1708,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             }
             return "";
         }
-
-        //private bool SortierungNachSuS()
-        //{
-        //    try
-        //    {
-        //        do
-        //        {
-        //            Console.Write("  Bitte die interessierenden Klassen kommasepariert angeben [" + Properties.Settings.Default.Sortierung + "]: ");
-
-        //            var x = Console.ReadLine();
-
-        //            if (x == "")
-        //            {
-        //                interessierendeKlassen.AddRange(Properties.Settings.Default.InteressierendeKlassen.TrimEnd(',').Split(','));
-        //                x = Properties.Settings.Default.InteressierendeKlassen.TrimEnd(',');
-        //            }
-        //            else
-        //            {
-        //                var interessierendeKlassenString = "";
-
-        //                foreach (var klasse in möglicheKlassen)
-        //                {
-        //                    foreach (var item in x.ToUpper().Replace(" ", "").Split(','))
-        //                    {
-        //                        if (klasse != "" && klasse.StartsWith(item.Replace(" ", "").ToUpper()))
-        //                        {
-        //                            interessierendeKlassen.Add(klasse);
-        //                            interessierendeKlassenString += klasse + ",";
-        //                        }
-        //                    }
-        //                }
-
-        //                Properties.Settings.Default.InteressierendeKlassen = interessierendeKlassenString.TrimEnd(',');
-        //                Properties.Settings.Default.Save();
-        //            }
-        //        } while (Properties.Settings.Default.InteressierendeKlassen == "");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Global.WriteLine("Bei der Auswahl der interessierenden Klasse ist es zum Fehler gekommen. \n " + ex);
-        //    }
-        //    Global.WriteLine("   Ihre Auswahl: " + Global.List2String(interessierendeKlassen, ','));
-        //    Global.WriteLine(" ");
-        //}
-
-        //internal void Delete(List<Leistung> webuntisLeistungen, List<string> interessierendeKlassen, List<string> aktSj)
-        //{   
-        //    int outputIndex = Global.SqlZeilen.Count();                        
-        //    int i = 0;
-
-        //    try
-        //    {
-        //        foreach (var a in this)
-        //        {
-        //            if (a.SchuelerAktivInDieserKlasse)
-        //            {
-        //                // Wenn es zu einem Atlantis-Datensatz keine Entsprechung in Webuntis gibt, ... 
-                        
-        //                var webuntisLeistung = (from w in webuntisLeistungen
-        //                                        where w.Zielfach == a.Fach
-        //                                        where w.Klasse == a.Klasse
-        //                                        where w.SchlüsselExtern == a.SchlüsselExtern
-        //                                        where w.Gesamtpunkte != null
-        //                                        select w).FirstOrDefault();
-
-        //                if (webuntisLeistung == null)
-        //                {
-        //                    if (a.Gesamtnote != null)
-        //                    {
-        //                        // Wenn die Zeugniskonferenz mehr als drei Tage hinter uns liegt, wird nicht mehr gelöscht.
-
-        //                        if (DateTime.Now <= a.Konferenzdatum)
-        //                        {
-        //                            // Geholte Noten aus Vorjahren werden nicht gelöscht.
-
-        //                            if (!a.IstGeholteNote)
-        //                            {
-        //                                //UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Gesamtnote == null ? "NULL" : a.Gesamtnote + (a.Tendenz == null ? " " : a.Tendenz)) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      s_note=NULL WHERE noe_id=" + a.LeistungId + ";", new DateTime(1, 1, 1));
-
-        //                                if (a.Gesamtpunkte != null)
-        //                                {
-        //                                    //UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + ((a.Gesamtpunkte == null ? "NULL" : a.Gesamtpunkte.Split(',')[0])).PadLeft(2) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET      punkte=NULL WHERE noe_id=" + a.LeistungId + ";", new DateTime(1, 1, 1));
-        //                                }
-
-        //                                if (a.Tendenz != null)
-        //                                {
-        //                                    //UpdateLeistung(a.Klasse + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 6)) + "|" + a.Fach.Substring(0, Math.Min(a.Fach.Length, 3)).PadRight(3) + "|" + (a.Tendenz == null ? "NULL" : " " + a.Tendenz) + ">NULL" + a.Beschreibung, "UPDATE noten_einzel SET s_tendenz=NULL WHERE noe_id=" + a.LeistungId + ";", new DateTime(1, 1, 1));
-        //                                }
-        //                                i++;
-        //                            }
-        //                        }
-        //                    }                            
-        //                }
-        //            }
-        //        }                
-        //        Global.WriteLine(("Zu löschende Leistungen in Atlantis ").PadRight(71, '.') + i.ToString().PadLeft(4));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw ex;
-        //    }
-        //}
-             
+        
         public void AusgabeSchreiben(string text, List<string> klassen)
         {
             try

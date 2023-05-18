@@ -7,8 +7,6 @@ namespace webuntisnoten2atlantis
 {
     public class Fach
     {
-        private string fach;
-
         public string Klasse { get; private set; }
         public string Name { get; private set; }
         public string Lehrkraft { get; private set; }

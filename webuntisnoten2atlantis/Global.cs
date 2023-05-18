@@ -98,6 +98,7 @@ namespace webuntisnoten2atlantis
             }
             return s.Substring(0,s.Length-delimiter.Length);
         }
+
         internal static string List2String(List<int> interessierendeKlassen, Char delimiter)
         {
             var s = "";
