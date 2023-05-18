@@ -63,7 +63,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                Global.WriteLine(("Alle Gruppen ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+                Console.WriteLine(("Alle Gruppen ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
             }
         }
     }

@@ -61,8 +61,6 @@ namespace webuntisnoten2atlantis
         public string Gesamtpunkte_13_1 { get; internal set; }
         public string Gesamtpunkte_13_2 { get; internal set; }
         public int LehrkraftAtlantisId { get; internal set; }
-        public string Zielfach { get; internal set; }
-        public int ZielLeistungId { get; internal set; }
         public string Note { get; internal set; }
         public string Punkte { get; internal set; }
         public DateTime DatumReligionAbmeldung { get; internal set; }

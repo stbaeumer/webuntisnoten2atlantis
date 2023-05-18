@@ -57,7 +57,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                Global.WriteLine(("Alle Unterrichte ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+                Console.WriteLine(("Alle Unterrichte ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
             }
         }
     }

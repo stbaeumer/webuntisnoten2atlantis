@@ -152,8 +152,6 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                WL.Zielfach = AL.Fach;
-                WL.ZielLeistungId = AL.LeistungId;
                 WL.Beschreibung = WL.Beschreibung + (AL.Fach != "REL" && gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
 
                 if (WL.ReligionAbgewählt && WL.FachAliases.Contains("REL"))

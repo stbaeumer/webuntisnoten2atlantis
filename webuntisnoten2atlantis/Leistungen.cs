@@ -113,7 +113,7 @@ namespace webuntisnoten2atlantis
                 }
             }               
 
-            Global.WriteLine(("Alle Webuntis-Leistungen (mit & ohne Gesamtnote; ohne Dopplungen) ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+            Console.WriteLine(("Alle Webuntis-Leistungen (mit & ohne Gesamtnote; ohne Dopplungen) ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
         }
 
         internal List<string> GetMöglicheKlassen()
@@ -122,7 +122,7 @@ namespace webuntisnoten2atlantis
                      where m.Klasse != ""
                      where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
                      select m.Klasse).Distinct().ToList();
-            Global.WriteLine(("Webuntis-Klassen mit eingetragenen Gesamtnoten").PadRight(Global.PadRight - 2, '.') + x.Count.ToString().PadLeft(6));
+            Console.WriteLine(("Webuntis-Klassen mit eingetragenen Gesamtnoten").PadRight(Global.PadRight - 2, '.') + x.Count.ToString().PadLeft(6));
 
             Console.WriteLine(Global.List2String(x, ","));
 
@@ -513,7 +513,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             var alleFächerDesAktuellenAbschnitts = (from l in this where (l.Konferenzdatum > DateTime.Now.AddDays(-20) || l.Konferenzdatum.Year == 1) select l.Fach).ToList();
 
-            Global.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + hzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
+            Console.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + hzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
         }
 
         private Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum()
@@ -521,8 +521,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             if (Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.Count > 0)
             {
                 Console.WriteLine(" ");
-                Global.WriteLine(("Es gibt Atlantisleistungen mit dem Konferenzdatum " + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.FirstOrDefault().Konferenzdatum.ToShortDateString()).PadRight(Global.PadRight,'.') + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.Count.ToString().PadLeft(4));
-                Global.WriteLine(" Aus Sicherheitsgründen werden Atlantisleistungen mit zuückliegendem Konferenzdatum nicht ungefragt überschrieben. ");
+                Console.WriteLine(("Es gibt Atlantisleistungen mit dem Konferenzdatum " + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.FirstOrDefault().Konferenzdatum.ToShortDateString()).PadRight(Global.PadRight,'.') + Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.Count.ToString().PadLeft(4));
+                Console.WriteLine(" Aus Sicherheitsgründen werden Atlantisleistungen mit zuückliegendem Konferenzdatum nicht ungefragt überschrieben. ");
                 ConsoleKeyInfo x;
 
                 do

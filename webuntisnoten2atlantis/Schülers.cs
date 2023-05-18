@@ -87,7 +87,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
 
-                Global.WriteLine(("Alle aktiven Schüler, die nicht länger als 30 Tage ausgetreten sind aus Webuntis ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+                Console.WriteLine(("Alle aktiven Schüler, die nicht länger als 30 Tage ausgetreten sind aus Webuntis ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
             }
         }
 
@@ -95,7 +95,7 @@ namespace webuntisnoten2atlantis
         {
             Schülers alleWebuntisSchülersDieserKlasse = new Schülers();
             alleWebuntisSchülersDieserKlasse.AddRange((from m in this where m.Klasse == interessierendeKlasse select m).ToList());
-            Global.WriteLine(("Verschiedene SuS der Klasse " + interessierendeKlasse + " aus Webuntis ").PadRight(Global.PadRight - 2, '.') + alleWebuntisSchülersDieserKlasse.Count.ToString().PadLeft(6));
+            Console.WriteLine(("Verschiedene SuS der Klasse " + interessierendeKlasse + " aus Webuntis ").PadRight(Global.PadRight - 2, '.') + alleWebuntisSchülersDieserKlasse.Count.ToString().PadLeft(6));
             return alleWebuntisSchülersDieserKlasse;
         }
 
@@ -312,6 +312,7 @@ namespace webuntisnoten2atlantis
                     }
                 }
             }
+            Global.WriteLine("  ");
             Global.WriteLine("Link zum Teams-Chat mit den LuL der Klasse " + interessierendeKlasse + ":");
             Global.WriteLine(" " + url.TrimEnd(','));
 
@@ -407,11 +408,17 @@ namespace webuntisnoten2atlantis
 
                             if (atlantisLeistung.Konferenzdatum.Date >= DateTime.Now.Date || atlantisLeistung.Konferenzdatum.Year == 1)
                             {
-                                // ... wird sie zugeordnet.
+                                if (hzJz == atlantisLeistung.HzJz)
+                                {
+                                    if (aktSj[0] + "/" + aktSj[1] == atlantisLeistung.Schuljahr)
+                                    {
+                                        // ... wird sie zugeordnet.
 
-                                u.AL = atlantisLeistung;
-                                u.Reihenfolge = atlantisLeistung.Reihenfolge; // Die Reihenfolge aus Atlantis wird an den Unterricht übergeben                                    
-                                break;
+                                        u.AL = atlantisLeistung;
+                                        u.Reihenfolge = atlantisLeistung.Reihenfolge; // Die Reihenfolge aus Atlantis wird an den Unterricht übergeben                                    
+                                        break;
+                                    }                                    
+                                }                                
                             }
                         }
                     }                
@@ -636,8 +643,8 @@ namespace webuntisnoten2atlantis
                 Global.WriteLine("*-----*------*----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
                 Global.WriteLine(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis:").PadRight(Global.PadRight + 3) + "|");
                 
-
-                var aktuelleFächer = (from s in this from u in s.UnterrichteAusWebuntis.OrderBy(xx => xx.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
+                // aktuelle Fächer
+                var aF = (from s in this from u in s.UnterrichteAusWebuntis.OrderBy(xx => xx.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
                 
                 bool xxxx = false;
                 bool reliabwähler = false;
@@ -652,7 +659,7 @@ namespace webuntisnoten2atlantis
                 string x = "*------------+";
                 string y = "*-----*------*";
 
-                foreach (var aktuelleFach in aktuelleFächer)
+                foreach (var aktuelleFach in aF)
                 {
                     b += "----+";
                     f += aktuelleFach.Split('|')[0].PadRight(4).Substring(0, 4) + "|";
@@ -677,13 +684,26 @@ namespace webuntisnoten2atlantis
                 {
                     string s = "|" + schüler.Nachname.PadRight(5).Substring(0, 5) + "|" + schüler.SchlüsselExtern + "|";
 
-                    foreach (var aF in aktuelleFächer)
+                    for (int i = 0; i < aF.Count; i++)
                     {
                         var uA = (from u in schüler.UnterrichteAusWebuntis
-                                 where u.Fach == aF.Split('|')[0]
-                                 where u.Lehrkraft == aF.Split('|')[2]
-                                 where aF.Split('|')[3] == u.Gruppe
+                                 where u.Fach == aF[i].Split('|')[0]
+                                 where u.Lehrkraft == aF[i].Split('|')[2]
+                                 where aF[i].Split('|')[3] == u.Gruppe
                                  select u).FirstOrDefault();
+
+                        // Wenn der Nachfolger das selbe Fach ist, ändert sich der delimiter
+
+                        var delimiter = "|";
+
+                        if (i<aF.Count-1)
+                        {
+                            if (Regex.Replace(aF[i].Split('|')[0], @"[\d-]", string.Empty) == Regex.Replace(aF[i+1].Split('|')[0], @"[\d-]", string.Empty))
+                            {
+                                delimiter = " ";
+                            }
+                        }
+                        
 
                         // Wenn es zu dem Fach in der Schülergruppe und bei der Lehrkraft einen Unterricht gibt ... 
 
@@ -693,11 +713,11 @@ namespace webuntisnoten2atlantis
                             {
                                 if (uA.WL != null)
                                 {
-                                    s += (uA.WL.Gesamtnote + uA.WL.Tendenz).PadRight(2) + (uA.AL.Gesamtnote + uA.AL.Tendenz).PadRight(2) + "|";
+                                    s += (uA.WL.Gesamtnote + uA.WL.Tendenz).PadRight(2) + (uA.AL.Gesamtnote + uA.AL.Tendenz).PadRight(2) + delimiter;
                                 }
                                 else
                                 {
-                                    s += "  " + (uA.AL.Gesamtnote + uA.AL.Tendenz).PadRight(2) + "|";
+                                    s += "  " + (uA.AL.Gesamtnote + uA.AL.Tendenz).PadRight(2) + delimiter;
                                 }
                             }
                             else
@@ -705,14 +725,14 @@ namespace webuntisnoten2atlantis
                                 if (uA.WL != null)
                                 {
                                     // Wenn der Schüler in Webuntis steht, aber kein Leistungsdatensatz in Atlantis hat
-                                    s += (uA.WL.Gesamtnote + uA.WL.Tendenz).PadRight(2) + "XX|";
+                                    s += (uA.WL.Gesamtnote + uA.WL.Tendenz).PadRight(2) + "XX" + delimiter;
                                     xxxx = true;
                                 }
                                 else
                                 {
                                     if (uA.Bemerkung.Contains("setzt die Note"))
                                     {
-                                        s += uA.Bemerkung.Substring(0,2) + "XX|";
+                                        s += uA.Bemerkung.Substring(0,2) + "XX" + delimiter;
                                     }
                                     else
                                     {
@@ -725,14 +745,14 @@ namespace webuntisnoten2atlantis
                         {
                             // Wenn der Schüler in Webuntis dieses Fach nicht belegt hat, wird geixxt
 
-                            if ((new List<string> { "KR", "ER", "REL" }).Contains(aF.Split('|')[0]))
+                            if ((new List<string> { "KR", "ER", "REL" }).Contains(aF[i].Split('|')[0]))
                             {
-                                s += "R*  |";
+                                s += "R*  " + delimiter;
                                 reliabwähler = true;
                             }
                             else
                             {
-                                s += "XXXX|";
+                                s += "XXXX" + delimiter;
                                 xxxx = true;
                             }
                         }
@@ -750,9 +770,9 @@ namespace webuntisnoten2atlantis
                               where (new List<string> { "KR", "ER", "REL", "KR G1", "KR G2" }).Contains(u.Fach)
                               select u.Lehrkraft).FirstOrDefault();
 
-                    if (!Global.Rückmeldung.Contains(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen. Bei Abgang/Abschluss Strich."))
+                    if (!Global.Rückmeldung.Contains(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen, falls bewertbar. Bei Abgang/Abschluss Strich."))
                     {
-                        Global.Rückmeldung.Add(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen. Bei Abgang/Abschluss Strich.");
+                        Global.Rückmeldung.Add(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen, falls bewertbar. Bei Abgang/Abschluss Strich.");
                     }                    
                 }
                 if (xxxx)

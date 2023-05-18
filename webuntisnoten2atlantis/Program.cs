@@ -237,7 +237,7 @@ namespace webuntisnoten2atlantis
             {
                 Console.Write(" Bitte die interessierende Klasse angeben [" + GetVorschlag(möglicheKlassen) + "]: ");
 
-                var x = Console.ReadLine();
+                var x = Console.ReadLine().ToUpper();
 
                 if (x == "")
                 {
@@ -247,8 +247,8 @@ namespace webuntisnoten2atlantis
                 {
                     Properties.Settings.Default.InteressierendeKlassen = x;
                     Properties.Settings.Default.Save();
-                    Global.WriteLine("   Ihre Auswahl: " + x);
-                    Global.WriteLine(" ");
+                    Console.WriteLine("   Ihre Auswahl: " + x);
+                    Console.WriteLine(" ");
                     return x;
                 }
             } while (true);
@@ -338,18 +338,18 @@ namespace webuntisnoten2atlantis
 
             if ((sourceFile == null || System.IO.File.GetLastWriteTime(sourceFile).Date < DateTime.Now.Date))
             {
-                Global.WriteLine("");
-                Global.WriteLine(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
-                Global.WriteLine(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
+                Console.WriteLine("");
+                Console.WriteLine(" Die " + kriterium + "<...>.csv" + (sourceFile == null ? " existiert nicht im Download-Ordner" : " im Download-Ordner ist nicht von heute. \n Es werden keine Daten aus der Datei importiert") + ".");
+                Console.WriteLine(" Exportieren Sie die Datei frisch aus Webuntis, indem Sie als Administrator:");
 
                 if (kriterium.Contains("Student_"))
                 {
-                    Global.WriteLine("   1. Stammdaten > Schülerinnen");
-                    Global.WriteLine("   2. \"Berichte\" auswählen");                    
-                    Global.WriteLine("   3. Bei \"Schüler\" auf CSV klicken");
-                    Global.WriteLine("   4. Die Datei \"Student_<...>.CSV\" im Download-Ordner zu speichern");
-                    Global.WriteLine(" ");
-                    Global.WriteLine(" ENTER beendet das Programm.");
+                    Console.WriteLine("   1. Stammdaten > Schülerinnen");
+                    Console.WriteLine("   2. \"Berichte\" auswählen");                    
+                    Console.WriteLine("   3. Bei \"Schüler\" auf CSV klicken");
+                    Console.WriteLine("   4. Die Datei \"Student_<...>.CSV\" im Download-Ordner zu speichern");
+                    Console.WriteLine(" ");
+                    Console.WriteLine(" ENTER beendet das Programm.");
                     Console.ReadKey();
                     Environment.Exit(0);
                 }
@@ -357,48 +357,48 @@ namespace webuntisnoten2atlantis
                 {
                     if (kriterium.Contains("MarksPerLesson"))
                     {
-                        Global.WriteLine("   1. Klassenbuch > Berichte klicken");
-                        Global.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
-                        Global.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
-                        Global.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
-                        Global.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
-                        Global.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
-                        Global.WriteLine(" ");
-                        Global.WriteLine(" ENTER beendet das Programm.");
+                        Console.WriteLine("   1. Klassenbuch > Berichte klicken");
+                        Console.WriteLine("   2. Alle Klassen auswählen und ggfs. den Zeitraum einschränken");
+                        Console.WriteLine("   3. Unter \"Noten\" die Prüfungsart (-Alle-) auswählen");
+                        Console.WriteLine("   4. Unter \"Noten\" den Haken bei Notennamen ausgeben _NICHT_ setzen");
+                        Console.WriteLine("   5. Hinter \"Noten pro Schüler\" auf CSV klicken");
+                        Console.WriteLine("   6. Die Datei \"MarksPerLesson<...>.CSV\" im Download-Ordner zu speichern");
+                        Console.WriteLine(" ");
+                        Console.WriteLine(" ENTER beendet das Programm.");
                         Console.ReadKey();
                         Environment.Exit(0);
                     }
                     else
                     {
-                        Global.WriteLine("   1. Administration > Export klicken");
-                        Global.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
-                        Global.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
+                        Console.WriteLine("   1. Administration > Export klicken");
+                        Console.WriteLine("   2. Zeitraum begrenzen, also die Woche der Zeugniskonferenz und vergange Abschnitte herauslassen");
+                        Console.WriteLine("   2. Das CSV-Icon hinter Gesamtfehlzeiten klicken");
                     }
 
                     if (kriterium.Contains("AbsenceTimesTotal"))
                     {
-                        Global.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
-                        Global.WriteLine("WICHTIG: Es kann Sinn machen nur Abwesenheiten bis zur letzten Woche in Webuntis auszuwählen.");
+                        Console.WriteLine("   4. Die Gesamtfehlzeiten (\"AbsenceTimesTotal<...>.CSV\") im Download-Ordner zu speichern");
+                        Console.WriteLine("WICHTIG: Es kann Sinn machen nur Abwesenheiten bis zur letzten Woche in Webuntis auszuwählen.");
                     }
 
                     if (kriterium.Contains("StudentgroupStudents"))
                     {
-                        Global.WriteLine("   4. Die Schülergruppen  (\"StudentgroupStudents<...>.CSV\") im Download-Ordner zu speichern");
+                        Console.WriteLine("   4. Die Schülergruppen  (\"StudentgroupStudents<...>.CSV\") im Download-Ordner zu speichern");
                     }
 
                     if (kriterium.Contains("ExportLessons"))
                     {
-                        Global.WriteLine("   4. Die Unterrichte (\"ExportLessons<...>.CSV\") im Download-Ordner zu speichern");
+                        Console.WriteLine("   4. Die Unterrichte (\"ExportLessons<...>.CSV\") im Download-Ordner zu speichern");
                     }
                 }
 
-                Global.WriteLine(" ");
+                Console.WriteLine(" ");
                 sourceFile = null;
             }
 
             if (sourceFile != null)
             {
-                Global.WriteLine("Ausgewertete Datei: " + (Path.GetFileName(sourceFile) + " ").PadRight(53, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
+                Console.WriteLine("Ausgewertete Datei: " + (Path.GetFileName(sourceFile) + " ").PadRight(53, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
             return sourceFile;
@@ -509,7 +509,7 @@ namespace webuntisnoten2atlantis
             {
                 do
                 {
-                    Global.WriteLine(" Wo sollen die Dateien gespeichert werden? [ " + pfad + " ]");
+                    Console.WriteLine(" Wo sollen die Dateien gespeichert werden? [ " + pfad + " ]");
                     pfad = Console.ReadLine();
 
                     if (pfad == "")
@@ -524,15 +524,15 @@ namespace webuntisnoten2atlantis
                     catch (Exception)
                     {
 
-                        Global.WriteLine("Der Pfad " + pfad + " kann nicht angelegt werden.");
+                        Console.WriteLine("Der Pfad " + pfad + " kann nicht angelegt werden.");
                     }
 
                 } while (!Directory.Exists(pfad));
             }
             
-            Global.WriteLine(("|     Pfad zu den Dateien: " + pfad).PadRight(Global.PadRight,' ') + "   |");
-            Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine(@" ");
+            Console.WriteLine(("|     Pfad zu den Dateien: " + pfad).PadRight(Global.PadRight,' ') + "   |");
+            Console.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
+            Console.WriteLine(@" ");
 
             return pfad;
         }
