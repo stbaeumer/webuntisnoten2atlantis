@@ -226,6 +226,7 @@ namespace webuntisnoten2atlantis
             catch (Exception)
             {
                 Console.WriteLine("Es gibt keine PNG-Datei, die in den letzten 5 Minuten auf dem Desktop abgelegt wurde. Also wurde nichts verändert.");
+                Console.WriteLine("");
             }
             Console.WriteLine("");
         }
