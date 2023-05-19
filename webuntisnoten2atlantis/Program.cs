@@ -93,6 +93,8 @@ namespace webuntisnoten2atlantis
 
                     interessierendeSchülerDieserKlasse.GetAtlantisLeistungen(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, User, interessierendeKlasse, hzJz);
 
+                    interessierendeSchülerDieserKlasse.ZweiLehrerEinFach(interessierendeKlasse);
+
                     interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
 
                     interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);

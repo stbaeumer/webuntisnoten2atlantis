@@ -10,6 +10,8 @@ namespace webuntisnoten2atlantis
 {
     public class Schülers : List<Schüler>
     {
+        public List<string> AktuelleFächer { get; private set; }
+
         public Schülers()
         {
         }
@@ -157,6 +159,70 @@ namespace webuntisnoten2atlantis
                         if (w[0].Gesamtnote == "-" && !Global.Rückmeldung.Contains(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Bei einem Strich (" + w[0].Name + ") muss rechtzeitig vor der Konferenz eine Bemerkung mit Ulla vereinbart werden."))
                         {
                             Global.Rückmeldung.Add(" * " + w[0].Lehrkraft.PadRight(3) + "," + w[0].Fach.PadRight(4) + ": Bei einem Strich (" + w[0].Name + ") muss rechtzeitig vor der Konferenz eine Bemerkung mit Ulla vereinbart werden.");
+                        }
+                    }
+                }
+            }
+        }
+
+        internal void ZweiLehrerEinFach(string interessierendeKlasse)
+        {
+            foreach (var aktuellesFach in AktuelleFächer)
+            {
+                foreach (var schüler in this)
+                {
+                    // Zwei oder mehr unterrichten Fach, 
+
+                    var zweiUnterrichtenDasGleicheFach = (from u in schüler.UnterrichteAusWebuntis
+                                                          where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty)
+                                                          select u.Lehrkraft).ToList();
+
+                    if (zweiUnterrichtenDasGleicheFach.Count > 1)
+                    {
+                        foreach (var leh in zweiUnterrichtenDasGleicheFach)
+                        {
+                            // davon darf mindestens einer keine einzige Gesamtnote eingetragen haben
+
+                            var keineEinzigeNoteEingetragen = (from s in this
+                                                               from u in s.UnterrichteAusWebuntis
+                                                               where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty)
+                                                               where u.WL == null || u.WL.Gesamtnote == null || u.WL.Gesamtnote == ""
+                                                               select u.Lehrkraft).Distinct().ToList();
+
+                            // und genau ein anderer muss Noten eingetragen haben
+
+                            var noteEingetragen = (from s in this
+                                                   from u in s.UnterrichteAusWebuntis
+                                                   where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty)
+                                                   where u.WL != null
+                                                   where u.WL.Gesamtnote != null && u.WL.Gesamtnote != ""
+                                                   select u.Lehrkraft).Distinct().ToList();
+
+                            // Dann werden alle Webuntis- & Atlantisleistungen bei dem Nichteintrager entfernt
+
+                            if (noteEingetragen.Count == 1 && keineEinzigeNoteEingetragen.Count > 0)
+                            {
+                                foreach (var s in this)
+                                {
+                                    foreach (var unt in (from u in s.UnterrichteAusWebuntis where Regex.Replace(u.Fach.Split('|')[0], @"[\d-]", string.Empty) == Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty) select u).ToList())
+                                    {
+                                        foreach (var keineNote in keineEinzigeNoteEingetragen)
+                                        {
+                                            if (unt.Lehrkraft == keineNote)
+                                            {
+                                                unt.WL = null;
+                                                unt.AL = null;
+                                                unt.Bemerkung = noteEingetragen[0] + " setzt die Note in " + unt.Fach + ".";
+                                                
+                                                if (!Global.Rückmeldung.Contains(unt.Lehrkraft.PadRight(3) + "," + Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty).PadRight(3) + ": Von den " + zweiUnterrichtenDasGleicheFach + " LuL in " + Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty).PadRight(3) + " werden nur die Noten von " + unt.Lehrkraft + " in das Zeugnis übernommen."))
+                                                {
+                                                    Global.Rückmeldung.Add(unt.Lehrkraft.PadRight(3) + "," + Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty).PadRight(3) + ": Von den " + zweiUnterrichtenDasGleicheFach + " LuL in " + Regex.Replace(aktuellesFach.Split('|')[0], @"[\d-]", string.Empty).PadRight(3) + " werden nur die Noten von " + unt.Lehrkraft + " in das Zeugnis übernommen.");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -472,6 +538,9 @@ namespace webuntisnoten2atlantis
                     schüler.UnterrichteAktuellAusAtlantis.Add(new Unterricht(atlantisLeistung));
                 }
             }
+
+            // aktuelle Fächer
+            AktuelleFächer = (from s in this from u in s.UnterrichteAusWebuntis.OrderBy(xx => xx.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
         }
 
         internal void Update(string interessierendeKlasse)
@@ -543,6 +612,19 @@ namespace webuntisnoten2atlantis
                                 }
                             }
                         }
+                                                
+                        foreach (var unterricht in (from u in schüler.UnterrichteAusWebuntis where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(af.Split('|')[0], @"[\d-]", string.Empty) select u).ToList())
+                        {
+                            if (unterricht.WL != null && unterricht.WL.Gesamtnote != null && unterricht.WL.Gesamtnote != "")
+                            {
+                                if (!doppelteNotenLoL.Contains(unterricht.WL.Gesamtnote + unterricht.WL.Tendenz + "|" + unterricht.WL.Lehrkraft))
+                                {
+                                    doppelteNotenLoL.Add(unterricht.WL.Gesamtnote + unterricht.WL.Tendenz + "|" + unterricht.WL.Lehrkraft);
+                                    doppelterLehrer.Add(unterricht.Lehrkraft);
+                                    doppelteNoten.Add(unterricht.WL.Gesamtnote + unterricht.WL.Tendenz);
+                                }
+                            }
+                        }
 
                         if (doppelteNotenLoL.Count > 1)
                         {
@@ -587,7 +669,7 @@ namespace webuntisnoten2atlantis
                                                 {
                                                     unt.WL = null;                                                    
                                                     unt.AL = null;
-                                                    unt.Bemerkung = lehrkraft + " setzt die Note in " + unt.Fach + ".";
+                                                    unt.Bemerkung = lehrkraft + " überschreibt die Noten in " + unt.Fach + ".";
                                                 }
                                             }
                                         }
@@ -641,13 +723,12 @@ namespace webuntisnoten2atlantis
                 Console.WriteLine(("======================================== ").PadRight(interessierendeKlasse.Length, '='));
                 Console.WriteLine((" "));
                 Global.WriteLine("*-----*------*----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
-                Global.WriteLine(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis:").PadRight(Global.PadRight + 3) + "|");
-                
-                // aktuelle Fächer
-                var aF = (from s in this from u in s.UnterrichteAusWebuntis.OrderBy(xx => xx.Reihenfolge) select u.Fach + "|" + interessierendeKlasse + "|" + u.Lehrkraft + "|" + u.Gruppe + "|" + u.LessonNumber).Distinct().ToList();
+                Global.WriteLine(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis & F***lantis").PadRight(Global.PadRight - 28) + (DateTime.Now.ToLongDateString() + ", " + DateTime.Now.ToShortTimeString()).PadLeft(31) + "|");
                 
                 bool xxxx = false;
                 bool reliabwähler = false;
+                bool gartenzaun = false;
+                bool prozent = false;
 
                 string b = "*------------+";
                 string f = "|       Fach:|";
@@ -659,7 +740,7 @@ namespace webuntisnoten2atlantis
                 string x = "*------------+";
                 string y = "*-----*------*";
 
-                foreach (var aktuelleFach in aF)
+                foreach (var aktuelleFach in AktuelleFächer)
                 {
                     b += "----+";
                     f += aktuelleFach.Split('|')[0].PadRight(4).Substring(0, 4) + "|";
@@ -684,27 +765,26 @@ namespace webuntisnoten2atlantis
                 {
                     string s = "|" + schüler.Nachname.PadRight(5).Substring(0, 5) + "|" + schüler.SchlüsselExtern + "|";
 
-                    for (int i = 0; i < aF.Count; i++)
+                    for (int i = 0; i < AktuelleFächer.Count; i++)
                     {
                         var uA = (from u in schüler.UnterrichteAusWebuntis
-                                 where u.Fach == aF[i].Split('|')[0]
-                                 where u.Lehrkraft == aF[i].Split('|')[2]
-                                 where aF[i].Split('|')[3] == u.Gruppe
+                                 where u.Fach == AktuelleFächer[i].Split('|')[0]
+                                 where u.Lehrkraft == AktuelleFächer[i].Split('|')[2]
+                                 where AktuelleFächer[i].Split('|')[3] == u.Gruppe
                                  select u).FirstOrDefault();
 
                         // Wenn der Nachfolger das selbe Fach ist, ändert sich der delimiter
 
                         var delimiter = "|";
 
-                        if (i<aF.Count-1)
+                        if (i< AktuelleFächer.Count-1)
                         {
-                            if (Regex.Replace(aF[i].Split('|')[0], @"[\d-]", string.Empty) == Regex.Replace(aF[i+1].Split('|')[0], @"[\d-]", string.Empty))
+                            if (Regex.Replace(AktuelleFächer[i].Split('|')[0], @"[\d-]", string.Empty) == Regex.Replace(AktuelleFächer[i+1].Split('|')[0], @"[\d-]", string.Empty))
                             {
-                                delimiter = " ";
+                                delimiter = ":";
                             }
                         }
                         
-
                         // Wenn es zu dem Fach in der Schülergruppe und bei der Lehrkraft einen Unterricht gibt ... 
 
                         if (uA != null)
@@ -730,9 +810,18 @@ namespace webuntisnoten2atlantis
                                 }
                                 else
                                 {
-                                    if (uA.Bemerkung.Contains("setzt die Note"))
+                                    if (uA.Bemerkung.Contains("die Note"))
                                     {
-                                        s += uA.Bemerkung.Substring(0,2) + "XX" + delimiter;
+                                        if (uA.Bemerkung.Contains("setzt die Note"))
+                                        {
+                                            s += (uA.Bemerkung.Split(' ')[0]).PadRight(4, '#') + delimiter;
+                                            gartenzaun = true;
+                                        }
+                                        if (uA.Bemerkung.Contains("überschreibt die Note"))
+                                        {
+                                            s += (uA.Bemerkung.Split(' ')[0]).PadRight(4, '%') + delimiter;
+                                            prozent = true;
+                                        }
                                     }
                                     else
                                     {
@@ -745,7 +834,7 @@ namespace webuntisnoten2atlantis
                         {
                             // Wenn der Schüler in Webuntis dieses Fach nicht belegt hat, wird geixxt
 
-                            if ((new List<string> { "KR", "ER", "REL" }).Contains(aF[i].Split('|')[0]))
+                            if ((new List<string> { "KR", "ER", "REL" }).Contains(AktuelleFächer[i].Split('|')[0]))
                             {
                                 s += "R*  " + delimiter;
                                 reliabwähler = true;
@@ -773,11 +862,20 @@ namespace webuntisnoten2atlantis
                     if (!Global.Rückmeldung.Contains(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen, falls bewertbar. Bei Abgang/Abschluss Strich."))
                     {
                         Global.Rückmeldung.Add(" * " + le.PadRight(3) + ",REL : Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen, falls bewertbar. Bei Abgang/Abschluss Strich.");
-                    }                    
+                    }
+                    Global.WriteLine("  * R* Gibt es Reliabwähler? Evtl. Note in Konferenz ergänzen, falls bewertbar. Bei Abgang/Abschluss Strich.");
                 }
                 if (xxxx)
                 {
                     Global.WriteLine("  * X Der Schüler hat den Kurs nicht belegt oder das Untis-Fach kann keinem Datensatz in Atlantis zugeordnet werden.");
+                }
+                if (gartenzaun)
+                {
+                    Global.WriteLine("  * # Nur ein Lehrer hat Noten eingetragen. Nur dessen Noten werden in das Zeugnis übernommen.");
+                }
+                if (prozent)
+                {
+                    Global.WriteLine("  * % Nur dieser Lehrer setzt die Noten für alle. Noten anderer LuL werden überschrieben.");
                 }
                 Global.WriteLine("");
 
