@@ -917,10 +917,20 @@ namespace webuntisnoten2atlantis
                                 if (uA.LeistungW != null)
                                 {
                                     s += (uA.LeistungW.Gesamtnote + uA.LeistungW.Tendenz).PadRight(2) + (uA.LeistungA.Gesamtnote + uA.LeistungA.Tendenz).PadRight(2) + delimiter;
+                                    
+                                    if ((uA.LeistungW.Gesamtnote == null || uA.LeistungW.Gesamtnote == "") && !uA.LeistungA.FachAliases.Contains("REL"))
+                                    {
+                                        Rückmeldungen.AddRückmeldung(new Rückmeldung(uA.Lehrkraft, uA.LeistungA.Fach, "Es scheinen Noten in " + uA.LeistungA.Fach + " zu fehlen. Bitte umgehend nachtragen und dann melden."));
+                                    }
                                 }
                                 else
                                 {
                                     s += "  " + (uA.LeistungA.Gesamtnote + uA.LeistungA.Tendenz).PadRight(2) + delimiter;
+                                    
+                                    if (!uA.LeistungA.FachAliases.Contains("REL"))
+                                    {
+                                        Rückmeldungen.AddRückmeldung(new Rückmeldung(uA.Lehrkraft, uA.LeistungA.Fach, "Es scheinen Noten in " + uA.LeistungA.Fach + " zu fehlen. Bitte umgehend nachtragen und dann melden."));
+                                    }
                                 }
                             }
                             else
