@@ -3,13 +3,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace webuntisnoten2atlantis
 {
     public class Unterrichte : List<Unterricht>
     {
         public Unterrichte()
-        {
+        {  
         }
 
         public Unterrichte(string sourceExportLessons)
@@ -58,6 +59,32 @@ namespace webuntisnoten2atlantis
                 }
 
                 Console.WriteLine(("Alle Unterrichte ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(6));
+            }
+        }
+
+        internal void AddUnterrichte(Unterricht unterricht)
+        {
+            // Wenn es einen Unterricht noch noch als Unterricht in dieser Klasse gibt, wird er hinzugefügt.
+
+            if (!(from t in this
+                  where t.Lehrkraft == unterricht.Lehrkraft
+                  where t.Fach == unterricht.Fach
+                  where t.Klassen == unterricht.Klassen
+                  where t.Gruppe == unterricht.Gruppe
+                  select t).Any())
+            {
+                this.Add(new Unterricht(unterricht.Lehrkraft, 
+                    unterricht.Fach, 
+                    unterricht.Klassen, 
+                    unterricht.LessonId, 
+                    unterricht.Reihenfolge, 
+                    unterricht.Gruppe, 
+                    unterricht.KursOderAlle,
+                    unterricht.LeistungW,
+                    unterricht.LeistungA,
+                    unterricht.LessonNumber,
+                    unterricht.FachnameAtlantis,
+                    unterricht.InfragekommendeLeistungenA));
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿// Published under the terms of GPLv3 Stefan Bäumer 2023.
 
 using System;
+using System.Collections.Generic;
 
 namespace webuntisnoten2atlantis
 {
@@ -16,10 +17,18 @@ namespace webuntisnoten2atlantis
         public int Periode { get; internal set; }
         public DateTime Startdate { get; internal set; }
         public DateTime Enddate { get; internal set; }
-        public Leistung WL { get; internal set; }
-        public Leistung AL { get; internal set; }
+        public Leistung LeistungW { get; internal set; }
+        public Leistung LeistungA { get; internal set; }
         public int Reihenfolge { get; internal set; }
         public string Bemerkung { get; internal set; }
+        public string KursOderAlle { get; internal set; }
+        public string FachnameAtlantis { get; internal set; }
+
+        /// <summary>
+        /// Falls keine automatische Zuordnung einer Atlantisleitung zu einem Unterricht gelingt, werden alle infragkommenden 
+        /// Leistungen hinzugefügt, um später manuell daraus auswählen zu können.
+        /// </summary>
+        public Leistungen InfragekommendeLeistungenA { get; private set; }
 
         public Unterricht()
         {
@@ -33,138 +42,156 @@ namespace webuntisnoten2atlantis
                 Lehrkraft = atlantisLeistung.Lehrkraft;
                 Klassen = atlantisLeistung.Klasse;
             }
-            AL = new Leistung();
-            AL = atlantisLeistung;
+            LeistungA = new Leistung();
+            LeistungA = atlantisLeistung;
         }
 
         public Unterricht(Leistung atlantisLeistung, int lessonNumber, string fach, Leistung webuntisLeistung, string lehrkraft, int marksPerLessonZeile, int periode, string gruppe, string klassen, DateTime startdate, DateTime enddate) : this(atlantisLeistung)
         {
-            this.AL = atlantisLeistung;
+            InfragekommendeLeistungenA = new Leistungen();
+            this.LeistungA = atlantisLeistung;
             this.LessonNumber = lessonNumber;
             this.Fach = fach;
-            this.WL = webuntisLeistung;
+            this.LeistungW = webuntisLeistung;
             this.Lehrkraft = lehrkraft;
             this.Zeile = marksPerLessonZeile;
             this.Periode = periode;
             this.Gruppe = gruppe;
+            this.KursOderAlle = (gruppe == "" ? "Alle" : "Kurs");
             this.Klassen = klassen;
             this.Startdate = startdate;
             this.Enddate = enddate;
             this.Bemerkung = "";
         }
 
+        public Unterricht(string lehrkraft, string fach, string klasse, int lessonId, int reihenfolge, string gruppe, string kursOderAlle, Leistung leistungW, Leistung leistungA, int lessonNumber, string fachNameAtlantis, Leistungen infragekommendeLeistungenA)
+        {
+            Lehrkraft = lehrkraft;
+            Fach = fach;
+            Klassen = klasse;
+            LessonId = lessonId;
+            Reihenfolge = reihenfolge;
+            Gruppe = gruppe;
+            KursOderAlle = kursOderAlle;
+            LeistungA = leistungA;
+            LeistungW = leistungW;
+            LessonNumber = lessonNumber;
+            FachnameAtlantis = fachNameAtlantis;
+            InfragekommendeLeistungenA = infragekommendeLeistungenA;
+        }
+
         internal void QueryBauen()
         {
             // Für eine einfachere Vergleichbarkeit wird eine leere Gesamtnote genullt
 
-            string gesamtnote = WL.Gesamtnote != "" ? WL.Gesamtnote : null;
-            string gesamtpunkte = WL.Gesamtpunkte != "" ? WL.Gesamtpunkte : null;
-            string tendenz = WL.Tendenz != "" ? WL.Tendenz : null;
+            string gesamtnote = LeistungW.Gesamtnote != "" ? LeistungW.Gesamtnote : null;
+            string gesamtpunkte = LeistungW.Gesamtpunkte != "" ? LeistungW.Gesamtpunkte : null;
+            string tendenz = LeistungW.Tendenz != "" ? LeistungW.Tendenz : null;
             
-            WL.Query = "";
+            LeistungW.Query = "";
 
-            WL.EinheitNP = AL.EinheitNP;
-            WL.Beschreibung = AL.SchlüsselExtern + "|" + (AL.Nachname.PadRight(10)).Substring(0, 3) + " " + (AL.Vorname.PadRight(10)).Substring(0, 2) + "|"
-                + AL.Klasse + "|"
+            LeistungW.EinheitNP = LeistungA.EinheitNP;
+            LeistungW.Beschreibung = LeistungA.SchlüsselExtern + "|" + (LeistungA.Nachname.PadRight(10)).Substring(0, 3) + " " + (LeistungA.Vorname.PadRight(10)).Substring(0, 2) + "|"
+                + LeistungA.Klasse + "|"
                 + (Lehrkraft == null ? "|" : Lehrkraft + "|")
-                + AL.Fach + "|"
-                + (WL.MarksPerLessonZeile == 0 ? "" : "Zeile:" + WL.MarksPerLessonZeile + "|") +
-                (AL.Konferenzdatum != null && AL.Konferenzdatum.Year != 1 ? AL.Konferenzdatum.ToShortDateString() + "|" : "")
-                + AL.Bemerkung;
+                + LeistungA.Fach + "|"
+                + (LeistungW.MarksPerLessonZeile == 0 ? "" : "Zeile:" + LeistungW.MarksPerLessonZeile + "|") +
+                (LeistungA.Konferenzdatum != null && LeistungA.Konferenzdatum.Year != 1 ? LeistungA.Konferenzdatum.ToShortDateString() + "|" : "")
+                + LeistungA.Bemerkung;
 
             // Falls Neu oder Update oder zuvor geholte Noten wieder nullen
 
             if (
-                (AL.Gesamtnote == null && AL.Gesamtpunkte == null && AL.Tendenz == null && (gesamtnote != null || gesamtpunkte != null || tendenz != null))                                  // Neu
-                || (AL.Gesamtnote != gesamtnote                                                                                 // UPD 
-                || (AL.Gesamtpunkte != gesamtpunkte && AL.EinheitNP == "P") || (AL.Tendenz != tendenz && AL.EinheitNP == "P"))     // UPD Gym
+                (LeistungA.Gesamtnote == null && LeistungA.Gesamtpunkte == null && LeistungA.Tendenz == null && (gesamtnote != null || gesamtpunkte != null || tendenz != null))                                  // Neu
+                || (LeistungA.Gesamtnote != gesamtnote                                                                                 // UPD 
+                || (LeistungA.Gesamtpunkte != gesamtpunkte && LeistungA.EinheitNP == "P") || (LeistungA.Tendenz != tendenz && LeistungA.EinheitNP == "P"))     // UPD Gym
                )
             {
-                WL.Query = "UPDATE noten_einzel SET ";
+                LeistungW.Query = "UPDATE noten_einzel SET ";
 
                 // Falls Neu
 
-                if (AL.Gesamtnote == null && AL.Gesamtpunkte == null && AL.Tendenz == null)
+                if (LeistungA.Gesamtnote == null && LeistungA.Gesamtpunkte == null && LeistungA.Tendenz == null)
                 {
-                    WL.Beschreibung = "NEU|" + WL.Beschreibung;
+                    LeistungW.Beschreibung = "NEU|" + LeistungW.Beschreibung;
 
-                    if (gesamtpunkte != null && AL.EinheitNP == "P")
+                    if (gesamtpunkte != null && LeistungA.EinheitNP == "P")
                     {
-                        WL.Beschreibung = WL.Beschreibung + "P:[" + (AL.Gesamtpunkte == null ? "  " : AL.Gesamtpunkte.PadLeft(2)) + "]->[" + gesamtpunkte.PadLeft(2) + "]";
-                        WL.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
+                        LeistungW.Beschreibung = LeistungW.Beschreibung + "P:[" + (LeistungA.Gesamtpunkte == null ? "  " : LeistungA.Gesamtpunkte.PadLeft(2)) + "]->[" + gesamtpunkte.PadLeft(2) + "]";
+                        LeistungW.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
                     }
                     else
                     {
-                        WL.Query += (" ").PadRight(11) + "  ";
+                        LeistungW.Query += (" ").PadRight(11) + "  ";
                     }
                     if (gesamtnote != null)
                     {
-                        WL.Beschreibung = WL.Beschreibung + "N:[" + (AL.Gesamtnote == null ? " " : AL.Gesamtnote.PadRight(1)) + "]->[" + gesamtnote.PadRight(1) + "]";
-                        WL.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
+                        LeistungW.Beschreibung = LeistungW.Beschreibung + "N:[" + (LeistungA.Gesamtnote == null ? " " : LeistungA.Gesamtnote.PadRight(1)) + "]->[" + gesamtnote.PadRight(1) + "]";
+                        LeistungW.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(11);
                     }
                     else
                     {
-                        WL.Query += (" ").PadRight(10) + "  ";
+                        LeistungW.Query += (" ").PadRight(10) + "  ";
                     }
-                    if (WL.Tendenz != null && AL.EinheitNP == "P")
+                    if (LeistungW.Tendenz != null && LeistungA.EinheitNP == "P")
                     {
-                        WL.Beschreibung = WL.Beschreibung + "T:[" + (AL.Tendenz == null ? " " : AL.Tendenz) + "]->[" + (WL.Tendenz == null ? " " : WL.Tendenz) + "]";
-                        WL.Query += ("s_tendenz='" + tendenz + "'").PadRight(12) + ",  ";
+                        LeistungW.Beschreibung = LeistungW.Beschreibung + "T:[" + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz) + "]->[" + (LeistungW.Tendenz == null ? " " : LeistungW.Tendenz) + "]";
+                        LeistungW.Query += ("s_tendenz='" + tendenz + "'").PadRight(12) + ",  ";
                     }
                     else
                     {
-                        WL.Query += (" ").PadRight(13) + "  ";
+                        LeistungW.Query += (" ").PadRight(13) + "  ";
                     }
                 }
                 else // Falls Update
                 {
-                    if (AL.Gesamtnote != gesamtnote || (AL.Gesamtpunkte != gesamtpunkte && WL.EinheitNP == "P") || (AL.Tendenz != WL.Tendenz && WL.EinheitNP == "P"))
+                    if (LeistungA.Gesamtnote != gesamtnote || (LeistungA.Gesamtpunkte != gesamtpunkte && LeistungW.EinheitNP == "P") || (LeistungA.Tendenz != LeistungW.Tendenz && LeistungW.EinheitNP == "P"))
                     {
-                        WL.Beschreibung = "UPD|" + WL.Beschreibung;
+                        LeistungW.Beschreibung = "UPD|" + LeistungW.Beschreibung;
 
-                        if (AL.Gesamtpunkte != gesamtpunkte && AL.EinheitNP == "P")
+                        if (LeistungA.Gesamtpunkte != gesamtpunkte && LeistungA.EinheitNP == "P")
                         {
-                            WL.Beschreibung = WL.Beschreibung + "P:[" + (AL.Gesamtpunkte == null ? "  " : AL.Gesamtpunkte.PadLeft(2)) + "]->[" + WL.Gesamtpunkte.PadLeft(2) + "]";
-                            WL.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
+                            LeistungW.Beschreibung = LeistungW.Beschreibung + "P:[" + (LeistungA.Gesamtpunkte == null ? "  " : LeistungA.Gesamtpunkte.PadLeft(2)) + "]->[" + LeistungW.Gesamtpunkte.PadLeft(2) + "]";
+                            LeistungW.Query += "punkte=" + ("'" + gesamtpunkte).PadLeft(3) + "'" + ", ";
                         }
                         else
                         {
-                            WL.Query += (" ").PadRight(11) + "  ";
+                            LeistungW.Query += (" ").PadRight(11) + "  ";
                         }
-                        if (AL.Gesamtnote != gesamtnote)
+                        if (LeistungA.Gesamtnote != gesamtnote)
                         {
-                            WL.Beschreibung = WL.Beschreibung + "N:[" + (AL.Gesamtnote == null ? " " : AL.Gesamtnote.PadLeft(1)) + "]->[" + WL.Gesamtnote.PadLeft(1) + "]";
-                            WL.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(10);
-                        }
-                        else
-                        {
-                            WL.Query += (" ").PadRight(11) + "  ";
-                        }
-                        if (AL.Tendenz != tendenz && AL.EinheitNP == "P")
-                        {
-                            WL.Beschreibung = WL.Beschreibung + "T:[" + (AL.Tendenz == null ? " " : AL.Tendenz) + "]->[" + (tendenz == null ? " " : tendenz) + "]";
-                            WL.Query += ("s_tendenz='" + tendenz + "',").PadRight(16);
+                            LeistungW.Beschreibung = LeistungW.Beschreibung + "N:[" + (LeistungA.Gesamtnote == null ? " " : LeistungA.Gesamtnote.PadLeft(1)) + "]->[" + LeistungW.Gesamtnote.PadLeft(1) + "]";
+                            LeistungW.Query += ("s_note='" + gesamtnote + "'" + ", ").PadRight(10);
                         }
                         else
                         {
-                            WL.Query += (" ").PadRight(15);
+                            LeistungW.Query += (" ").PadRight(11) + "  ";
+                        }
+                        if (LeistungA.Tendenz != tendenz && LeistungA.EinheitNP == "P")
+                        {
+                            LeistungW.Beschreibung = LeistungW.Beschreibung + "T:[" + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz) + "]->[" + (tendenz == null ? " " : tendenz) + "]";
+                            LeistungW.Query += ("s_tendenz='" + tendenz + "',").PadRight(16);
+                        }
+                        else
+                        {
+                            LeistungW.Query += (" ").PadRight(15);
                         }
                     }
                 }
 
-                WL.Beschreibung = WL.Beschreibung + (AL.Fach != "REL" && gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
+                LeistungW.Beschreibung = LeistungW.Beschreibung + (LeistungA.Fach != "REL" && gesamtnote == "-" ? "Zeugnisbemerkung?|" : "");
 
-                if (WL.ReligionAbgewählt && WL.FachAliases.Contains("REL"))
+                if (LeistungW.ReligionAbgewählt && LeistungW.FachAliases.Contains("REL"))
                 {
-                    WL.Beschreibung += WL.Beschreibung + "Reli abgewählt.";
+                    LeistungW.Beschreibung += LeistungW.Beschreibung + "Reli abgewählt.";
                 }
-                WL.Query += "ls_id_1=1337 "; // letzter Bearbeiter
-                WL.Query += "WHERE noe_id=" + AL.LeistungId + ";";
+                LeistungW.Query += "ls_id_1=1337 "; // letzter Bearbeiter
+                LeistungW.Query += "WHERE noe_id=" + LeistungA.LeistungId + ";";
             }
             else
             {
-                WL.Beschreibung = "   |" + WL.Beschreibung + "Note bleibt: " + (AL.Gesamtnote + (AL.Tendenz == null ? " " : AL.Tendenz)).PadLeft(2) + (AL.EinheitNP == "P" ? "(" + AL.Gesamtpunkte.PadLeft(2) + " P)" : "");
-                WL.Query += "/* KEINE ÄNDERUNG   SET punkte='" + (gesamtpunkte == null ? "  " : gesamtpunkte.PadLeft(2)) + "',".PadRight(2) + " s_note='" + (AL.Gesamtnote == null ? "" : AL.Gesamtnote.PadRight(1)) + "', s_tendenz='" + (AL.Tendenz == null ? " " : AL.Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + AL.LeistungId + "*/";
+                LeistungW.Beschreibung = "   |" + LeistungW.Beschreibung + "Note bleibt: " + (LeistungA.Gesamtnote + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz)).PadLeft(2) + (LeistungA.EinheitNP == "P" ? "(" + LeistungA.Gesamtpunkte.PadLeft(2) + " P)" : "");
+                LeistungW.Query += "/* KEINE ÄNDERUNG   SET punkte='" + (gesamtpunkte == null ? "  " : gesamtpunkte.PadLeft(2)) + "',".PadRight(2) + " s_note='" + (LeistungA.Gesamtnote == null ? "" : LeistungA.Gesamtnote.PadRight(1)) + "', s_tendenz='" + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + LeistungA.LeistungId + "*/";
             }
         }
     }

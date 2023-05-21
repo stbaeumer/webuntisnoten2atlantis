@@ -23,6 +23,7 @@ namespace webuntisnoten2atlantis
         /// Die Rückmeldung ist gedacht, um an Ende Hinweise (über Teams) an die Lehrer zu geben.
         /// </summary>
         public static List<string> Rückmeldung { get; internal set; }
+        public static List<string> Tabelle { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {
@@ -78,6 +79,12 @@ namespace webuntisnoten2atlantis
         {
             Console.WriteLine(zeile);            
             Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
+        }
+
+        internal static void WriteLineTabelle(string zeile)
+        {
+            Console.WriteLine(zeile);
+            Global.Tabelle.Add(zeile);
         }
 
         internal static void Write(string zeile)

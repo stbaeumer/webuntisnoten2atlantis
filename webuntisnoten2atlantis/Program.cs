@@ -27,9 +27,8 @@ namespace webuntisnoten2atlantis
 
         static void Main(string[] args)
         {
-            Global.SqlZeilen = new List<string>();
-            Global.Rückmeldung = new List<string>();
             Global.PadRight = 116;
+            Global.SqlZeilen = new List<string>();
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
             Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230520  |");
@@ -74,6 +73,8 @@ namespace webuntisnoten2atlantis
                 do
                 {
                     Global.SqlZeilen = new List<string>();
+                    Global.Rückmeldung = new List<string>();
+                    Global.Tabelle = new List<string>();
 
                     var interessierendeKlasse = GetIntessierendeKlasse(alleMöglicheKlassen, AktSj);
 
@@ -152,9 +153,7 @@ namespace webuntisnoten2atlantis
             }
             catch (Exception ex)
             {
-                Global.WriteLine("Ooops! Es ist etwas schiefgelaufen! Die Verarbeitung wird gestoppt.");
-                Global.WriteLine("");
-                Global.WriteLine(ex.ToString());
+                Global.WriteLine(ex.Message);
                 Console.ReadKey();
                 Environment.Exit(0);
             }
@@ -400,7 +399,7 @@ namespace webuntisnoten2atlantis
 
             if (sourceFile != null)
             {
-                Console.WriteLine("Ausgewertete Datei: " + (Path.GetFileName(sourceFile) + " ").PadRight(53, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
+                Console.WriteLine((Path.GetFileName(sourceFile) + " ").PadRight(73, '.') + ". Erstell-/Bearbeitungszeitpunkt heute um " + System.IO.File.GetLastWriteTime(sourceFile).ToShortTimeString());
             }
 
             return sourceFile;

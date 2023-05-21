@@ -91,6 +91,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Rückmeldung.cs" />
+    <Compile Include="Rückmeldungen.cs" />
     <Compile Include="Schüler.cs" />
     <Compile Include="Schülers.cs" />
     <Compile Include="Unterricht.cs" />

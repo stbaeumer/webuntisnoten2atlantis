@@ -51,8 +51,8 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public string Zeugnisart { get; internal set; }
         public string Prüfungsart { get; internal set; }
-        public string Nachname { get; internal set; }
-        public string Vorname { get; internal set; }
+        public string Nachname { get; set; }
+        public string Vorname { get; set; }
         public DateTime Geburtsdatum { get; internal set; }
         public bool Volljährig { get; internal set; }
         public string Bereich { get; internal set; }
@@ -68,6 +68,7 @@ namespace webuntisnoten2atlantis
         public bool IstGeholteNote { get; set; }
         public int MarksPerLessonZeile { get; internal set; }
         public int Reihenfolge { get; internal set; }
+        public bool Zugeordnet { get; internal set; }
 
         public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, string lehrkraft, int schlüsselExtern, int marksPerLessonZeile)
         {
@@ -99,9 +100,18 @@ namespace webuntisnoten2atlantis
             Beschreibung = atlantisLeistung.Beschreibung;
             Bemerkung = atlantisLeistung.Bemerkung;
             EinheitNP = atlantisLeistung.EinheitNP;
+            Nachname = atlantisLeistung.Nachname;
+            Vorname = atlantisLeistung.Vorname;
             Query = "";
         }
-                
+
+        public Leistung(string fach, string gesamtnote, DateTime konferenzdatum)
+        {
+            Fach = fach;
+            Gesamtnote = gesamtnote;
+            Konferenzdatum = konferenzdatum;
+        }
+
         public bool IstAbschlussklasse()
         {
             if (Anlage.StartsWith(Properties.Settings.Default.Klassenart))

@@ -1,6 +1,6 @@
 # WebuntisNoten2Atlantis
 
-Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webuntis nach Atlantis übertragen werden, ohne dass einzelne Noten oder Fehlzeiten händisch angefasst werden.
+Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten, Noten für Blaue Briefe und Fehlzeiten von Webuntis nach Atlantis übertragen werden, ohne dass einzelne Noten oder Fehlzeiten händisch angefasst werden.
 
 ## Voraussetzungen
 
@@ -14,9 +14,10 @@ Mit *WebuntisNoten2Atlantis* können die Zeugnisnoten und Fehlzeiten von Webunti
 
 1. Prüfungen aus Webuntis exportieren und im Download-Ordner ablegen.
 2. Fehlzeiten aus Webuntis exportieren und im Download-Ordner ablegen.
-3. *WebuntisNoten2Atlantis* starten.
+3. Unterrichte, Gruppen und Schülerinnen und Schüler exportieren.
+4. *WebuntisNoten2Atlantis* starten.
    Falls die Zuordnung eines Webuntis-Fachs nicht möglich ist, wird das angezeigt. Eine Zuordnung kann dann händisch vorgenommen werden.
-4. Erzeugte SQL-Datei in Atlantis importieren.
+5. Erzeugte SQL-Datei in Atlantis importieren.
 
 ### Prüfungen aus Webuntis exportieren
 

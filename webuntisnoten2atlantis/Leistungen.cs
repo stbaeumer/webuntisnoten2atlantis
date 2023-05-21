@@ -516,6 +516,49 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             Console.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + hzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
         }
 
+        internal void NotenblattAngelegt(string hzJz , List<string> aktSj, string interessierendeKlasse)
+        {
+            string meldung = "";
+            var angelegt = (from atlantisLeistung in this
+                            where atlantisLeistung.Konferenzdatum.Date >= DateTime.Now.Date || atlantisLeistung.Konferenzdatum.Year == 1
+                            where hzJz == atlantisLeistung.HzJz
+                            where aktSj[0] + "/" + aktSj[1] == atlantisLeistung.Schuljahr
+                            select atlantisLeistung).ToList();
+
+            if (angelegt.Count > 0)
+            {
+                meldung += "Das Notenblatt für die Klasse " + interessierendeKlasse + " wurde angelegt.";
+                
+                if ((from atlantisLeistung in angelegt where atlantisLeistung.Konferenzdatum.Year == 1 select atlantisLeistung).Any())
+                {
+                    meldung += " Allerdings ist kein Konferenzdatum gesetzt. Vorsichtshalber sollte ein Konferenzdatum gesetzt werden.";
+                }
+                else
+                {
+                    meldung+="Konferenzdatum: " + angelegt[0].Konferenzdatum + ".";
+                }
+                Console.WriteLine(meldung);                
+            }
+            else
+            {                
+                throw new Exception("Es ist kein Notenblatt angelegt. Die Verarbeitung endet hier. Legen Sie zuerst ein Notenblatt an:\n" +
+                    "1. Klassenverwaltung - > Klasse wählen " + interessierendeKlasse + "\n" +
+                    "2. Reiter *Zeugnisdaten* klicken\n" +
+                    "3. Unter alle Zeugnisdaten Halbjahreszeugnis oder Jahresendzeugnisse wählen.\n" +
+                    "4. Konferenzdatum und Ausgabedatum wählen.\n" +
+                    "5. *Notenblatt und Zeugnissatz () aller SuS mit diesen Zeugnisdaten aktualisieren*" +
+                    "6. Webuntisnoten2Atlantis erneut starten.");
+            }
+        }
+
+        internal void AddLeistungen(List<Leistung> leistungs)
+        {
+            foreach (var leistung in leistungs)
+            {
+                this.Add(new Leistung(leistung.Fach,leistung.Gesamtnote, leistung.Konferenzdatum));
+            }
+        }
+
         private Leistungen LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum()
         {
             if (Global.LeistungenDesAktuellenAbschnittsMitZurückliegendemKonferenzdatum.Count > 0)

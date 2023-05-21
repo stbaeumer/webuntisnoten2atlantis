@@ -24,7 +24,7 @@ namespace webuntisnoten2atlantis
 
         internal void GetUnterrichte(List<Unterricht> alleUnterrichte, List<Gruppe> alleGruppen)
         {
-            this.UnterrichteAusWebuntis = new Unterrichte();
+            UnterrichteAusWebuntis = new Unterrichte();
 
             // Unterrichte der ganzen Klasse
 
@@ -37,10 +37,10 @@ namespace webuntisnoten2atlantis
             foreach (var u in unterrichteDerKlasse)
             {
                 UnterrichteAusWebuntis.Add(new Unterricht(
-                    u.AL,
+                    u.LeistungA,
                     u.LessonNumber,
                     u.Fach,
-                    u.WL,
+                    u.LeistungW,
                     u.Lehrkraft,
                     u.Zeile,
                     u.Periode,
@@ -61,10 +61,10 @@ namespace webuntisnoten2atlantis
                 if (u != null)
                 {
                     UnterrichteAusWebuntis.Add(new Unterricht(
-                    u.AL,
+                    u.LeistungA,
                     u.LessonNumber,
                     u.Fach,
-                    u.WL,
+                    u.LeistungW,
                     u.Lehrkraft,
                     u.Zeile,
                     u.Periode,
@@ -85,21 +85,21 @@ namespace webuntisnoten2atlantis
                 foreach (var dF in dieseFächerHolen)
                 {
                     if (this.UnterrichteGeholt[i].Fach == dF.Split('|')[0] &&
-                        this.UnterrichteGeholt[i].AL.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
+                        this.UnterrichteGeholt[i].LeistungA.Konferenzdatum.ToShortDateString() == dF.Split(' ')[1])
                     {
                         holen = true; break;
                     }
                 }
                 if (holen)
                 {
-                    var x = (from uuu in UnterrichteAktuellAusAtlantis where uuu.Fach == this.UnterrichteGeholt[i].Fach select uuu.AL).FirstOrDefault();
+                    var x = (from uuu in UnterrichteAktuellAusAtlantis where uuu.Fach == this.UnterrichteGeholt[i].Fach select uuu.LeistungA).FirstOrDefault();
 
                     this.UnterrichteGeholt[i].Bemerkung = "Note geholt.";
 
                     // Die Atlantis-LeistungsID wird mit der ID des aktuellen Atlantis-Unterrichts überschrieben.
 
-                    this.UnterrichteGeholt[i].AL.Bemerkung = "|" + this.UnterrichteGeholt[i].AL.LeistungId + ">" + x.LeistungId;
-                    this.UnterrichteGeholt[i].AL.LeistungId = x.LeistungId;
+                    this.UnterrichteGeholt[i].LeistungA.Bemerkung = "|" + this.UnterrichteGeholt[i].LeistungA.LeistungId + ">" + x.LeistungId;
+                    this.UnterrichteGeholt[i].LeistungA.LeistungId = x.LeistungId;
                 }
                 else
                 {
