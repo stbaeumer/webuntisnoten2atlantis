@@ -98,9 +98,16 @@ namespace webuntisnoten2atlantis
 
                     interessierendeSchülerDieserKlasse.ZweiLehrerEinFach(interessierendeKlasse);
 
-                    interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse, User);
+                    interessierendeSchülerDieserKlasse.TabelleZeichnen(interessierendeKlasse, User);
 
                     interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);
+
+                    interessierendeSchülerDieserKlasse.TabelleZeichnen(interessierendeKlasse, User);
+
+                    foreach (var zeile in Global.Tabelle)
+                    {
+                        Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
+                    }
 
                     interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz, User);
 
