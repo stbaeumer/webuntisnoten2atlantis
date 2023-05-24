@@ -840,8 +840,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             foreach (var iA in (from al in this.OrderByDescending(x => x.Konferenzdatum)
                                 where al.SchlüsselExtern == schlüsselExtern
-                                //where al.HzJz == hzJz
-                                //where al.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                where al.HzJz == hzJz
+                                where al.Schuljahr == aktSj[0] + "/" + aktSj[1]
                                 where al.Konferenzdatum.Date > DateTime.Now.Date || al.Konferenzdatum.Year == 1
                                 select al).ToList())
             {

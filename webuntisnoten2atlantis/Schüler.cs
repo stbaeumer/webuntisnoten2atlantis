@@ -75,7 +75,7 @@ namespace webuntisnoten2atlantis
                                               select al).ToList())
             {
                 bool geholt = true;
-
+                               
                 foreach (var atlantisFach in atlantisLeistung.FachAliases)
                 {
                     if ((from  g in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert select g.Fach).Contains(Regex.Replace(atlantisFach, @"[\d-]", string.Empty)))
