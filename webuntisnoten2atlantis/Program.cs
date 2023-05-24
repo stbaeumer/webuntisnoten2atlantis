@@ -86,6 +86,8 @@ namespace webuntisnoten2atlantis
 
                     Leistungen atlantisLeistungen = new Leistungen();
 
+                    Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert = new Unterrichte();
+
                     var interessierendeSchülerDieserKlasse = alleSchüler.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
                     interessierendeSchülerDieserKlasse.GetWebuntisUnterrichte(alleUnterrichte, alleGruppen, interessierendeKlasse);
@@ -96,11 +98,11 @@ namespace webuntisnoten2atlantis
 
                     interessierendeSchülerDieserKlasse.ZweiLehrerEinFach(interessierendeKlasse);
 
-                    interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse);
+                    interessierendeSchülerDieserKlasse.TabelleErzeugen(interessierendeKlasse, User);
 
                     interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);
 
-                    interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz);
+                    interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz, User);
 
                     // Add-Delete-Update
 

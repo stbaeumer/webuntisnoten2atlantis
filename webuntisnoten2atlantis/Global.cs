@@ -24,6 +24,8 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public static List<string> Rückmeldung { get; internal set; }
         public static List<string> Tabelle { get; internal set; }
+        public static Unterrichte AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert { get; internal set; }
+        public static Unterrichte AlleVerschiedenenUnterrichteInDieserKlasseAktuell { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {
@@ -97,15 +99,19 @@ namespace webuntisnoten2atlantis
         {
             var s = "";
 
-            foreach (var item in interessierendeKlassen)
+            if (interessierendeKlassen.Count > 0)
             {
-                s += item + delimiter;
-
-                if (s.Length > Global.PadRight - 5 && s.Length <= Global.PadRight || s.Length > Global.PadRight * 2 - 5 && s.Length <= Global.PadRight * 2 || s.Length > Global.PadRight * 3 - 5 && s.Length <= Global.PadRight * 3 || s.Length > Global.PadRight * 4 - 5 && s.Length <= Global.PadRight * 4)
+                foreach (var item in interessierendeKlassen)
                 {
-                    s += "\n";
+                    s += item + delimiter;
+
+                    if (s.Length > Global.PadRight - 5 && s.Length <= Global.PadRight || s.Length > Global.PadRight * 2 - 5 && s.Length <= Global.PadRight * 2 || s.Length > Global.PadRight * 3 - 5 && s.Length <= Global.PadRight * 3 || s.Length > Global.PadRight * 4 - 5 && s.Length <= Global.PadRight * 4)
+                    {
+                        s += "\n";
+                    }
                 }
             }
+            
             return s.Substring(0,s.Length-delimiter.Length);
         }
 

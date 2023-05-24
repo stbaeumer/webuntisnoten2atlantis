@@ -2,14 +2,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace webuntisnoten2atlantis
 {
     public class Unterricht
     {
         public int Zeile { get; internal set; }
-        public int LessonId { get; internal set; }
-        public int LessonNumber { get; internal set; }
+        public int LessonId { get; internal set; }        
         public string Fach { get; internal set; }
         public string Lehrkraft { get; internal set; }
         public string Klassen { get; internal set; }
@@ -19,6 +20,7 @@ namespace webuntisnoten2atlantis
         public DateTime Enddate { get; internal set; }
         public Leistung LeistungW { get; internal set; }
         public Leistung LeistungA { get; internal set; }
+        public List<int> LessonNumbers { get; set; }
         public int Reihenfolge { get; internal set; }
         public string Bemerkung { get; internal set; }
         public string KursOderAlle { get; internal set; }
@@ -35,12 +37,13 @@ namespace webuntisnoten2atlantis
         }
 
         public Unterricht(Leistung atlantisLeistung)
-        {            
+        {
             if (atlantisLeistung != null)
             {
                 Fach = atlantisLeistung.Fach;
                 Lehrkraft = atlantisLeistung.Lehrkraft;
                 Klassen = atlantisLeistung.Klasse;
+                Reihenfolge = atlantisLeistung.Reihenfolge;
             }
             LeistungA = new Leistung();
             LeistungA = atlantisLeistung;
@@ -50,7 +53,8 @@ namespace webuntisnoten2atlantis
         {
             InfragekommendeLeistungenA = new Leistungen();
             this.LeistungA = atlantisLeistung;
-            this.LessonNumber = lessonNumber;
+            this.LessonNumbers = new List<int>();
+            this.LessonNumbers.Add(lessonNumber);
             this.Fach = fach;
             this.LeistungW = webuntisLeistung;
             this.Lehrkraft = lehrkraft;
@@ -64,7 +68,7 @@ namespace webuntisnoten2atlantis
             this.Bemerkung = "";
         }
 
-        public Unterricht(string lehrkraft, string fach, string klasse, int lessonId, int reihenfolge, string gruppe, string kursOderAlle, Leistung leistungW, Leistung leistungA, int lessonNumber, string fachNameAtlantis, Leistungen infragekommendeLeistungenA)
+        public Unterricht(string lehrkraft, string fach, string klasse, int lessonId, int reihenfolge, string gruppe, string kursOderAlle, Leistung leistungW, Leistung leistungA, List<int> lessonNumbers, string fachNameAtlantis, Leistungen infragekommendeLeistungenA)
         {
             Lehrkraft = lehrkraft;
             Fach = fach;
@@ -75,7 +79,7 @@ namespace webuntisnoten2atlantis
             KursOderAlle = kursOderAlle;
             LeistungA = leistungA;
             LeistungW = leistungW;
-            LessonNumber = lessonNumber;
+            LessonNumbers = lessonNumbers;            
             FachnameAtlantis = fachNameAtlantis;
             InfragekommendeLeistungenA = infragekommendeLeistungenA;
         }
@@ -87,7 +91,7 @@ namespace webuntisnoten2atlantis
             string gesamtnote = LeistungW.Gesamtnote != "" ? LeistungW.Gesamtnote : null;
             string gesamtpunkte = LeistungW.Gesamtpunkte != "" ? LeistungW.Gesamtpunkte : null;
             string tendenz = LeistungW.Tendenz != "" ? LeistungW.Tendenz : null;
-            
+
             LeistungW.Query = "";
 
             LeistungW.EinheitNP = LeistungA.EinheitNP;
@@ -192,6 +196,57 @@ namespace webuntisnoten2atlantis
             {
                 LeistungW.Beschreibung = "   |" + LeistungW.Beschreibung + "Note bleibt: " + (LeistungA.Gesamtnote + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz)).PadLeft(2) + (LeistungA.EinheitNP == "P" ? "(" + LeistungA.Gesamtpunkte.PadLeft(2) + " P)" : "");
                 LeistungW.Query += "/* KEINE ÄNDERUNG   SET punkte='" + (gesamtpunkte == null ? "  " : gesamtpunkte.PadLeft(2)) + "',".PadRight(2) + " s_note='" + (LeistungA.Gesamtnote == null ? "" : LeistungA.Gesamtnote.PadRight(1)) + "', s_tendenz='" + (LeistungA.Tendenz == null ? " " : LeistungA.Tendenz) + "',  ls_id_1=1337 WHERE noe_id=" + LeistungA.LeistungId + "*/";
+            }
+        }
+
+        /// <summary>
+        /// Zu jeder Webuntisleistung wird eine Atlantisleistung des aktuellen Abschnitts zugeordnet.
+        /// </summary>
+        /// <param name="atlantisLeistungen"></param>
+        /// <param name="schlüsselExtern"></param>
+        /// <param name="hzJz"></param>
+        /// <param name="aktSj"></param>
+        internal void GetAtlantisLeistung(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
+        {
+            var atlantisLeistungenDiesesSchülers = (from al in atlantisLeistungen.OrderByDescending(x => x.Konferenzdatum)
+                                                    where al.SchlüsselExtern == schlüsselExtern
+                                                    where al.FachAliases.Contains(Regex.Replace(Fach, @"[\d-]", string.Empty))
+                                                    where al.Konferenzdatum.Date >= DateTime.Now.Date || al.Konferenzdatum.Year == 1
+                                                    where al.HzJz == hzJz
+                                                    where al.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                                    select al).ToList();
+
+            if (atlantisLeistungenDiesesSchülers.Count > 1)
+            {
+                Console.WriteLine("Es gibt ... Prüfen!");
+                Console.ReadKey();
+            }
+            if (atlantisLeistungenDiesesSchülers.Count == 1)
+            {
+                LeistungA = atlantisLeistungenDiesesSchülers[0];
+                LeistungA.Zugeordnet = true; ;
+                Reihenfolge = atlantisLeistungenDiesesSchülers[0].Reihenfolge; // Die Reihenfolge aus Atlantis wird an den Unterricht übergeben                                    
+                LessonId = atlantisLeistungenDiesesSchülers[0].LeistungId;
+                FachnameAtlantis = atlantisLeistungenDiesesSchülers[0].Fach;
+                Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert.AddUnterrichte(this);
+            }
+        }
+
+        /// <summary>
+        /// Wenn einer Webuntis-Leistung keine Atlantis-Leistung zugeordnet werden konnte, muss trotzdem ein Unterricht der Klasse angelegt werden.
+        /// Alle infragekommenden aktuellen Atlantisleistungen werden für eine spätere Auswahl angehangen.
+        /// </summary>
+        /// <param name="atlantisLeistungen"></param>
+        /// <param name="schlüsselExtern"></param>
+        /// <param name="hzJz"></param>
+        /// <param name="aktSj"></param>
+        internal void InfragekommendeAktuelleLeistungenHinzufügen(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
+        {
+            if (LeistungA == null)
+            {
+                InfragekommendeLeistungenA.AddRange(atlantisLeistungen.InfragekommendeLeistungenHinzufügen(schlüsselExtern, hzJz, aktSj));
+
+                Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert.AddUnterrichte(this);
             }
         }
     }

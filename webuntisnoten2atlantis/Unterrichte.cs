@@ -34,9 +34,10 @@ namespace webuntisnoten2atlantis
                             var x = line.Split('\t');
 
                             unterricht = new Unterricht();
+                            unterricht.LessonNumbers = new List<int>();
                             unterricht.Zeile = i;
                             unterricht.LessonId = Convert.ToInt32(x[0]);
-                            unterricht.LessonNumber = Convert.ToInt32(x[1]) / 100;
+                            unterricht.LessonNumbers.Add(Convert.ToInt32(x[1]) / 100);
                             unterricht.Fach = x[2];
                             unterricht.Lehrkraft = x[3];
                             unterricht.Klassen = x[4];
@@ -82,7 +83,7 @@ namespace webuntisnoten2atlantis
                     unterricht.KursOderAlle,
                     unterricht.LeistungW,
                     unterricht.LeistungA,
-                    unterricht.LessonNumber,
+                    unterricht.LessonNumbers,
                     unterricht.FachnameAtlantis,
                     unterricht.InfragekommendeLeistungenA));
             }

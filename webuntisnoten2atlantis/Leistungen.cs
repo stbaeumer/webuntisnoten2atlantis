@@ -426,6 +426,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                 if (!(austrittsdatum > new DateTime(DateTime.Now.Month >= 8 ? DateTime.Now.Year : DateTime.Now.Year - 1, 8, 1) && austrittsdatum < DateTime.Now))
                                 {
                                     leistung.LeistungId = Convert.ToInt32(theRow["LeistungId"]);
+                                    leistung.NokId = Convert.ToInt32(theRow["NOK_ID"]);
                                     leistung.SchlüsselExtern = Convert.ToInt32(theRow["SchlüsselExtern"]);
                                     leistung.Schuljahr = theRow["Schuljahr"].ToString();
                                     leistung.Gliederung = theRow["Gliederung"].ToString();
@@ -516,7 +517,14 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             Console.WriteLine(("Leistungsdaten der SuS der Klasse " + interessierendeKlasse + " aus Atlantis (" + hzJz + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));
         }
 
-        internal void NotenblattAngelegt(string hzJz , List<string> aktSj, string interessierendeKlasse)
+        /// <summary>
+        /// Wenn kein Notenblatt angelegt ist, wird die Verarbeitung abgebrochen.
+        /// </summary>
+        /// <param name="hzJz"></param>
+        /// <param name="aktSj"></param>
+        /// <param name="interessierendeKlasse"></param>
+        /// <exception cref="Exception"></exception>
+        internal void IstNotenblattAngelegt(string hzJz , List<string> aktSj, string interessierendeKlasse)
         {
             string meldung = "";
             var angelegt = (from atlantisLeistung in this
@@ -824,6 +832,30 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
             {
                 throw ex;
             }
-        }       
+        }
+
+        internal List<Leistung> InfragekommendeLeistungenHinzufügen(int schlüsselExtern, string hzJz, List<string> aktSj)
+        {
+            var infragekommendeLeistungenA = new Leistungen();
+
+            foreach (var iA in (from al in this.OrderByDescending(x => x.Konferenzdatum)
+                                where al.SchlüsselExtern == schlüsselExtern
+                                //where al.HzJz == hzJz
+                                //where al.Schuljahr == aktSj[0] + "/" + aktSj[1]
+                                where al.Konferenzdatum.Date > DateTime.Now.Date || al.Konferenzdatum.Year == 1
+                                select al).ToList())
+            {
+                // Nur Fächer, die nicht bereits erfolgreich zugeordnet wurden, werden als Infragekommende Fächer
+                // für eine spätere manuelle Auswahl erfasst.
+
+                if (!(from a in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert
+                      where a.FachnameAtlantis == iA.Fach
+                      select a).Any())
+                {
+                    infragekommendeLeistungenA.Add(iA);
+                }
+            }
+            return infragekommendeLeistungenA;
+        }
     }
 }

@@ -69,6 +69,9 @@ namespace webuntisnoten2atlantis
         public int MarksPerLessonZeile { get; internal set; }
         public int Reihenfolge { get; internal set; }
         public bool Zugeordnet { get; internal set; }
+        
+        // ID des Notenkopfes. Siehe Fucklantis.
+        public int NokId { get; internal set; }
 
         public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, string lehrkraft, int schlüsselExtern, int marksPerLessonZeile)
         {
@@ -89,7 +92,7 @@ namespace webuntisnoten2atlantis
         {
         }
 
-        public Leistung(Leistung atlantisLeistung)
+        public Leistung(Leistung atlantisLeistung, string bemerkung)
         {
             Klasse=atlantisLeistung.Klasse;
             Fach = atlantisLeistung.Fach;
@@ -98,10 +101,12 @@ namespace webuntisnoten2atlantis
             Tendenz = atlantisLeistung.Tendenz;
             Konferenzdatum = atlantisLeistung.Konferenzdatum;
             Beschreibung = atlantisLeistung.Beschreibung;
-            Bemerkung = atlantisLeistung.Bemerkung;
+            Bemerkung = (atlantisLeistung.Bemerkung == null ? "" : atlantisLeistung.Bemerkung) + bemerkung;
             EinheitNP = atlantisLeistung.EinheitNP;
             Nachname = atlantisLeistung.Nachname;
             Vorname = atlantisLeistung.Vorname;
+            LeistungId = atlantisLeistung.LeistungId;
+            SchlüsselExtern = atlantisLeistung.SchlüsselExtern;
             Query = "";
         }
 
