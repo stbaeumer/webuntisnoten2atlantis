@@ -433,12 +433,14 @@ namespace webuntisnoten2atlantis
                 } while (gehtNichtWeiter);
 
                 Global.WriteLine((dieseFächerHolen.Count > 0 ? "  Es werden diese Fächer geholt: " + Global.List2String(dieseFächerHolen,",") : " Es werden keine Fächer geholt."));
-                
-                
                                 
                 foreach (var schüler in this)
                 {
-                    schüler.HoleLeistungen(dieseFächerHolen);
+                    schüler.UnterrichteAusWebuntis.UmGeholteUnterrichteErweitern(
+                        dieseFächerHolen, 
+                        schüler.UnterrichteGeholt, 
+                        schüler.UnterrichteAktuellAusAtlantis
+                        );
                 }
             }
             catch (Exception ex)
@@ -684,16 +686,20 @@ namespace webuntisnoten2atlantis
                         var doppelteNotenLoL = new List<string>();
                         var doppelteNoten = new List<string>();
                         var doppelterLehrer = new List<string>();
+                        var doppelteNotenSuS = new List<string>();
+                        var doppelteLuLKlasseFachSuS = new List<string>();
 
                         foreach (var unterricht in (from u in schüler.UnterrichteAusWebuntis where Regex.Replace(u.Fach, @"[\d-]", string.Empty) == Regex.Replace(af.Fach, @"[\d-]", string.Empty) select u).ToList())
                         {
                             if (unterricht.LeistungW != null && unterricht.LeistungW.Gesamtnote != null && unterricht.LeistungW.Gesamtnote != "")
                             {
-                                if (!doppelteNotenLoL.Contains(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz + "|" + unterricht.LeistungW.Lehrkraft))
+                                if (!doppelteNotenLoL.Contains(unterricht.LeistungW.Lehrkraft + "|" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz))
                                 {
-                                    doppelteNotenLoL.Add(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz + "|" + unterricht.LeistungW.Lehrkraft);
+                                    doppelteNotenLoL.Add(unterricht.LeistungW.Lehrkraft + "|" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
                                     doppelterLehrer.Add(unterricht.Lehrkraft);
                                     doppelteNoten.Add(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
+                                    doppelteNotenSuS.Add(unterricht.LeistungW.Name);
+                                    doppelteLuLKlasseFachSuS.Add(unterricht.LeistungW.Lehrkraft + "|Bsp.:" + schüler.Nachname + ":" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
                                 }
                             }
                         }
@@ -702,11 +708,13 @@ namespace webuntisnoten2atlantis
                         {
                             if (unterricht.LeistungW != null && unterricht.LeistungW.Gesamtnote != null && unterricht.LeistungW.Gesamtnote != "")
                             {
-                                if (!doppelteNotenLoL.Contains(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz + "|" + unterricht.LeistungW.Lehrkraft))
+                                if (!doppelteNotenLoL.Contains(unterricht.LeistungW.Lehrkraft + "|" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz))
                                 {
-                                    doppelteNotenLoL.Add(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz + "|" + unterricht.LeistungW.Lehrkraft);
+                                    doppelteNotenLoL.Add(unterricht.LeistungW.Lehrkraft + "|" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
                                     doppelterLehrer.Add(unterricht.Lehrkraft);
                                     doppelteNoten.Add(unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
+                                    doppelteNotenSuS.Add(unterricht.LeistungW.Name);
+                                    doppelteLuLKlasseFachSuS.Add(unterricht.LeistungW.Lehrkraft + "|Bsp.:" + schüler.Nachname + ":" + unterricht.LeistungW.Gesamtnote + unterricht.LeistungW.Tendenz);
                                 }
                             }
                         }
@@ -724,13 +732,21 @@ namespace webuntisnoten2atlantis
                                                 select a).ToList())
                             {
                                 i++;
-                                Console.WriteLine("  " + i + ". " + aF.Lehrkraft + "/" + aF.Fach);
+
+                                var x = (from s in schüler.UnterrichteAusWebuntis
+                                         where s.LeistungW != null
+                                         where s.LeistungW.Fach == aF.Fach
+                                         where s.LeistungW.Gesamtnote != null
+                                         where s.LeistungW.Gesamtnote != ""
+                                         select s.LeistungW).FirstOrDefault();
+
+                                Console.WriteLine("  " + i + ". " + aF.Fach.PadRight(7) + "|" + aF.Lehrkraft.PadRight(3) + "|Bsp: " + x.Name + "|Note: " + x.Gesamtnote + "|Zeile: " + x.MarksPerLessonZeile + "|Eingetragen: " + x.Datum.ToShortDateString());
                             }
                             bool gehtNichtWeiter = true;
 
                             do
                             {
-                                Console.Write("   Wessen Noten (1, ..., " + i + ") sollen im Fach " + Regex.Replace(af.Fach, @"[\d-]", string.Empty) + " im Zeugnis erscheinen? ");
+                                Console.Write("   Welche Noten (1, ..., " + i + ") sollen im Fach " + Regex.Replace(af.Fach, @"[\d-]", string.Empty) + " im Zeugnis erscheinen? ");
                                 ConsoleKeyInfo input;
                                 input = Console.ReadKey(true);
 

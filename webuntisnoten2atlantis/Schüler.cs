@@ -189,38 +189,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void HoleLeistungen(List<string> dieseFächerHolen)
-        {
-            for (int i = this.UnterrichteGeholt.Count - 1; i >= 0; i--)
-            {
-                bool holen = false;
-
-                foreach (var dF in dieseFächerHolen)
-                {
-                    if (this.UnterrichteGeholt[i].Fach == dF || this.UnterrichteGeholt[i].FachnameAtlantis == dF)
-                    {
-                        holen = true; break;
-                    }
-                }
-                if (holen)
-                {
-                    var x = (from uuu in UnterrichteAktuellAusAtlantis 
-                             where uuu.Fach == this.UnterrichteGeholt[i].Fach || uuu.Fach == this.UnterrichteGeholt[i].FachnameAtlantis
-                             select uuu.LeistungA).FirstOrDefault();
-
-                    this.UnterrichteGeholt[i].Bemerkung = "Note geholt.";
-
-                    // Die Atlantis-LeistungsID wird mit der ID des aktuellen Atlantis-Unterrichts überschrieben.
-
-                    this.UnterrichteGeholt[i].LeistungA.Bemerkung = this.UnterrichteGeholt[i].LeistungA.LeistungId + ">" + x.LeistungId + "|";
-                    this.UnterrichteGeholt[i].LeistungA.LeistungId = x.LeistungId;
-                }
-                else
-                {
-                    this.UnterrichteGeholt.RemoveAt(i);
-                }
-            }
-        }
+        
 
         /// Wenn einer Webuntis-Leistung keine Atlantis-Leistung zugeordnet werden konnte, muss trotzdem ein Unterricht der Klasse angelegt werden.
         /// Alle infragekommenden aktuellen Atlantisleistungen werden für eine spätere Auswahl angehangen.
@@ -255,19 +224,7 @@ namespace webuntisnoten2atlantis
             if (i == 0)
             {
                 Global.WriteLine("A C H T U N G: Es wurde keine einzige Leistung angelegt oder verändert. Das kann daran liegen, dass das Notenblatt in Atlantis nicht richtig angelegt ist. Die Tabelle zum manuellen eintragen der Noten muss in der Notensammelerfassung sichtbar sein.");
-            }
-            foreach (var unterricht in UnterrichteGeholt.OrderBy(x => x.Reihenfolge))
-            {
-                if (unterricht.LeistungA != null)
-                {
-                    unterricht.LeistungW = new Leistung(unterricht.LeistungA, "geholt|");
-                    unterricht.LeistungA.Gesamtpunkte = null;
-                    unterricht.LeistungA.Gesamtnote = null;
-                    unterricht.LeistungA.Tendenz = null;
-                    unterricht.QueryBauen();
-                    unterricht.LeistungW.Update();
-                }
-            }
+            }            
         }
 
         /// <summary>

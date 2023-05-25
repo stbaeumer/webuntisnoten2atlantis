@@ -88,5 +88,31 @@ namespace webuntisnoten2atlantis
                     unterricht.InfragekommendeLeistungenA));
             }
         }
+
+        internal void UmGeholteUnterrichteErweitern(List<string> dieseFächerHolen, Unterrichte geholteUnterrichte, Unterrichte unterrichteAktuellAusAtlantis)
+        {
+            for (int i = geholteUnterrichte.Count - 1; i >= 0; i--)
+            {
+                foreach (var dF in dieseFächerHolen)
+                {
+                    if (geholteUnterrichte[i].Fach == dF || geholteUnterrichte[i].FachnameAtlantis == dF)
+                    {
+                        // Der aktuelle Unterricht aus Atlantis wird zur LeistungA
+                        var leistungA = (from uuu in unterrichteAktuellAusAtlantis
+                                         where uuu.Fach == geholteUnterrichte[i].Fach || uuu.Fach == geholteUnterrichte[i].FachnameAtlantis
+                                         select uuu.LeistungA).FirstOrDefault();
+
+                        // Die geholte leistungA wird zur leistungW
+                        var leistungW = geholteUnterrichte[i].LeistungA;
+
+                        leistungA.Bemerkung = "Note geholt.|" + leistungW.LeistungId + ">" + leistungA.LeistungId + "|";
+
+                        // Die Unterrichte werden um den neu erstellten geholten Unterricht ergänzt
+
+                        this.Add(new Unterricht(leistungW, leistungA));
+                    }
+                }
+            }
+        }
     }
 }

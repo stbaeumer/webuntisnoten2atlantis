@@ -70,7 +70,7 @@ namespace webuntisnoten2atlantis
         public int Reihenfolge { get; internal set; }
         public bool Zugeordnet { get; internal set; }
         
-        // ID des Notenkopfes. Siehe Fucklantis.
+        // ID des Notenkopfes,
         public int NokId { get; internal set; }
 
         public Leistung(string name, string fach, List<string> fachAliases, string gesamtnote, string gesamtpunkte, string tendenz, DateTime datum, string nachname, string lehrkraft, int schlüsselExtern, int marksPerLessonZeile)

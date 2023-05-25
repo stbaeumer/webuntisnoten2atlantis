@@ -84,6 +84,12 @@ namespace webuntisnoten2atlantis
             InfragekommendeLeistungenA = infragekommendeLeistungenA;
         }
 
+        public Unterricht(Leistung leistungW, Leistung leistungA) : this(leistungW)
+        {
+            LeistungW = leistungW;
+            LeistungA = leistungA;
+        }
+
         internal void QueryBauen()
         {
             // Für eine einfachere Vergleichbarkeit wird eine leere Gesamtnote genullt
