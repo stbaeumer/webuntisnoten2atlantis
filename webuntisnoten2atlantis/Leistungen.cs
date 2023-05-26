@@ -535,6 +535,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
 
             if (angelegt.Count > 0)
             {
+                Console.WriteLine("");
                 meldung += "Das Notenblatt für die Klasse " + interessierendeKlasse + " wurde angelegt.";
                 
                 if ((from atlantisLeistung in angelegt where atlantisLeistung.Konferenzdatum.Year == 1 select atlantisLeistung).Any())
@@ -545,7 +546,8 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 {
                     meldung+="Konferenzdatum: " + angelegt[0].Konferenzdatum + ".";
                 }
-                Console.WriteLine(meldung);                
+                Console.WriteLine(meldung);    
+                Console.WriteLine("");
             }
             else
             {                

@@ -803,10 +803,10 @@ namespace webuntisnoten2atlantis
                     Global.Tabelle = new List<string>();
                     Console.WriteLine((" "));
                     Console.WriteLine((" "));
-                    Global.WriteLineTabelle(("Leistungen der Klasse " + interessierendeKlasse + " in Atlantis: "));
-                    Global.WriteLineTabelle(("======================================== ").PadRight(interessierendeKlasse.Length, '='));
+                    Global.WriteLineTabelle(("Leistungen der Klasse " + interessierendeKlasse + " aus Webuntis & Atlantis: "));
+                    Global.WriteLineTabelle(("=====================================================").PadRight(interessierendeKlasse.Length, '='));
                     Global.WriteLineTabelle("*-----*------*----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
-                    Global.WriteLineTabelle("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis & F***lantis" + (DateTime.Now.ToLongDateString() + ", " + DateTime.Now.ToShortTimeString() + ", " + user.PadRight(3).Substring(0, 3) + "|").PadLeft(44));
+                    Global.WriteLineTabelle(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis & F***lantis").PadRight(70) + (DateTime.Now.ToLongDateString() + ", " + DateTime.Now.ToShortTimeString() + ", " + user.PadRight(3).Substring(0, 3) + "|").PadLeft(44));
 
                     bool xxxx = false;
                     bool xx = false;
@@ -863,7 +863,7 @@ namespace webuntisnoten2atlantis
 
                         foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell)
                         {
-                            n += (aktuellerU.LessonNumbers == null ? "    |" : aktuellerU.LessonNumbers.Count > i ? aktuellerU.LessonNumbers[i].ToString() : "").PadRight(4).Substring(0, 4) + "|";
+                            n += (aktuellerU.LessonNumbers == null ? "    |" : aktuellerU.LessonNumbers.Count > i ? aktuellerU.LessonNumbers[i].ToString() : "").PadLeft(4).Substring(0, 4) + "|";
                         }    
                         Global.WriteLineTabelle(n);
                     }
