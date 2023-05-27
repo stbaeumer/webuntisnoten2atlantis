@@ -23,6 +23,7 @@ namespace webuntisnoten2atlantis
         /// </summary>
         public Unterrichte UnterrichteAktuellAusAtlantis { get; internal set; }
         public Unterrichte AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert { get; private set; }
+        public int Zähler { get; internal set; }
 
         internal void ErstelleUnterricht(Leistungen atlantisLeistungen)
         {

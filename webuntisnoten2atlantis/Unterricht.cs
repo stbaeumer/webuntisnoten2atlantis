@@ -12,6 +12,7 @@ namespace webuntisnoten2atlantis
         public int Zeile { get; internal set; }
         public int LessonId { get; internal set; }        
         public string Fach { get; internal set; }
+        public DateTime Konferenzdatum { get; }
         public string Lehrkraft { get; internal set; }
         public string Klassen { get; internal set; }
         public string Gruppe { get; internal set; }
@@ -72,6 +73,7 @@ namespace webuntisnoten2atlantis
         {
             Lehrkraft = lehrkraft;
             Fach = fach;
+            Konferenzdatum = leistungA == null ? new DateTime() : leistungA.Konferenzdatum;
             Klassen = klasse;
             LessonId = lessonId;
             Reihenfolge = reihenfolge;
@@ -88,6 +90,7 @@ namespace webuntisnoten2atlantis
         {
             LeistungW = leistungW;
             LeistungA = leistungA;
+            Konferenzdatum = leistungW.Konferenzdatum;
         }
 
         internal void QueryBauen()

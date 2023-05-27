@@ -70,6 +70,7 @@ namespace webuntisnoten2atlantis
             if (!(from t in this
                   where t.Lehrkraft == unterricht.Lehrkraft
                   where t.Fach == unterricht.Fach
+                  where (t.LeistungA == null ? true : t.LeistungA.Konferenzdatum.ToShortDateString() == unterricht.LeistungA.Konferenzdatum.ToShortDateString())
                   where t.Klassen == unterricht.Klassen
                   where t.Gruppe == unterricht.Gruppe
                   select t).Any())
@@ -95,7 +96,9 @@ namespace webuntisnoten2atlantis
             {
                 foreach (var dF in dieseFächerHolen)
                 {
-                    if (geholteUnterrichte[i].Fach == dF || geholteUnterrichte[i].FachnameAtlantis == dF)
+                        if ((geholteUnterrichte[i].Fach == dF.Split('|')[0] || geholteUnterrichte[i].FachnameAtlantis == dF.Split('|')[0])
+                        && (geholteUnterrichte[i].LeistungA.Konferenzdatum.ToShortDateString() == dF.Split('|')[1])
+                        )
                     {
                         // Der aktuelle Unterricht aus Atlantis wird zur LeistungA
                         var leistungA = (from uuu in unterrichteAktuellAusAtlantis

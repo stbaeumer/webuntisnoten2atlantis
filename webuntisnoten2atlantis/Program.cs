@@ -100,7 +100,7 @@ namespace webuntisnoten2atlantis
 
                     interessierendeSchülerDieserKlasse.TabelleZeichnen(interessierendeKlasse, User);
 
-                    interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse);
+                    interessierendeSchülerDieserKlasse.GeholteLeistungenBehandeln(interessierendeKlasse, AktSj, hzJz);
 
                     interessierendeSchülerDieserKlasse.TabelleZeichnen(interessierendeKlasse, User);
 

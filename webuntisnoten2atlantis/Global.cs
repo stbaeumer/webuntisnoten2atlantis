@@ -115,6 +115,26 @@ namespace webuntisnoten2atlantis
             return s.Substring(0,s.Length-delimiter.Length);
         }
 
+        internal static string List2String90(List<string> interessierendeKlassen, string delimiter)
+        {
+            var s = "";
+
+            if (interessierendeKlassen.Count > 0)
+            {
+                foreach (var item in interessierendeKlassen)
+                {
+                    s += item + delimiter;
+
+                    if (s.Length > 90 - 5 && s.Length <= 90 || s.Length > 90 * 2 - 5 && s.Length <= 90 * 2 || s.Length > 90 * 3 - 5 && s.Length <= 90 * 3 || s.Length > 60 * 4 - 5 && s.Length <= 60 * 4)
+                    {
+                        s += "\n              ";
+                    }
+                }
+            }
+
+            return s.Substring(0, s.Length - delimiter.Length);
+        }
+
         internal static string List2String(List<int> interessierendeKlassen, Char delimiter)
         {
             var s = "";
