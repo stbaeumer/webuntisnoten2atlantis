@@ -64,8 +64,9 @@ namespace webuntisnoten2atlantis
         /// sind geholte Unterrichte.
         /// </summary>
         /// <param name="atlantisLeistungen"></param>
-        internal void GeholteUnterrichteHinzufügen(Leistungen atlantisLeistungen)
+        internal int GeholteUnterrichteHinzufügen(Leistungen atlantisLeistungen)
         {
+            int a = 0;
             UnterrichteGeholt = new Unterrichte();
 
             foreach (var atlantisLeistung in (from al in atlantisLeistungen.OrderByDescending(x => x.Konferenzdatum)
@@ -96,8 +97,10 @@ namespace webuntisnoten2atlantis
                 if (geholt)
                 {
                     UnterrichteGeholt.Add(new Unterricht(atlantisLeistung));
+                    a++;
                 }
             }
+            return a;
         }
 
         /// <summary>
@@ -106,16 +109,21 @@ namespace webuntisnoten2atlantis
         /// <param name="atlantisLeistungen"></param>
         /// <param name="hzJz"></param>
         /// <param name="aktSj"></param>
-        internal void GetAtlantisLeistungen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
+        internal int GetAtlantisLeistungen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
         {
+            int i = 0;
+
             foreach (var u in UnterrichteAusWebuntis)
             {
-                u.GetAtlantisLeistung(atlantisLeistungen, SchlüsselExtern, hzJz, aktSj);
+                i+= u.GetAtlantisLeistung(atlantisLeistungen, SchlüsselExtern, hzJz, aktSj);
             }
+
+            return i;
         }
 
-        internal void GetUnterrichte(List<Unterricht> unterrichteDerKlasse, List<Gruppe> alleGruppen)
+        internal int GetUnterrichte(List<Unterricht> unterrichteDerKlasse, List<Gruppe> alleGruppen)
         {
+            int i = 0; 
             UnterrichteAusWebuntis = new Unterrichte();
 
             // Unterrichte der ganzen Klasse
@@ -134,6 +142,7 @@ namespace webuntisnoten2atlantis
 
                 if (gibtsSchon == null)
                 {
+                    i++;
                     UnterrichteAusWebuntis.Add(new Unterricht(
                         u.LeistungA,
                         u.LessonNumbers[0],
@@ -169,6 +178,7 @@ namespace webuntisnoten2atlantis
 
                     if (gibtsSchon == null)
                     {
+                        i++;
                         UnterrichteAusWebuntis.Add(new Unterricht(
                             u.LeistungA,
                             u.LessonNumbers[0],
@@ -188,18 +198,23 @@ namespace webuntisnoten2atlantis
                     }
                 }
             }
+            return i;
         }
 
         
 
         /// Wenn einer Webuntis-Leistung keine Atlantis-Leistung zugeordnet werden konnte, muss trotzdem ein Unterricht der Klasse angelegt werden.
         /// Alle infragekommenden aktuellen Atlantisleistungen werden für eine spätere Auswahl angehangen.
-        internal void InfragekommendeUnterrichteFürSpätereZuordnungAnlegen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
+        internal int InfragekommendeUnterrichteFürSpätereZuordnungAnlegen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
         {
+            int a = 0;
+
             foreach (var u in UnterrichteAusWebuntis)
             {
-                u.InfragekommendeAktuelleLeistungenHinzufügen(atlantisLeistungen, SchlüsselExtern, hzJz, aktSj);
+                a += u.InfragekommendeAktuelleLeistungenHinzufügen(atlantisLeistungen, SchlüsselExtern, hzJz, aktSj);
             }
+
+            return a;
         }
 
         internal void QueriesBauenUpdate()
@@ -233,8 +248,9 @@ namespace webuntisnoten2atlantis
         /// werden zu neuen Unterrichten, denen später die geholten Noten zugeordnet werden können.  
         /// </summary>
         /// <param name="atlantisLeistungen"></param>
-        internal void UnterrichteAktuellAusAtlantisHolen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
+        internal int UnterrichteAktuellAusAtlantisHolen(Leistungen atlantisLeistungen, string hzJz, List<string> aktSj)
         {
+            int i = 0;
             UnterrichteAktuellAusAtlantis = new Unterrichte();
 
             foreach (var atlantisLeistung in (from al in atlantisLeistungen.OrderByDescending(x => x.Konferenzdatum)
@@ -245,7 +261,10 @@ namespace webuntisnoten2atlantis
                                               select al).ToList())
             {
                 UnterrichteAktuellAusAtlantis.Add(new Unterricht(atlantisLeistung));
+                i++;
             }
+
+            return i;
         }
     }
 }

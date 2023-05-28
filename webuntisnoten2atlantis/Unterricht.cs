@@ -12,7 +12,7 @@ namespace webuntisnoten2atlantis
         public int Zeile { get; internal set; }
         public int LessonId { get; internal set; }        
         public string Fach { get; internal set; }
-        public DateTime Konferenzdatum { get; }
+        public DateTime Konferenzdatum { get; set; }
         public string Lehrkraft { get; internal set; }
         public string Klassen { get; internal set; }
         public string Gruppe { get; internal set; }
@@ -215,7 +215,7 @@ namespace webuntisnoten2atlantis
         /// <param name="schlüsselExtern"></param>
         /// <param name="hzJz"></param>
         /// <param name="aktSj"></param>
-        internal void GetAtlantisLeistung(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
+        internal int GetAtlantisLeistung(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
         {
             var atlantisLeistungenDiesesSchülers = (from al in atlantisLeistungen.OrderByDescending(x => x.Konferenzdatum)
                                                     where al.SchlüsselExtern == schlüsselExtern
@@ -227,18 +227,20 @@ namespace webuntisnoten2atlantis
 
             if (atlantisLeistungenDiesesSchülers.Count > 1)
             {
-                Console.WriteLine("Es gibt ... Prüfen!");
-                Console.ReadKey();
+                Console.WriteLine("Für den Schüler " + schlüsselExtern + " liegt keine einzige Leistung in Atlantis vor.");                
             }
             if (atlantisLeistungenDiesesSchülers.Count == 1)
             {
                 LeistungA = atlantisLeistungenDiesesSchülers[0];
-                LeistungA.Zugeordnet = true; ;
+                LeistungA.Zugeordnet = true;
+                Konferenzdatum = LeistungA.Konferenzdatum;
                 Reihenfolge = atlantisLeistungenDiesesSchülers[0].Reihenfolge; // Die Reihenfolge aus Atlantis wird an den Unterricht übergeben                                    
                 LessonId = atlantisLeistungenDiesesSchülers[0].LeistungId;
                 FachnameAtlantis = atlantisLeistungenDiesesSchülers[0].Fach;
                 Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert.AddUnterrichte(this);
+                return 1;
             }
+            return 0;
         }
 
         /// <summary>
@@ -249,14 +251,15 @@ namespace webuntisnoten2atlantis
         /// <param name="schlüsselExtern"></param>
         /// <param name="hzJz"></param>
         /// <param name="aktSj"></param>
-        internal void InfragekommendeAktuelleLeistungenHinzufügen(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
+        internal int InfragekommendeAktuelleLeistungenHinzufügen(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
         {
             if (LeistungA == null)
             {
-                InfragekommendeLeistungenA.AddRange(atlantisLeistungen.InfragekommendeLeistungenHinzufügen(schlüsselExtern, hzJz, aktSj));
-
+                InfragekommendeLeistungenA.AddRange(atlantisLeistungen.InfragekommendeLeistungenHinzufügen(schlüsselExtern, hzJz, aktSj));                
                 Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert.AddUnterrichte(this);
+                return InfragekommendeLeistungenA.Count();
             }
+            return 0;
         }
     }
 }

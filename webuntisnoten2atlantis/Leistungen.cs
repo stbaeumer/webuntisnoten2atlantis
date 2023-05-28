@@ -52,7 +52,7 @@ namespace webuntisnoten2atlantis
                                 leistung.Gesamtnote = Gesamtpunkte2Gesamtnote(leistung.Gesamtpunkte);
                                 leistung.Tendenz = Gesamtpunkte2Tendenz(leistung.Gesamtpunkte);
                                 leistung.Bemerkung = x[6];
-                                leistung.Lehrkraft = x[7];
+                                leistung.Lehrkraft = x[7].Length > 3 && x[7].ToLower().EndsWith("sa") ? x[7].ToUpper().Substring(0, x[7].Length - 2) : x[7].ToUpper();
                                 leistung.LehrkraftAtlantisId = (from l in lehrers where l.Kuerzel == leistung.Lehrkraft select l.AtlantisId).FirstOrDefault();
                                 leistung.SchlüsselExtern = Convert.ToInt32(x[8]);
 
@@ -120,8 +120,10 @@ namespace webuntisnoten2atlantis
         {
             var x = (from m in this
                      where m.Klasse != ""
-                     where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden
+                     where m.Gesamtnote != null
+                     where m.Gesamtnote != "" // nur Klassen, für die schon Noten gegeben wurden                     
                      select m.Klasse).Distinct().ToList();
+
             Console.WriteLine(("Webuntis-Klassen mit eingetragenen Gesamtnoten").PadRight(Global.PadRight - 2, '.') + x.Count.ToString().PadLeft(6));
 
             Console.WriteLine(Global.List2String(x, ","));
@@ -725,11 +727,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                 UpdateLeistung(w.Beschreibung, w.Query);
                 i++;
             }
-
-            if (i==0)
-            {
-                return "A C H T U N G: Es wurde keine einzige Leistung angelegt oder verändert. Das kann daran liegen, dass das Notenblatt in Atlantis nicht richtig angelegt ist. Die Tabelle zum manuellen eintragen der Noten muss in der Notensammelerfassung sichtbar sein. Außerdem muss ein Zeugnisdatum angelegt sein, das nicht in der Vergangenheit liegen darf.";
-            }
+                        
             return "";
         }
         

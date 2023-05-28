@@ -70,7 +70,7 @@ namespace webuntisnoten2atlantis
             if (!(from t in this
                   where t.Lehrkraft == unterricht.Lehrkraft
                   where t.Fach == unterricht.Fach
-                  where (t.LeistungA == null ? true : t.LeistungA.Konferenzdatum.ToShortDateString() == unterricht.LeistungA.Konferenzdatum.ToShortDateString())
+                  where (t.LeistungA == null || unterricht.LeistungA == null ? true : t.LeistungA.Konferenzdatum.ToShortDateString() == unterricht.LeistungA.Konferenzdatum.ToShortDateString())
                   where t.Klassen == unterricht.Klassen
                   where t.Gruppe == unterricht.Gruppe
                   select t).Any())

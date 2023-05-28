@@ -97,22 +97,29 @@ namespace webuntisnoten2atlantis
 
         internal static string List2String(List<string> interessierendeKlassen, string delimiter)
         {
-            var s = "";
-
-            if (interessierendeKlassen.Count > 0)
+            try
             {
-                foreach (var item in interessierendeKlassen)
-                {
-                    s += item + delimiter;
+                var s = "";
 
-                    if (s.Length > Global.PadRight - 5 && s.Length <= Global.PadRight || s.Length > Global.PadRight * 2 - 5 && s.Length <= Global.PadRight * 2 || s.Length > Global.PadRight * 3 - 5 && s.Length <= Global.PadRight * 3 || s.Length > Global.PadRight * 4 - 5 && s.Length <= Global.PadRight * 4)
+                if (interessierendeKlassen.Count > 0)
+                {
+                    foreach (var item in interessierendeKlassen)
                     {
-                        s += "\n";
+                        s += item + delimiter;
+
+                        if (s.Length > Global.PadRight - 5 && s.Length <= Global.PadRight || s.Length > Global.PadRight * 2 - 5 && s.Length <= Global.PadRight * 2 || s.Length > Global.PadRight * 3 - 5 && s.Length <= Global.PadRight * 3 || s.Length > Global.PadRight * 4 - 5 && s.Length <= Global.PadRight * 4)
+                        {
+                            s += "\n";
+                        }
                     }
                 }
+
+                return s.Substring(0, s.Length - delimiter.Length);
             }
-            
-            return s.Substring(0,s.Length-delimiter.Length);
+            catch (Exception)
+            {
+                return "";
+            }
         }
 
         internal static string List2String90(List<string> interessierendeKlassen, string delimiter)
