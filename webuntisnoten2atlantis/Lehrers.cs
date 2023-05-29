@@ -58,7 +58,7 @@ WHERE vorgang_schuljahr = '" + (Convert.ToInt32(aktSj[0]) - 0) + "/" + (Convert.
             {
                 throw ex;
             }
-            Console.WriteLine(("Lehrer*innen aus Atlantis (" + typ + ") ").PadRight(Global.PadRight - 2, '.') + this.Count.ToString().PadLeft(4));            
+            Console.WriteLine(("Lehrer*innen aus Atlantis (" + typ + ") ").PadRight(Global.PadRight, '.') + this.Count.ToString().PadLeft(4));            
         }        
     }
 }

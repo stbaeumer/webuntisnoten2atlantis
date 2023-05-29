@@ -339,7 +339,7 @@ namespace webuntisnoten2atlantis
                                     {
                                         xx.Add(gU);
                                     }
-                                    Console.WriteLine("".PadRight(dieseFächerHolen.Count + 1, ' ') + " " + i + ". " + gU.Fach.PadRight(5) + " |" + gU.LeistungA.Konferenzdatum.ToShortDateString() + " |" + gU.LeistungA.Schuljahr + " |" +gU.LeistungA.HzJz  + " |Anzahl: " + anzahl.ToString().PadLeft(2) + " SuS |Klassen: " + Global.List2String(klassen, ",") + " |Notenkopf-ID: " + nokId[0] + ",..." + "\n           |SuS: " + Global.List2String90(susNamen, ","));
+                                    Console.WriteLine("".PadRight(dieseFächerHolen.Count + 1, ' ') + " " + i + ". " + gU.Fach.PadRight(5) + " |" + gU.LeistungA.Konferenzdatum.ToShortDateString() + " |" + gU.LeistungA.Schuljahr + " |" +gU.LeistungA.HzJz  + " |Anzahl: " + anzahl.ToString().PadLeft(2) + " SuS |Klassen: " + Global.List2String(klassen, ",") + " |Notenkopf-ID: " + Global.List2String(nokId,",") + "\n           |SuS: " + Global.List2String90(susNamen, ","));
                                     i++;
                                 }                                
                             }
@@ -852,16 +852,16 @@ namespace webuntisnoten2atlantis
 
                     var breiteSpalteEins = Math.Max(Global.PadRight - Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.Count * 5, 10);
 
-                    string x = "*".PadRight(breiteSpalteEins - 9, '-') + "------------+";
-                    string webUntFach = "|".PadRight(breiteSpalteEins - 9, ' ') + "WebUnt-Fach|";
-                    string atlantFach = "|".PadRight(breiteSpalteEins - 9, ' ') + "Atlant-Fach|";
-                    string l = "|".PadRight(breiteSpalteEins - 9, ' ') + "  Lehrkraft|";
-                    string g = "|".PadRight(breiteSpalteEins - 9, ' ') + " Teilnehmer|";
-                    string w = "|".PadRight(breiteSpalteEins - 9, ' ') + "WebUn Atlan|";
+                    string x = "*".PadRight(breiteSpalteEins - 8, '-') + "-----------+";
+                    string webUntFach = "|".PadRight(breiteSpalteEins - 8, ' ') + "WebUnt-Fach|";
+                    string atlantFach = "|".PadRight(breiteSpalteEins - 8, ' ') + "Atlant-Fach|";
+                    string l = "|".PadRight(breiteSpalteEins - 8, ' ') + "  Lehrkraft|";
+                    string g = "|".PadRight(breiteSpalteEins - 8, ' ') + " Teilnehmer|";
+                    string w = "|".PadRight(breiteSpalteEins - 8, ' ') + "WebUn Atlan|";
                     string b = "*".PadRight(breiteSpalteEins - 9, '-') + "-----*------+";
-                    string k = "|".PadRight(breiteSpalteEins - 9, ' ') + "            |";
-                    string y = "*".PadRight(breiteSpalteEins - 9, '-') + "-----*------*";
-                    string sj = "|".PadRight(breiteSpalteEins - 9, ' ') + " HZ/JZ + SJ|";
+                    string k = "|".PadRight(breiteSpalteEins - 8, ' ') + "            |";
+                    string y = "*".PadRight(breiteSpalteEins - 8, '-') + "----*------*";
+                    string sj = "|".PadRight(breiteSpalteEins - 8, ' ') + " HZ/JZ + SJ|";
 
                     foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell)
                     {
@@ -898,7 +898,7 @@ namespace webuntisnoten2atlantis
 
                     for (int i = 0; i < anzahlVerschiedenerUnterrichtsnummern; i++)
                     {
-                        string n = "|".PadRight(breiteSpalteEins - 9, ' ') + " Unterr.Nr.:|";
+                        string n = "|".PadRight(breiteSpalteEins - 9, ' ') + "  Unterr.Nr.|";
 
                         foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell)
                         {
