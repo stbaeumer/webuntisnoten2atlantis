@@ -10,7 +10,7 @@ namespace webuntisnoten2atlantis
     public class Unterrichte : List<Unterricht>
     {
         public Unterrichte()
-        {  
+        {
         }
 
         public Unterrichte(string sourceExportLessons)
@@ -75,12 +75,12 @@ namespace webuntisnoten2atlantis
                   where t.Gruppe == unterricht.Gruppe
                   select t).Any())
             {
-                this.Add(new Unterricht(unterricht.Lehrkraft, 
-                    unterricht.Fach, 
-                    unterricht.Klassen, 
-                    unterricht.LessonId, 
-                    unterricht.Reihenfolge, 
-                    unterricht.Gruppe, 
+                this.Add(new Unterricht(unterricht.Lehrkraft,
+                    unterricht.Fach,
+                    unterricht.Klassen,
+                    unterricht.LessonId,
+                    unterricht.Reihenfolge,
+                    unterricht.Gruppe,
                     unterricht.KursOderAlle,
                     unterricht.LeistungW,
                     unterricht.LeistungA,
@@ -90,15 +90,17 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void UmGeholteUnterrichteErweitern(List<string> dieseFächerHolen, Unterrichte geholteUnterrichte, Unterrichte unterrichteAktuellAusAtlantis)
+        internal string UmGeholteUnterrichteErweitern(List<string> dieseFächerHolen, Unterrichte geholteUnterrichte, Unterrichte unterrichteAktuellAusAtlantis, string nachname)
         {
+            string meldungen = "";
+
             for (int i = geholteUnterrichte.Count - 1; i >= 0; i--)
             {
                 foreach (var dF in dieseFächerHolen)
                 {
-                        if ((geholteUnterrichte[i].Fach == dF.Split('|')[0] || geholteUnterrichte[i].FachnameAtlantis == dF.Split('|')[0])
-                        && (geholteUnterrichte[i].LeistungA.Konferenzdatum.ToShortDateString() == dF.Split('|')[1])
-                        )
+                    if ((geholteUnterrichte[i].Fach == dF.Split('|')[0] || geholteUnterrichte[i].FachnameAtlantis == dF.Split('|')[0])
+                    && (geholteUnterrichte[i].LeistungA.Konferenzdatum.ToShortDateString() == dF.Split('|')[1])
+                    )
                     {
                         // Der aktuelle Unterricht aus Atlantis wird zur LeistungA
                         var leistungA = (from uuu in unterrichteAktuellAusAtlantis
@@ -108,14 +110,23 @@ namespace webuntisnoten2atlantis
                         // Die geholte leistungA wird zur leistungW
                         var leistungW = geholteUnterrichte[i].LeistungA;
 
-                        leistungA.Bemerkung = "Note geholt.|" + leistungW.LeistungId + ">" + leistungA.LeistungId + "|";
+                        if (leistungA != null)
+                        {
+                            leistungA.Bemerkung = "Note geholt.|" + leistungW.LeistungId + ">" + leistungA.LeistungId + "|";
 
-                        // Die Unterrichte werden um den neu erstellten geholten Unterricht ergänzt
+                            // Die Unterrichte werden um den neu erstellten geholten Unterricht ergänzt
 
-                        this.Add(new Unterricht(leistungW, leistungA));
+                            this.Add(new Unterricht(leistungW, leistungA));
+                        }
+                        else
+                        {
+                            meldungen += "Fehler beim Schüler " + nachname + ". Die Noten im Fach " + dF + " können nicht geholt werden.";                            
+                            
+                        }
                     }
                 }
             }
+            return meldungen;
         }
     }
 }

@@ -132,9 +132,9 @@ namespace webuntisnoten2atlantis
                 {
                     s += item + delimiter;
 
-                    if (s.Length > 90 - 5 && s.Length <= 90 || s.Length > 90 * 2 - 5 && s.Length <= 90 * 2 || s.Length > 90 * 3 - 5 && s.Length <= 90 * 3 || s.Length > 60 * 4 - 5 && s.Length <= 60 * 4)
+                    if (s.Length > 90 - 7 && s.Length <= 90 || s.Length > 90 * 2 - 7 && s.Length <= 90 * 2 || s.Length > 90 * 3 - 7 && s.Length <= 90 * 3 || s.Length > 60 * 4 - 7 && s.Length <= 60 * 4)
                     {
-                        s += "\n              ";
+                        s += "\n                  ";
                     }
                 }
             }

@@ -10,13 +10,16 @@ namespace webuntisnoten2atlantis
     {
         public void AddRückmeldung(Rückmeldung rückmeldung)
         {
-            if (!(from t in this 
-                  where t.Lehrkraft == rückmeldung.Lehrkraft 
-                  where t.Meldung == rückmeldung.Meldung 
-                  where t.Fach == rückmeldung.Fach
-                  select t).Any())
+            if (rückmeldung.Meldung!= "")
             {
-                this.Add(rückmeldung);
+                if (!(from t in this
+                      where t.Lehrkraft == rückmeldung.Lehrkraft
+                      where t.Meldung == rückmeldung.Meldung
+                      where t.Fach == rückmeldung.Fach
+                      select t).Any())
+                {
+                    this.Add(rückmeldung);
+                }
             }
         }
     }
