@@ -26,6 +26,7 @@ namespace webuntisnoten2atlantis
         public static List<string> Tabelle { get; internal set; }
         public static Unterrichte AlleVerschiedenenUnterrichteInDieserKlasseAktuellUnsortiert { get; internal set; }
         public static Unterrichte AlleVerschiedenenUnterrichteInDieserKlasseAktuell { get; internal set; }
+        public static Rückmeldungen Rückmeldungen { get; internal set; }
 
         internal static void PrintMessage(int index, string message)
         {

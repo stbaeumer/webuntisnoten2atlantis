@@ -90,7 +90,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal string UmGeholteUnterrichteErweitern(List<string> dieseFächerHolen, Unterrichte geholteUnterrichte, Unterrichte unterrichteAktuellAusAtlantis, string nachname)
+        internal string UmGeholteUnterrichteErweitern(List<string> dieseFächerHolen, Unterrichte geholteUnterrichte, Unterrichte unterrichteAktuellAusAtlantis, Unterrichte unterrichteAusWebuntis, string nachname)
         {
             string meldungen = "";
 
@@ -107,21 +107,48 @@ namespace webuntisnoten2atlantis
                                          where uuu.Fach == geholteUnterrichte[i].Fach || uuu.Fach == geholteUnterrichte[i].FachnameAtlantis
                                          select uuu.LeistungA).FirstOrDefault();
 
-                        // Die geholte leistungA wird zur leistungW
-                        var leistungW = geholteUnterrichte[i].LeistungA;
+                        // Es wird nochmal geprüft, ob nicht schon ein passender Unterricht existiert.
+                        // Das kann der Fall sein, wenn die Namen in W und A nicht identisch sind. Z.B bei S GB und S GD
+                        bool existiertSchon = false;
 
                         if (leistungA != null)
                         {
-                            leistungA.Bemerkung = "Note geholt.|" + leistungW.LeistungId + ">" + leistungA.LeistungId + "|";
-
-                            // Die Unterrichte werden um den neu erstellten geholten Unterricht ergänzt
-
-                            this.Add(new Unterricht(leistungW, leistungA));
+                            foreach (var uA in unterrichteAusWebuntis)
+                            {
+                                if (uA.LeistungA != null && uA.LeistungA.FachAliases != null)
+                                {
+                                    foreach (var item in uA.LeistungA.FachAliases)
+                                    {
+                                        foreach (var itemi in leistungA.FachAliases)
+                                        {
+                                            if (itemi == item)
+                                            {
+                                                existiertSchon = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        else
+
+                        if (!existiertSchon)
                         {
-                            meldungen += "Fehler beim Schüler " + nachname + ". Die Noten im Fach " + dF + " können nicht geholt werden.";                            
-                            
+                            // Die geholte leistungA wird zur leistungW
+                            var leistungW = geholteUnterrichte[i].LeistungA;
+
+                            if (leistungA != null)
+                            {
+                                leistungA.Bemerkung = "Note geholt.|" + leistungW.LeistungId + ">" + leistungA.LeistungId + "|";
+
+                                // Die Unterrichte werden um den neu erstellten geholten Unterricht ergänzt
+
+                                this.Add(new Unterricht(leistungW, leistungA));
+                            }
+                            else
+                            {
+                                meldungen += "Fehler beim Schüler " + nachname + ". Die Noten im Fach " + dF + " können nicht geholt werden.";
+
+                            }
                         }
                     }
                 }

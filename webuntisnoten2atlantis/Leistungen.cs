@@ -475,6 +475,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                                     leistung.Abschlussklasse = leistung.IstAbschlussklasse();
                                     leistung.Beschreibung = "";                                    
                                     leistung.ReligionAbgewählt = leistung.HatReligionAbgewählt(this);
+
                                     leistung.GetFachAliases();
                                     //leistung.GeholteNote(this, alleWebuntisLeistungen);
 
@@ -558,7 +559,7 @@ ORDER BY DBA.klasse.s_klasse_art DESC, DBA.noten_kopf.dat_notenkonferenz DESC, D
                     "2. Reiter *Zeugnisdaten* klicken\n" +
                     "3. Unter alle Zeugnisdaten Halbjahreszeugnis oder Jahresendzeugnisse wählen.\n" +
                     "4. Konferenzdatum und Ausgabedatum wählen.\n" +
-                    "5. *Notenblatt und Zeugnissatz () aller SuS mit diesen Zeugnisdaten aktualisieren*" +
+                    "5. *Notenblatt und Zeugnissatz () aller SuS mit diesen Zeugnisdaten aktualisieren\n" +
                     "6. Webuntisnoten2Atlantis erneut starten.");
             }
         }

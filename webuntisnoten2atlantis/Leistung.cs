@@ -143,6 +143,182 @@ namespace webuntisnoten2atlantis
 
             var nameAliases = new List<string>();
 
+            if (Fach.StartsWith("D  G1"))
+            {
+                nameAliases.Add("D G1");
+                nameAliases.Add("D G2");
+                nameAliases.Add("D G");
+                nameAliases.Add("D  G1");
+                nameAliases.Add("D  G2");
+                nameAliases.Add("D  G");
+            }
+
+            if (Fach.StartsWith("E  G1"))
+            {
+                nameAliases.Add("E G1");
+                nameAliases.Add("E G2");
+                nameAliases.Add("E G");
+                nameAliases.Add("E  G1");
+                nameAliases.Add("E  G2");
+                nameAliases.Add("E  G");
+            }
+
+            if (Fach.StartsWith("M  G1"))
+            {
+                nameAliases.Add("M G1");
+                nameAliases.Add("M G2");
+                nameAliases.Add("M G");
+                nameAliases.Add("M  G1");
+                nameAliases.Add("M  G2");
+                nameAliases.Add("M  G");
+            }
+
+            if (Fach.StartsWith("D  L1"))
+            {
+                nameAliases.Add("D L1");
+                nameAliases.Add("D L2");
+                nameAliases.Add("D L");
+                nameAliases.Add("D  L1");
+                nameAliases.Add("D  L2");
+                nameAliases.Add("D  L");
+            }
+
+            if (Fach.StartsWith("E  L1"))
+            {
+                nameAliases.Add("E L1");
+                nameAliases.Add("E L2");
+                nameAliases.Add("E L");
+                nameAliases.Add("E  L1");
+                nameAliases.Add("E  L2");
+                nameAliases.Add("E  L");
+            }
+
+            if (Fach.StartsWith("M  L1"))
+            {
+                nameAliases.Add("M L1");
+                nameAliases.Add("M L2");
+                nameAliases.Add("M L");
+                nameAliases.Add("M  L1");
+                nameAliases.Add("M  L2");
+                nameAliases.Add("M  L");
+            }
+
+            if (Fach.StartsWith("D G1"))
+            {
+                nameAliases.Add("D G1");
+                nameAliases.Add("D G2");
+                nameAliases.Add("D G");
+                nameAliases.Add("D  G1");
+                nameAliases.Add("D  G2");
+                nameAliases.Add("D  G");
+            }
+
+            if (Fach.StartsWith("E G1"))
+            {
+                nameAliases.Add("E G1");
+                nameAliases.Add("E G2");
+                nameAliases.Add("E G");
+                nameAliases.Add("E  G1");
+                nameAliases.Add("E  G2");
+                nameAliases.Add("E  G");
+            }
+
+            if (Fach.StartsWith("M G1"))
+            {
+                nameAliases.Add("M G1");
+                nameAliases.Add("M G2");
+                nameAliases.Add("M G");
+                nameAliases.Add("M  G1");
+                nameAliases.Add("M  G2");
+                nameAliases.Add("M  G");
+            }
+
+            if (Fach.StartsWith("D L1"))
+            {
+                nameAliases.Add("D L1");
+                nameAliases.Add("D L2");
+                nameAliases.Add("D L");
+                nameAliases.Add("D  L1");
+                nameAliases.Add("D  L2");
+                nameAliases.Add("D  L");
+            }
+
+            if (Fach.StartsWith("E L1"))
+            {
+                nameAliases.Add("E L1");
+                nameAliases.Add("E L2");
+                nameAliases.Add("E L");
+                nameAliases.Add("E  L1");
+                nameAliases.Add("E  L2");
+                nameAliases.Add("E  L");
+            }
+
+            if (Fach.StartsWith("M L1"))
+            {
+                nameAliases.Add("M L1");
+                nameAliases.Add("M L2");
+                nameAliases.Add("M L");
+                nameAliases.Add("M  L1");
+                nameAliases.Add("M  L2");
+                nameAliases.Add("M  L");
+            }
+
+            if (Fach.StartsWith("S G"))
+            {
+                nameAliases.Add("S G1");
+                nameAliases.Add("S G2");
+                nameAliases.Add("S G");
+                nameAliases.Add("S GB");
+                nameAliases.Add("S GD");
+                nameAliases.Add("S  G1");
+                nameAliases.Add("S  G2");
+                nameAliases.Add("S  G");
+                nameAliases.Add("S  GB");
+                nameAliases.Add("S  GD");
+            }
+
+            if (Fach.StartsWith("S  G"))
+            {
+                nameAliases.Add("S G1");
+                nameAliases.Add("S G2");
+                nameAliases.Add("S G");
+                nameAliases.Add("S GB");
+                nameAliases.Add("S GD");
+                nameAliases.Add("S  G1");
+                nameAliases.Add("S  G2");
+                nameAliases.Add("S  G");
+                nameAliases.Add("S  GB");
+                nameAliases.Add("S  GD");
+            }
+
+            if (Fach.StartsWith("N G"))
+            {
+                nameAliases.Add("N G1");
+                nameAliases.Add("N G2");
+                nameAliases.Add("N G");
+                nameAliases.Add("N GB");
+                nameAliases.Add("N GD");
+                nameAliases.Add("N  G1");
+                nameAliases.Add("N  G2");
+                nameAliases.Add("N  G");
+                nameAliases.Add("N  GB");
+                nameAliases.Add("N  GD");
+            }
+
+            if (Fach.StartsWith("N  G"))
+            {
+                nameAliases.Add("N G1");
+                nameAliases.Add("N G2");
+                nameAliases.Add("N G");
+                nameAliases.Add("N GB");
+                nameAliases.Add("N GD");
+                nameAliases.Add("N  G1");
+                nameAliases.Add("N  G2");
+                nameAliases.Add("N  G");
+                nameAliases.Add("N  GB");
+                nameAliases.Add("N  GD");
+            }
+
             if (Fach.StartsWith("CAD"))
             {
                 nameAliases.Add("CAD1");

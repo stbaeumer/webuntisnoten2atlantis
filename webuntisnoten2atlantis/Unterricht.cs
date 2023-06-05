@@ -217,9 +217,21 @@ namespace webuntisnoten2atlantis
         /// <param name="aktSj"></param>
         internal int GetAtlantisLeistung(Leistungen atlantisLeistungen, int schlüsselExtern, string hzJz, List<string> aktSj)
         {
+            var fach = Fach;
+            fach = Regex.Replace(fach, @"[\d-]", string.Empty); // Ein Zähler am Ende wird entfernt
+            fach = fach.Replace("  ", " ");                     // ein doppeltes Leerzeichen wird entfernt
+
+            // Bei Spanisch gibt es GB oder GD. Der letzte Buchstabe wird abgeschnitten.
+            if (fach.Contains(" "))
+            {
+                int a = fach.IndexOf(" ");
+                fach = fach.PadRight(a+2).Substring(0,a+2);       // nach dem Leerzeichen wird nach einer Stelle abgeschnitten
+            }
+            
+
             var atlantisLeistungenDiesesSchülers = (from al in atlantisLeistungen.OrderByDescending(x => x.Konferenzdatum)
                                                     where al.SchlüsselExtern == schlüsselExtern
-                                                    where al.FachAliases.Contains(Regex.Replace(Fach, @"[\d-]", string.Empty))
+                                                    where al.FachAliases.Contains(fach)
                                                     where al.Konferenzdatum.Date >= DateTime.Now.Date || al.Konferenzdatum.Year == 1
                                                     where al.HzJz == hzJz
                                                     where al.Schuljahr == aktSj[0] + "/" + aktSj[1]
@@ -227,9 +239,10 @@ namespace webuntisnoten2atlantis
 
             if (atlantisLeistungenDiesesSchülers.Count > 1)
             {
-                Console.WriteLine("Für den Schüler " + schlüsselExtern + " liegt keine einzige Leistung in Atlantis vor.");                
+                // Bei Spanisch oder Niederländisch kann es sein, dass G1 zu GB oder GD führen kann.            
+                Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(Lehrkraft,Fach, "Das Webuntis-Fach kann matcht auf " + atlantisLeistungenDiesesSchülers.Count + " Fächer " + Global.List2String(atlantisLeistungenDiesesSchülers.Select(x=>x.Fach.Replace("  "," ")).ToList(),",") +". Es wird nur dem Fach " + atlantisLeistungenDiesesSchülers[0].Fach.Replace("  ", " ") + " zugeordnet."));
             }
-            if (atlantisLeistungenDiesesSchülers.Count == 1)
+            if (atlantisLeistungenDiesesSchülers.Count >= 1)
             {
                 LeistungA = atlantisLeistungenDiesesSchülers[0];
                 LeistungA.Zugeordnet = true;
