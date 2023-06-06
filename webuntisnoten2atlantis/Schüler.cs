@@ -128,9 +128,7 @@ namespace webuntisnoten2atlantis
 
             // Unterrichte der ganzen Klasse
 
-            var unterrichteDerKlasseOhneGruppen = (from a in unterrichteDerKlasse
-                                                   where a.Startdate <= DateTime.Now
-                                                   where a.Enddate >= DateTime.Now.AddMonths(-2) // Unterrichte, die 2 Monat vor Konferenz beendet wurden, zählen
+            var unterrichteDerKlasseOhneGruppen = (from a in unterrichteDerKlasse                                                   
                                                    where a.Gruppe == ""
                                                    select a).ToList();
 

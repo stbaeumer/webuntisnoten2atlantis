@@ -92,7 +92,7 @@ namespace webuntisnoten2atlantis
 
                     var interessierendeSchülerDieserKlasse = alleSchüler.GetMöglicheSchülerDerKlasse(interessierendeKlasse);
 
-                    interessierendeSchülerDieserKlasse.GetWebuntisUnterrichte(alleUnterrichte, alleGruppen, interessierendeKlasse);
+                    interessierendeSchülerDieserKlasse.GetWebuntisUnterrichte(alleUnterrichte, alleGruppen, interessierendeKlasse, hzJz, AktSj);
 
                     interessierendeSchülerDieserKlasse.GetWebuntisLeistungen(alleWebuntisLeistungen);
 
