@@ -58,6 +58,10 @@ namespace webuntisnoten2atlantis
 
                                 if (leistung.Fach != null && leistung.Fach != "")
                                 {
+                                    if (leistung.Fach.StartsWith("BBKZ") && leistung.Klasse == "BZ22A")
+                                    {
+                                        string a = "";
+                                    }
                                     leistung.GetFachAliases();
                                     this.Add(leistung);
                                 }

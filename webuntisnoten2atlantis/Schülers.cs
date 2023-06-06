@@ -228,7 +228,7 @@ namespace webuntisnoten2atlantis
                                                 unt.LeistungA = null;
                                                 unt.Bemerkung = noteEingetragen[0] + " setzt die Note in " + Regex.Replace(unt.Fach.Split('|')[0], @"[\d-]", string.Empty) + ".";
                                                                                                 
-                                                Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(unt.Lehrkraft, Regex.Replace(unt.Fach.Split('|')[0], @"[\d-]", string.Empty), "Von den " + Regex.Replace(aktuellerU.Fach, @"[\d-]", string.Empty).PadRight(3) + " werden nur die Noten von " + noteEingetragen[0] + " in das Zeugnis übernommen."));
+                                                Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(unt.Lehrkraft, Regex.Replace(unt.Fach.Split('|')[0], @"[\d-]", string.Empty), "In " + Regex.Replace(aktuellerU.Fach, @"[\d-]", string.Empty).PadRight(3) + " werden nur die Noten von " + noteEingetragen[0] + " in das Zeugnis übernommen."));
                                             }
                                         }
                                     }
@@ -562,11 +562,11 @@ namespace webuntisnoten2atlantis
                 "\nNOTENLISTE " + interessierendeKlasse + " für die Konferenz am " + konferenz.ToShortDateString() + 
                 "\n " +
                 "\nHallo LuL der " + interessierendeKlasse + ", " +
-                "\n\nin Vorbereitung auf die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=halbjahreszeugniskonferenzen)") + " sende ich die Notenliste mit Bitte um Kontrolle.";
+                "\n\nauf vielfachen Wunsch sende ich die Notenliste für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=halbjahreszeugniskonferenzen)") + ".";
 
             if (Global.Rückmeldungen.Count() > 0)
             {
-                rückmeldung += "\n\nIch bitte um Beachtung:\n\n";
+                rückmeldung += "\n\nFolgende automatisch generierte Meldungen sollen helfen Fehler zu erkennen:\n\n";
 
                 foreach (var r in Global.Rückmeldungen)
                 {
@@ -574,9 +574,11 @@ namespace webuntisnoten2atlantis
                 }
             }
 
+            rückmeldung += "\n\nBei Unklarheiten bitte gerne melden.";
+
             rückmeldung += "\n\nKennwort: https://wiki.berufskolleg-borken.de/doku.php?id=schulleitungsmitteilungen:schulleitungsmitteilung-2023-04-28#verschluesselung\n";
 
-            rückmeldung += "\n\nGruß,\n" + user + "\n\n */";
+            rückmeldung += "\n\nGruß,\n" + "\n\n */";
 
             Global.SqlZeilen.Insert(Global.SqlZeilen.Count(), rückmeldung );
             
@@ -676,8 +678,17 @@ namespace webuntisnoten2atlantis
                 
                 int i = 0;
 
+                // Damit die Liste nicht zweistellig wird, wird auf den Anfangsbuchstaben gefiltert.
+
                 var infragekommendeLeistungenAgefiltert = uOhneA.InfragekommendeLeistungenA.Where(x => x.Fach.Substring(0, 1) == uOhneA.Fach.Substring(0, 1)).ToList();
 
+                // Falls es kein Fach mit dem selben Anfangsbuchstaben gibt, werden alle Fächer vorgeschlagen
+
+                if (infragekommendeLeistungenAgefiltert.Count == 0)
+                {
+                    infragekommendeLeistungenAgefiltert = uOhneA.InfragekommendeLeistungenA;
+                }
+                
                 foreach (var infragekommendeA in infragekommendeLeistungenAgefiltert)
                 {
                     // Bereits erfolgreich zugeordnete Unterrichte werden nicht zur Auswahl angeboten.
@@ -1155,7 +1166,7 @@ namespace webuntisnoten2atlantis
             int i = 0;
 
             var unterrichteDerKlasse = (from a in alleUnterrichte 
-                                        where a.Klassen.Contains(interessierendeKlasse) 
+                                        where a.Klassen.Split(',').Contains(interessierendeKlasse) 
                                         where a.Startdate <= DateTime.Now
                                         where a.Enddate >= DateTime.Now.AddMonths(-2) // Unterrichte, die 2 Monat vor Konferenz beendet wurden, zählen
                                         select a).ToList();
