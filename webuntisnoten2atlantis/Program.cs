@@ -77,7 +77,7 @@ namespace webuntisnoten2atlantis
                     Global.Rückmeldung = new List<string>();
                     Global.Tabelle = new List<string>();
                     Global.Rückmeldungen = new Rückmeldungen();
-
+                    
                     var interessierendeKlasse = GetIntessierendeKlasse(alleMöglicheKlassen, AktSj);
 
                     var targetAbsenceTimesTotal = Path.Combine(targetPath, Zeitstempel + "_AbsenceTimesTotal_" + interessierendeKlasse + "_" + User + ".CSV");
@@ -120,7 +120,7 @@ namespace webuntisnoten2atlantis
                     // Abwesenheiten 
 
                     if (sourceAbsenceTimesTotal != null)
-                    {
+                    {                    
                         Global.WriteLine(" ");
                         Global.WriteLine("Abwesenheiten in der Klasse " + interessierendeKlasse + ":");
                         Global.WriteLine("==================================".PadRight(interessierendeKlasse.Length, '='));
@@ -131,7 +131,7 @@ namespace webuntisnoten2atlantis
                         var atlantisAbwesenheiten = targetAbsenceTimesTotal == null ? null : new Abwesenheiten(ConnectionStringAtlantis + Properties.Settings.Default.DBUser, AktSj, interessierendeKlasse);
                         atlantisAbwesenheiten.Add(webuntisAbwesenheiten);
                         atlantisAbwesenheiten.Delete(webuntisAbwesenheiten);
-                        atlantisAbwesenheiten.Update(webuntisAbwesenheiten);
+                        atlantisAbwesenheiten.Update(webuntisAbwesenheiten);                        
                     }
                     else
                     {

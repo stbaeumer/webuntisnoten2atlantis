@@ -17,7 +17,7 @@ namespace webuntisnoten2atlantis
 
         public override string ToString() 
         {
-            return " * " + (Lehrkraft==null? "   " : Lehrkraft.PadRight(3)) + ", " + Fach.PadRight(4).Substring(0,4) + ": " + Meldung + "\n";
+            return " * " + ((Lehrkraft==null? "   " : Lehrkraft) + (Fach == "" ? "" : "(" + Fach + ")") + ": ").PadRight(16) + Meldung +"\n";
         }
     }
 }

@@ -173,6 +173,8 @@ DBA.schueler.name_2 ASC ", connection);
                     if (w != null)
                     {
                         UpdateAbwesenheit(a.Klasse.PadRight(6) + "(" + a.HzJz + ")" + "|0->" + w.StundenAbwesendUnentschuldigt.ToString().PadRight(3) + "|" + a.Name.Substring(0, Math.Min(a.Name.Length, 12)) + (w.Beschreibung == null ? "" : "|" + w.Beschreibung.TrimEnd(',')), "UPDATE noten_kopf SET fehlstunden_ents_unents=" + w.StundenAbwesendUnentschuldigt.ToString().PadLeft(3) + " WHERE nok_id=" + a.NotenkopfId + ";");
+                        Global.Rückmeldungen.AddRückmeldung(new Rückmeldung("Klassenleitung", "", "(Unentschuldigte) Fehlstunden so ok?"));
+                        
                         i++;
                     }
                 }

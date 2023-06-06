@@ -562,11 +562,11 @@ namespace webuntisnoten2atlantis
                 "\nNOTENLISTE " + interessierendeKlasse + " für die Konferenz am " + konferenz.ToShortDateString() + 
                 "\n " +
                 "\nHallo LuL der " + interessierendeKlasse + ", " +
-                "\n\nauf vielfachen Wunsch sende ich die Notenliste für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=halbjahreszeugniskonferenzen)") + ".";
+                "\n\nauf vielfachen Wunsch senden wir jetzt immer die Notenlisten für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=halbjahreszeugniskonferenzen)") + " an alle.";
 
             if (Global.Rückmeldungen.Count() > 0)
             {
-                rückmeldung += "\n\nFolgende automatisch generierte Meldungen sollen helfen Fehler zu erkennen:\n\n";
+                rückmeldung += "\n\nFolgende automatisch generierte Meldungen sollen uns helfen Handlungsbedarfe bzw. Fehler zu erkennen:\n\n";
 
                 foreach (var r in Global.Rückmeldungen)
                 {
@@ -574,11 +574,11 @@ namespace webuntisnoten2atlantis
                 }
             }
 
-            rückmeldung += "\n\nBei Unklarheiten bitte gerne melden.";
+            rückmeldung += "\n\nBei Unklarheiten bitte immer gerne melden.";
 
             rückmeldung += "\n\nKennwort: https://wiki.berufskolleg-borken.de/doku.php?id=schulleitungsmitteilungen:schulleitungsmitteilung-2023-04-28#verschluesselung\n";
 
-            rückmeldung += "\n\nGruß,\n" + "\n\n */";
+            rückmeldung += "\n\nBesten Grüße,\nZeugnisschreibung" +  "\n\n */";
 
             Global.SqlZeilen.Insert(Global.SqlZeilen.Count(), rückmeldung );
             
@@ -1044,7 +1044,7 @@ namespace webuntisnoten2atlantis
                                         {
                                             if (!uA.Bemerkung.Contains("eholt"))
                                             {
-                                                Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(uA.Lehrkraft, uA.LeistungA.Fach, "Es scheinen Noten in " + uA.LeistungA.Fach + " zu fehlen."));
+                                                Global.Rückmeldungen.AddRückmeldung(new Rückmeldung("alle", "", "Sind alle Noten eingetragen?"));
                                             }
                                         }
                                     }
@@ -1057,7 +1057,7 @@ namespace webuntisnoten2atlantis
                                                 s += "  " + (uA.LeistungA.Gesamtnote + uA.LeistungA.Tendenz).PadRight(2) + delimiter;
                                                 if (!uA.Bemerkung.Contains("eholt"))
                                                 {
-                                                    Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(uA.Lehrkraft, uA.LeistungA.Fach, "Es scheinen Noten in " + uA.LeistungA.Fach + " zu fehlen."));
+                                                    Global.Rückmeldungen.AddRückmeldung(new Rückmeldung("alle", "", "Sind alle Noten eingetragen?"));
                                                 }
                                             }
                                             else
