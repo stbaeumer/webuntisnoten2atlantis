@@ -107,6 +107,7 @@ namespace webuntisnoten2atlantis
             Vorname = atlantisLeistung.Vorname;
             LeistungId = atlantisLeistung.LeistungId;
             SchlüsselExtern = atlantisLeistung.SchlüsselExtern;
+            Reihenfolge = atlantisLeistung.Reihenfolge;
             Query = "";
         }
 

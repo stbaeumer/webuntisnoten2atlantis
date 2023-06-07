@@ -505,11 +505,11 @@ namespace webuntisnoten2atlantis
         {
             var url = "https://teams.microsoft.com/l/chat/0/0?users=";
 
-            if (user != "LG")
+            if (user != "LG" && !interessierendeKlasse.StartsWith("G"))
             {
                 url += "wolfgang.leuering@berufskolleg-borken.de,";
             }
-            if (user != "LS")
+            if (user != "LS" && interessierendeKlasse.StartsWith("G"))
             {
                 url += "klaus.lienenklaus@berufskolleg-borken.de,";
             }
@@ -744,6 +744,7 @@ namespace webuntisnoten2atlantis
                     if (input.Key == ConsoleKey.Enter)
                     {
                         gehtNichtWeiter = false;
+
                         for (int ii = 0; ii < Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.Count; ii++)
                         {
                             if (uOhneA.Fach == Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[ii].Fach)
@@ -763,6 +764,7 @@ namespace webuntisnoten2atlantis
                             if (intAuswahl >= 1 && intAuswahl <= i)
                             {
                                 uOhneA.LeistungA = new Leistung(infragekommendeLeistungenAgefiltert[intAuswahl - 1], "");
+                                uOhneA.Reihenfolge = uOhneA.LeistungA.Reihenfolge;
                                 gehtNichtWeiter = false;
 
                                 foreach (var schüler in this)
@@ -805,7 +807,8 @@ namespace webuntisnoten2atlantis
                                         {
                                             u.LeistungA = new Leistung(ala, uOhneA.Fach + "->" + infragekommendeLeistungenAgefiltert[intAuswahl - 1].Fach + "|");
                                             u.LeistungA.Lehrkraft = u.Lehrkraft;
-                                            Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(uOhneA.Lehrkraft, uOhneA.Fach, "Es wurde das Atlantisfach " + uOhneA.InfragekommendeLeistungenA[intAuswahl - 1].Fach + " zugeordnet."));
+                                            Global.Rückmeldungen.AddRückmeldung(new Rückmeldung(uOhneA.Lehrkraft, uOhneA.Fach, "Es wurde das Atlantisfach " + infragekommendeLeistungenAgefiltert[intAuswahl - 1].Fach + " zugeordnet."));
+                                            u.Reihenfolge = u.LeistungA.Reihenfolge;
                                         }
                                     }
                                 }
@@ -974,7 +977,7 @@ namespace webuntisnoten2atlantis
                     string y = "*".PadRight(breiteSpalteEins - 8, '-') + "----*------*";
                     string sj = "|".PadRight(breiteSpalteEins - 8, ' ') + " HZ/JZ + SJ|";
 
-                    foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell)
+                    foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.OrderBy(xxx=>xxx.Reihenfolge))
                     {
                         b += "----+";
                         webUntFach += aktuellerU.Fach.PadRight(4).Substring(0, 4) + "|";
@@ -1198,7 +1201,7 @@ namespace webuntisnoten2atlantis
             int i = 0;
 
             var unterrichteDerKlasse = (from a in alleUnterrichte
-                                        where a.Klassen.Split(',').Contains(interessierendeKlasse)
+                                        where a.Klassen.Split('~').Contains(interessierendeKlasse)
                                         where a.Startdate <= DateTime.Now
                                         where a.Enddate >= DateTime.Now.AddMonths(-2) // Unterrichte, die 2 Monat vor Konferenz beendet wurden, zählen
                                         select a).ToList();
