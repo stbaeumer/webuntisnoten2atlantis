@@ -212,8 +212,8 @@ namespace webuntisnoten2atlantis
                 securitySettings.PermitModifyDocument = true;
                 securitySettings.PermitPrint = false;
                 pdocument.Save(directory + "\\" + interessierendeKlasse + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-Kennwort.pdf");
-                File.Copy(fileName + ".pdf", directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste.pdf");
-                File.Move(directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste.pdf", targetPath + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste.pdf");
+                File.Copy(fileName + ".pdf", directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste" + User + ".pdf");
+                File.Move(directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste\" + User + \".pdf", targetPath + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste.pdf");
 
                 //pdocument.Save(targetPath + "\\" + interessierendeKlasse + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-" + DateTime.Now.ToShortTimeString() + "-Kennwort.pdf");
                 //File.Delete(fileName + ".pdf");
