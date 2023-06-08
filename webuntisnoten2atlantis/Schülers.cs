@@ -956,7 +956,10 @@ namespace webuntisnoten2atlantis
                     Global.WriteLineTabelle(("Leistungen der Klasse " + interessierendeKlasse + " aus Webuntis & Atlantis: "));
                     Global.WriteLineTabelle(("=====================================================").PadRight(interessierendeKlasse.Length, '='));
                     Global.WriteLineTabelle("*-----*------*----------------------------".PadRight(Global.PadRight + 3, '-') + "*");
-                    Global.WriteLineTabelle(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis & F***lantis").PadRight(71) + (DateTime.Now.ToLongDateString() + ", " + DateTime.Now.ToShortTimeString() + ", " + user.PadRight(3).Substring(0, 3) + "|").PadLeft(45));
+                    Global.WriteLineTabelle(("|Name |SuS-Id| Noten + Tendenzen der Klasse " + interessierendeKlasse + " aus Webuntis & F***lantis").PadRight(70) + (DateTime.Now.ToLongDateString() + ", " + DateTime.Now.ToShortTimeString() + ", " + user.PadRight(3).Substring(0, 3) + "|").PadLeft(45));
+
+                    var alleVerschiedenenUnterrichteInDieserKlasseAktuell = new Unterrichte();
+                    alleVerschiedenenUnterrichteInDieserKlasseAktuell.AddRange(Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.OrderBy(xxx => xxx.Reihenfolge));
 
                     bool xxxx = false;
                     bool xx = false;
@@ -964,7 +967,7 @@ namespace webuntisnoten2atlantis
                     bool gartenzaun = false;
                     bool prozent = false;
 
-                    var breiteSpalteEins = Math.Max(Global.PadRight - Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.Count * 5, 10);
+                    var breiteSpalteEins = Math.Max(Global.PadRight - alleVerschiedenenUnterrichteInDieserKlasseAktuell.Count * 5, 10);
 
                     string x = "*".PadRight(breiteSpalteEins - 8, '-') + "-----------+";
                     string webUntFach = "|".PadRight(breiteSpalteEins - 8, ' ') + "WebUnt-Fach|";
@@ -977,7 +980,7 @@ namespace webuntisnoten2atlantis
                     string y = "*".PadRight(breiteSpalteEins - 8, '-') + "----*------*";
                     string sj = "|".PadRight(breiteSpalteEins - 8, ' ') + " HZ/JZ + SJ|";
 
-                    foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.OrderBy(xxx=>xxx.Reihenfolge))
+                    foreach (var aktuellerU in alleVerschiedenenUnterrichteInDieserKlasseAktuell)
                     {
                         b += "----+";
                         webUntFach += aktuellerU.Fach.PadRight(4).Substring(0, 4) + "|";
@@ -1002,7 +1005,7 @@ namespace webuntisnoten2atlantis
 
                     var anzahlVerschiedenerUnterrichtsnummern = 0;
 
-                    foreach (var item in (from gg in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell select gg).ToList())
+                    foreach (var item in (from gg in alleVerschiedenenUnterrichteInDieserKlasseAktuell select gg).ToList())
                     {
                         if (item.LessonNumbers != null && item.LessonNumbers.Count > anzahlVerschiedenerUnterrichtsnummern)
                         {
@@ -1014,7 +1017,7 @@ namespace webuntisnoten2atlantis
                     {
                         string n = "|".PadRight(breiteSpalteEins - 9, ' ') + "  Unterr.Nr.|";
 
-                        foreach (var aktuellerU in Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell)
+                        foreach (var aktuellerU in alleVerschiedenenUnterrichteInDieserKlasseAktuell)
                         {
                             n += (aktuellerU.LessonNumbers == null ? "    |" : aktuellerU.LessonNumbers.Count > i ? aktuellerU.LessonNumbers[i].ToString() : "").PadLeft(4).Substring(0, 4) + "|";
                         }
@@ -1030,20 +1033,20 @@ namespace webuntisnoten2atlantis
                         string s = "|" + (ii.ToString().PadLeft(2) + "." + schüler.Nachname + ", " + schüler.Vorname).PadRight(breiteSpalteEins).Substring(0, breiteSpalteEins - 5) + "|" + schüler.SchlüsselExtern + "|";
                         schüler.Zähler = ii;
                         ii++;
-                        for (int i = 0; i < Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.Count; i++)
+                        for (int i = 0; i < alleVerschiedenenUnterrichteInDieserKlasseAktuell.Count; i++)
                         {
                             Unterricht uA = new Unterricht();
                             bool zugeordnet = false;
 
                             foreach (var u in schüler.UnterrichteAusWebuntis)
                             {
-                                if (u.Fach == Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach)
+                                if (u.Fach == alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach)
                                 {
-                                    if (u.Lehrkraft == Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Lehrkraft || u.FachnameAtlantis == Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach)
+                                    if (u.Lehrkraft == alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Lehrkraft || u.FachnameAtlantis == alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach)
                                     {
-                                        if (Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Gruppe == u.Gruppe)
+                                        if (alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Gruppe == u.Gruppe)
                                         {
-                                            if (Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Konferenzdatum == u.Konferenzdatum)
+                                            if (alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Konferenzdatum == u.Konferenzdatum)
                                             {
                                                 uA = u;
                                                 zugeordnet = true;
@@ -1057,9 +1060,9 @@ namespace webuntisnoten2atlantis
 
                             var delimiter = "|";
 
-                            if (i < Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell.Count - 1)
+                            if (i < alleVerschiedenenUnterrichteInDieserKlasseAktuell.Count - 1)
                             {
-                                if (Regex.Replace(Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach, @"[\d-]", string.Empty) == Regex.Replace(Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i + 1].Fach, @"[\d-]", string.Empty))
+                                if (Regex.Replace(alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach, @"[\d-]", string.Empty) == Regex.Replace(alleVerschiedenenUnterrichteInDieserKlasseAktuell[i + 1].Fach, @"[\d-]", string.Empty))
                                 {
                                     delimiter = ":";
                                 }
@@ -1141,7 +1144,7 @@ namespace webuntisnoten2atlantis
                             {
                                 // Wenn der Schüler in Webuntis dieses Fach nicht belegt hat, wird geixxt
 
-                                if ((new List<string> { "KR", "ER", "REL" }).Contains(Global.AlleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach))
+                                if ((new List<string> { "KR", "ER", "REL" }).Contains(alleVerschiedenenUnterrichteInDieserKlasseAktuell[i].Fach))
                                 {
                                     s += "R*  " + delimiter;
                                     reliabwähler = true;
@@ -1222,6 +1225,7 @@ namespace webuntisnoten2atlantis
                 if (unterrichteDesErstenHj.Count > 0)
                 {
                     Console.WriteLine("Der Unterricht " + (unterrichteDesErstenHj.Count == 1 ? "im Fach " : "in den Fächern ") + Global.List2String(unterrichteDesErstenHj.Select(x => x.Fach).ToList(),",") + " ist im Halbjahr geendet.");
+                    Global.Rückmeldungen.AddRückmeldung(new Rückmeldung("Klassenleitung", "", "Sind evtl. Kurse zum Halbjahr ausgelaufen, deren Noten in das Jahreszeugnis übernommen werden müssen?"));
                 }
 
                 unterrichteDerKlasse.AddRange(unterrichteDesErstenHj);
