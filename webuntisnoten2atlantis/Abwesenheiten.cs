@@ -30,8 +30,12 @@ namespace webuntisnoten2atlantis
                             abwesenheit.StudentId = Convert.ToInt32(x[2]);
                             abwesenheit.Name = x[3] + " " + x[4];
                             abwesenheit.Klasse = x[5];
-                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[7]) / 45;
-                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[8]) / 45; // unenentschuldigt oder offen
+
+                            // Telefonat mit Bezreg: Nur ganze Fehlstunden dürfen ausgewiesen werden. 
+                            // Verspätungen dürfen nicht aufaddiert werden.
+
+                            abwesenheit.StundenAbwesend = Convert.ToInt32(x[9]);
+                            abwesenheit.StundenAbwesendUnentschuldigt = Convert.ToInt32(x[10]); // unenentschuldigt oder offen
 
                             if (interessierendeKlasse == abwesenheit.Klasse)
                             {

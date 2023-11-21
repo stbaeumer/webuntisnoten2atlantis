@@ -32,7 +32,7 @@ namespace webuntisnoten2atlantis
             Global.SqlZeilen = new List<string>();
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20230608  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20231121  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
             Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
