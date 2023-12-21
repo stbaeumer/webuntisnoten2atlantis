@@ -32,7 +32,7 @@ namespace webuntisnoten2atlantis
             Global.SqlZeilen = new List<string>();
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20231121  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20231219  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
             Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
@@ -157,7 +157,7 @@ namespace webuntisnoten2atlantis
 
                     if (x.Key.ToString().ToLower() != "n")
                     {
-                        PdfKennwort(interessierendeKlasse, targetPath);
+                        PdfKennwort(interessierendeKlasse, targetPath, AktSj, hzJz);
                     }
                     Console.WriteLine(" ");
 
@@ -171,9 +171,10 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        private static void PdfKennwort(string interessierendeKlasse, string targetPath)
+        private static void PdfKennwort(string interessierendeKlasse, string targetPath, List<string> aktSj, string hzJz)
         {
             var directory = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
+
             try
             {
                 var fileName = (from f in directory.GetFiles()
@@ -211,14 +212,28 @@ namespace webuntisnoten2atlantis
                 securitySettings.PermitFullQualityPrint = false;
                 securitySettings.PermitModifyDocument = true;
                 securitySettings.PermitPrint = false;
-                pdocument.Save(directory + "\\" + interessierendeKlasse + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-Kennwort.pdf");
-                File.Copy(fileName + ".pdf", directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste_" + User + ".pdf");
-                File.Move(directory + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste_" + User + ".pdf", targetPath + "\\" + Zeitstempel + "_" + interessierendeKlasse + "_Notenliste_" + User + ".pdf");
 
-                //pdocument.Save(targetPath + "\\" + interessierendeKlasse + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-" + DateTime.Now.ToShortTimeString() + "-Kennwort.pdf");
-                //File.Delete(fileName + ".pdf");
+                var pfad = @"\" + interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_" + User + "_Kennwort.pdf";
 
-                Console.WriteLine("Schauen Sie auf dem Desktop nach einer Datei namens " + interessierendeKlasse + "-Notenliste-" + DateTime.Now.ToShortDateString() + "-Kennwort.pdf");
+                var pfadLokal = directory + pfad;
+
+                var directorySql = @"V:";
+
+                var pfadSql = directorySql + pfad;
+
+                if (File.Exists(pfadLokal))
+                {
+                    File.Delete(pfadLokal);
+                }
+
+                pdocument.Save(pfadLokal);
+                
+                if (File.Exists(pfadSql))
+                {
+                    File.Delete(pfadSql);
+                }
+                
+                File.Move(pfadLokal, pfadSql);
             }
             catch (Exception)
             {

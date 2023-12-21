@@ -580,7 +580,7 @@ namespace webuntisnoten2atlantis
                 "\nNOTENLISTE " + interessierendeKlasse + " für die Konferenz am " + konferenz.ToShortDateString() +
                 "\n " +
                 "\nHallo LuL der " + interessierendeKlasse + ", " +
-                "\n\nauf vielfachen Wunsch senden wir jetzt immer die Notenlisten für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:halbjahreszeugniskonferenzen)") + " an alle.";
+                "\n\nanbei senden wir die Notenlisten für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:halbjahreszeugniskonferenzen)") + ".";
 
             if (Global.Rückmeldungen.Count() > 0)
             {
