@@ -32,7 +32,7 @@ namespace webuntisnoten2atlantis
             Global.SqlZeilen = new List<string>();
 
             Global.WriteLine("*" + "---".PadRight(Global.PadRight, '-') + "--*");
-            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20231219  |");
+            Global.WriteLine("| Webuntisnoten2Atlantis    |    Published under the terms of GPLv3    |    Stefan Bäumer   " + DateTime.Now.Year + "  |  Version 20240119  |");
             Global.WriteLine("|" + "---".PadRight(Global.PadRight, '-') + "--|");
             Global.WriteLine("| Webuntisnoten2Atlantis erstellt eine SQL-Datei mit Befehlen zum Import der Noten/Punkte aus Webuntis nach Atlantis   |");
             Global.WriteLine("| ACHTUNG:  Wenn es die Lehrkraft versäumt hat die Teilleistung zu dokumentieren, wird keine Gesamtnote von Webuntis   |");
@@ -112,7 +112,7 @@ namespace webuntisnoten2atlantis
                         Global.PrintMessage(Global.SqlZeilen.Count(), zeile);
                     }
 
-                    interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz, User);
+                    interessierendeSchülerDieserKlasse.ChatErzeugen(alleAtlantisLehrer, interessierendeKlasse, hzJz, User, AktSj);
 
                     // Add-Delete-Update
 
@@ -144,10 +144,9 @@ namespace webuntisnoten2atlantis
                     atlantisLeistungen.ErzeugeSqlDatei(new List<string>() { targetAbsenceTimesTotal, targetMarksPerLesson, targetSql });
                     OpenFiles(new List<string> { targetSql });
 
-                    Console.WriteLine("\nSie können einen Screenshot der Notensammelerfassung in Atlantis erstellen und auf dem Desktop ablegen.\n" +
+                    Console.WriteLine("\nSie können jetzt in der Notensammelerfassung den Button DRUCKEN AKTUELLES DATENFENSTER (Strg+ALT+P) drücken, und eine PDF-Datei auf dem Desktop mit dem Namen >>>Klassenname_Notensammelerfassung.pdf<<< speichern. Dann die PDF-Datei schließen.\n" +
                         "Nachdem Sie die Datei gespeichert haben, können Sie hier wählen, " +
-                        "ob eine verschlüsselte PDF-Datei erstellt werden soll, die dann z.B. per Teams verschickt werden kann.\n" +
-                        "Wenn Sie keine PNG-Datei gespeichert haben und trotzdem Ja klicken, passiert nichts.");
+                        "ob die Datei 1. umbenannt 2. verschlüsselt und 3. nach Wiki verschoben werden soll.");
 
                     ConsoleKeyInfo x;
 
@@ -177,63 +176,82 @@ namespace webuntisnoten2atlantis
 
             try
             {
-                var fileName = (from f in directory.GetFiles()
-                                where f.FullName.ToLower().EndsWith(".png")
-                                where f.LastWriteTime > DateTime.Now.AddMinutes(-5)
-                                orderby f.LastWriteTime descending
-                                select f.FullName).First();
-
-                Document document = new Document(new Rectangle(288f, 144f), 10, 10, 10, 10);
-                document.SetPageSize(iTextSharp.text.PageSize.A4.Rotate());
-
-                using (var stream = new FileStream(fileName + ".pdf", FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    PdfWriter.GetInstance(document, stream);
-                    document.Open();
-                    using (var imageStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        var image = Image.GetInstance(imageStream);
-                        image.SetAbsolutePosition(0, 0); // set the position to bottom left corner of pdf
-                        image.ScaleAbsolute(iTextSharp.text.PageSize.A4.Height, iTextSharp.text.PageSize.A4.Width); // set the height and width of image to PDF page size
-                        document.Add(image);
-                    }
-                    document.Close();
-                }
-
-                PdfSharp.Pdf.PdfDocument pdocument = PdfSharp.Pdf.IO.PdfReader.Open(fileName + ".pdf");
-                PdfSecuritySettings securitySettings = pdocument.SecuritySettings;
-                securitySettings.UserPassword = "!7765Neun";
-                securitySettings.OwnerPassword = "!7765Neun";
-                securitySettings.PermitAccessibilityExtractContent = false;
-                securitySettings.PermitAnnotations = false;
-                securitySettings.PermitAssembleDocument = false;
-                securitySettings.PermitExtractContent = false;
-                securitySettings.PermitFormsFill = true;
-                securitySettings.PermitFullQualityPrint = false;
-                securitySettings.PermitModifyDocument = true;
-                securitySettings.PermitPrint = false;
-
                 var pfad = @"\" + interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_" + User + "_Kennwort.pdf";
 
                 var pfadLokal = directory + pfad;
 
-                var directorySql = @"V:";
+                var directorySql = new DirectoryInfo(@"V:");
 
-                var pfadSql = directorySql + pfad;
+                var pfadSql = directorySql.Name + pfad;
 
-                if (File.Exists(pfadLokal))
+                // Alle PDF-Dateien mit dem Content Klassenname, otensammelerfassung und 
+
+                var file = (from f in directory.GetFiles()
+                             where f.Name.ToLower().StartsWith(interessierendeKlasse.ToLower())
+                             where f.FullName.ToLower().EndsWith("otensammelerfassung.pdf")
+                             orderby f.LastWriteTime descending
+                             select f).FirstOrDefault();
+
+                // Alle PDF-Dateien im Notenlistenordner werden gelesen
+
+                var filesNotenlistenordner = (from f in directorySql.GetFiles()
+                                              where f.FullName.ToLower().EndsWith(".pdf")
+                                              select f).ToList();
+
+
+                // Wenn es für die Klasse noch keine Datei in den Notenlisten gibt oder wenn bereits eine neuere Datei (von einem anderen Zeugnisschreiber) in Ordner V existiert, wird nichts verändert
+
+                DateTime datumRemoteDatei = (from f in filesNotenlistenordner.OrderByDescending(x => x.LastWriteTime) where f.Name.Contains(interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_") select f.LastWriteTime).FirstOrDefault();
+
+                if (!(from f in filesNotenlistenordner where f.Name.Contains(interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_") select f).Any() || file.LastWriteTime > datumRemoteDatei)
                 {
-                    File.Delete(pfadLokal);
-                }
+                    if (!(from f in filesNotenlistenordner where f.Name.Contains(interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_") select f).Any())
+                    {
+                        Console.WriteLine("Die Datei " + pfadSql + " existiert noch nicht und wird erstellt.");
+                    }
+                    if (file.LastWriteTime > datumRemoteDatei)
+                    {
+                        Console.WriteLine("Die Datei " + pfadSql + " ist veraltet und wird überschrieben.");
+                    }
+                    PdfSharp.Pdf.PdfDocument pdocument = PdfSharp.Pdf.IO.PdfReader.Open(file.FullName);
+                    PdfSecuritySettings securitySettings = pdocument.SecuritySettings;
+                    securitySettings.UserPassword = "!7765Neun";
+                    securitySettings.OwnerPassword = "!7765Neun";
+                    securitySettings.PermitAccessibilityExtractContent = false;
+                    securitySettings.PermitAnnotations = false;
+                    securitySettings.PermitAssembleDocument = false;
+                    securitySettings.PermitExtractContent = false;
+                    securitySettings.PermitFormsFill = true;
+                    securitySettings.PermitFullQualityPrint = false;
+                    securitySettings.PermitModifyDocument = true;
+                    securitySettings.PermitPrint = false;
 
-                pdocument.Save(pfadLokal);
-                
-                if (File.Exists(pfadSql))
-                {
-                    File.Delete(pfadSql);
+                    if (File.Exists(pfadLokal))
+                    {
+                        Console.WriteLine("Die Datei " + pfadLokal + " wird gelöscht.");
+                        File.Delete(pfadLokal);
+                    }
+
+                    pdocument.Save(pfadLokal);
+                    Console.WriteLine("Die Datei " + pfadLokal + " wird angelegt.");
+
+                    // die Datei in V wird herausgesucht
+
+                    var datei = (from f in filesNotenlistenordner where f.Name.Contains(interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste_") select f.FullName).FirstOrDefault();
+
+                    if (datei != null && File.Exists(datei))
+                    {
+                        Console.WriteLine("Die Datei " + datei + " wird gelöscht.");
+                        File.Delete(datei);
+                    }
+
+                    Console.WriteLine("Die Datei " + pfadLokal + " wird wird nach " + pfadSql + " verschoben.");
+                    File.Move(pfadLokal, pfadSql);
                 }
-                
-                File.Move(pfadLokal, pfadSql);
+                else
+                {
+                    Console.WriteLine("Die Datei " + pfadSql + " ist aktuell und wird nicht verändert.");
+                }
             }
             catch (Exception)
             {

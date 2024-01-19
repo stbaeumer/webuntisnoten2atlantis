@@ -509,7 +509,7 @@ namespace webuntisnoten2atlantis
             }
         }
 
-        internal void ChatErzeugen(Lehrers alleAtlantisLehrer, string interessierendeKlasse, string hzJz, string user)
+        internal void ChatErzeugen(Lehrers alleAtlantisLehrer, string interessierendeKlasse, string hzJz, string user, List<string> aktSj)
         {
             var url = "https://teams.microsoft.com/l/chat/0/0?users=";
 
@@ -577,10 +577,13 @@ namespace webuntisnoten2atlantis
             }
 
             var rückmeldung = "/*" +
-                "\nNOTENLISTE " + interessierendeKlasse + " für die Konferenz am " + konferenz.ToShortDateString() +
+                "\n" + interessierendeKlasse + "_" + aktSj[0] + "-" + aktSj[1] + "_" + hzJz + "_Notenliste" +
                 "\n " +
                 "\nHallo LuL der " + interessierendeKlasse + ", " +
-                "\n\nanbei senden wir die Notenlisten für die " + (hzJz == "JZ" ? "Jahreszeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:jahreszeugniskonferenzen)" : "Zeugniskonferenzen (https://wiki.berufskolleg-borken.de/doku.php?id=konferenzen:halbjahreszeugniskonferenzen)") + ".";
+                "\ndie aktuelle Notenlisten befindet sich unter folegndem Link:" +
+                "\n\nhttps://wiki.berufskolleg-borken.de/doku.php?id=notenlisten:start" +
+                "\n\nBeste Grüße" +
+                "\nZeugnisschreibung";   
 
             if (Global.Rückmeldungen.Count() > 0)
             {
@@ -1202,7 +1205,6 @@ namespace webuntisnoten2atlantis
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
